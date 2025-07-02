@@ -63,7 +63,13 @@ def admin_content():
     
     query = Content.query
     if search:
-        query = query.filter(Content.title.contains(search))
+        query = query.filter(
+            db.or_(
+                Content.title.contains(search),
+                Content.genre.contains(search),
+                Content.description.contains(search)
+            )
+        )
     
     content = query.order_by(Content.created_at.desc()).paginate(
         page=page, per_page=10, error_out=False)
@@ -148,8 +154,20 @@ def delete_content(content_id):
 @admin_required
 def manage_episodes(content_id):
     content = Content.query.get_or_404(content_id)
-    episodes = Episode.query.filter_by(content_id=content_id).order_by(Episode.episode_number).all()
-    return render_template('admin/episodes.html', content=content, episodes=episodes)
+    search = request.args.get('search', '')
+    
+    query = Episode.query.filter_by(content_id=content_id)
+    if search:
+        query = query.filter(
+            db.or_(
+                Episode.title.contains(search),
+                Episode.description.contains(search),
+                Episode.episode_number == search if search.isdigit() else False
+            )
+        )
+    
+    episodes = query.order_by(Episode.episode_number).all()
+    return render_template('admin/episodes.html', content=content, episodes=episodes, search=search)
 
 @admin_bp.route('/content/<int:content_id>/episodes/add', methods=['GET', 'POST'])
 @login_required
