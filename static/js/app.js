@@ -33,10 +33,28 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('Is hidden:', mobileNav.classList.contains('hidden'));
         });
         
-        // Close menu when clicking on navigation links
+        // Close menu when clicking on navigation links or close button
         mobileNav.addEventListener('click', function(e) {
-            if (e.target.tagName === 'A') {
+            if (e.target.tagName === 'A' || e.target.closest('#mobile-menu-close')) {
                 mobileNav.classList.add('hidden');
+                mobileNav.style.display = 'none';
+                console.log('Menu closed via navigation click or close button');
+            }
+        });
+        
+        // Close menu on outside click
+        document.addEventListener('click', function(e) {
+            if (!mobileToggle.contains(e.target) && !mobileNav.contains(e.target)) {
+                mobileNav.classList.add('hidden');
+                mobileNav.style.display = 'none';
+            }
+        });
+        
+        // Close menu on escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                mobileNav.classList.add('hidden');
+                mobileNav.style.display = 'none';
             }
         });
     } else {
