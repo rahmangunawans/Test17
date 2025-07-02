@@ -119,7 +119,7 @@ class NotificationManager {
     
     initSocket() {
         // No automatic polling - notifications load only on page load/login or manual refresh
-        console.log('Notification system initialized - load only on login/manual refresh');
+        console.log('Notification system initialized - manual refresh only');
         this.setupManualRefresh();
     }
     
@@ -338,8 +338,8 @@ class NotificationManager {
         const typeClass = this.getNotificationTypeClass(notification.type);
         
         // Show read time if notification has been read
-        const readInfo = notification.read_at ? 
-            `<span class="text-xs text-gray-400 dark:text-gray-500"> • Dibaca ${this.getTimeAgo(notification.read_at)}</span>` : '';
+        const readInfo = notification.is_read && notification.read_at ? 
+            ` • Dibaca ${this.getTimeAgo(notification.read_at)}` : '';
         
         return `
             <div class="notification-item p-3 border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors duration-150 ${isUnread ? 'bg-blue-50 dark:bg-blue-900/20' : ''}"

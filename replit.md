@@ -133,6 +133,7 @@ AniFlix is a premium anime and movie streaming platform built with Flask. The ap
 - July 02, 2025. Implemented real-time notifications with Socket.IO: replaced polling with WebSocket connections, added Socket.IO client library, configured real-time event emission for new content/episodes, and verified successful connection with instant notification delivery
 - July 02, 2025. Optimized notification system: reduced polling frequency from 5 seconds to 60 seconds to minimize server load, fixed "mark all as read" functionality with user feedback, and implemented automatic deletion of notifications older than 5 days to keep database clean
 - July 02, 2025. Completely removed automatic notification polling: notifications now only load on page load/login or manual refresh to eliminate unnecessary server requests, added manual refresh button with loading animation and feedback, implemented smart refresh when user returns after 5+ minutes away
+- July 02, 2025. Fixed read_at implementation: properly display read timestamp in notifications, improved datetime handling with timezone support for Indonesia, enhanced notification UI to show when notifications were read, eliminated all automatic polling for better performance
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
