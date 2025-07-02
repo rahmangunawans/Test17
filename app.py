@@ -4,7 +4,7 @@ from datetime import datetime
 from flask import Flask, render_template, request, redirect, url_for, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, login_required, current_user
-from flask_socketio import SocketIO
+# from flask_socketio import SocketIO  # Disabled for performance
 from sqlalchemy.orm import DeclarativeBase
 from werkzeug.middleware.proxy_fix import ProxyFix
 from dotenv import load_dotenv
@@ -20,7 +20,14 @@ class Base(DeclarativeBase):
 
 db = SQLAlchemy(model_class=Base)
 login_manager = LoginManager()
-socketio = SocketIO(cors_allowed_origins="*", async_mode='eventlet')
+# socketio = SocketIO(
+#     cors_allowed_origins="*", 
+#     async_mode='eventlet',
+#     ping_timeout=60,
+#     ping_interval=25,
+#     logger=False,
+#     engineio_logger=False
+# )
 
 # Create the app
 app = Flask(__name__)
@@ -56,7 +63,7 @@ else:
 # Initialize extensions
 db.init_app(app)
 login_manager.init_app(app)
-socketio.init_app(app)
+# socketio.init_app(app)  # Disabled for performance
 login_manager.login_view = 'auth.login'  # type: ignore
 login_manager.login_message = 'Please log in to access this page.'
 
@@ -70,7 +77,7 @@ from auth import auth_bp
 from content import content_bp
 from subscription import subscription_bp
 from admin import admin_bp
-from notifications import notifications_bp, setup_socketio_events
+from notifications import notifications_bp  # , setup_socketio_events
 
 app.register_blueprint(auth_bp, url_prefix='/auth')
 app.register_blueprint(content_bp)
@@ -78,8 +85,8 @@ app.register_blueprint(subscription_bp, url_prefix='/subscription')
 app.register_blueprint(admin_bp, url_prefix='/admin')
 app.register_blueprint(notifications_bp, url_prefix='/api')
 
-# Setup SocketIO events
-setup_socketio_events(socketio)
+# Setup SocketIO events - disabled for performance
+# setup_socketio_events(socketio)
 
 with app.app_context():
     # Import models to ensure tables are created

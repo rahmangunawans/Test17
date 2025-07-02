@@ -1007,9 +1007,8 @@
         document.head.appendChild(style);
     </script>
 
-    <!-- Socket.IO for real-time notifications -->
+    <!-- Notifications (lightweight polling) -->
     {% if current_user.is_authenticated %}
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
     <script src="{{ url_for('static', filename='js/notifications.js') }}"></script>
     {% endif %}
 

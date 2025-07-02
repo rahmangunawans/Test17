@@ -97,6 +97,19 @@ class NotificationManager {
     }
     
     initSocket() {
+        // Skip Socket.IO for now to improve performance
+        // Use polling instead
+        this.startPolling();
+    }
+    
+    startPolling() {
+        // Poll for new notifications every 30 seconds
+        setInterval(() => {
+            this.loadNotifications();
+        }, 30000);
+    }
+    
+    initSocketDisabled() {
         // Initialize Socket.IO connection
         if (typeof io !== 'undefined') {
             this.socket = io();
