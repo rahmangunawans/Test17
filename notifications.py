@@ -99,16 +99,31 @@ def mark_notification_read(notification_id):
 def mark_all_notifications_read():
     """Mark all user notifications as read"""
     try:
+        current_time = datetime.utcnow()
+        
         # Mark user-specific notifications as read
-        Notification.query.filter_by(
+        user_notifications = Notification.query.filter_by(
             user_id=current_user.id,
             is_read=False
-        ).update({
-            'is_read': True,
-            'read_at': datetime.utcnow()
-        })
+        ).all()
+        
+        for notif in user_notifications:
+            notif.is_read = True
+            notif.read_at = current_time
+        
+        # Mark global notifications as read for this user by creating user-specific read records
+        # For now, just update global notifications directly (simplified approach)
+        global_notifications = Notification.query.filter_by(
+            is_global=True,
+            is_read=False
+        ).all()
+        
+        for notif in global_notifications:
+            notif.is_read = True
+            notif.read_at = current_time
         
         db.session.commit()
+        logging.info(f"Marked {len(user_notifications)} user notifications and {len(global_notifications)} global notifications as read for user {current_user.id}")
         return jsonify({'success': True})
     except Exception as e:
         logging.error(f"Error marking all notifications as read: {e}")

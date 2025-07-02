@@ -20,7 +20,7 @@ class NotificationManager {
         
         // Load notifications only once on page load
         this.loadNotifications();
-        console.log('Notification system initialized - manual refresh only');
+        console.log('Notification system ready');
     }
     
     setupUI() {
@@ -270,7 +270,7 @@ class NotificationManager {
                             <p class="text-sm font-medium text-gray-900 dark:text-white truncate">
                                 ${notification.title}
                             </p>
-                            ${isUnread ? '<div class="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0" title="Belum dibaca"></div>' : '<div class="w-2 h-2 bg-gray-400 rounded-full flex-shrink-0" title="Sudah dibaca"></div>'}
+                            ${isUnread ? '<div class="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0" title="Belum dibaca"></div>' : '<div class="w-2 h-2 bg-green-500 rounded-full flex-shrink-0" title="Sudah dibaca"></div>'}
                         </div>
                         <p class="text-sm text-gray-600 dark:text-gray-300 mt-1 line-clamp-2">
                             ${notification.message}
