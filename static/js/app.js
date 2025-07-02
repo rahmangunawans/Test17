@@ -5,9 +5,16 @@ document.addEventListener('DOMContentLoaded', function() {
     const mobileToggle = document.getElementById('mobile-menu-toggle');
     const mobileNav = document.getElementById('mobile-navigation');
     
+    console.log('Mobile toggle element:', mobileToggle);
+    console.log('Mobile nav element:', mobileNav);
+    
     if (mobileToggle && mobileNav) {
-        mobileToggle.addEventListener('click', function() {
+        console.log('Setting up mobile menu event listener');
+        mobileToggle.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('Mobile menu toggle clicked');
             mobileNav.classList.toggle('hidden');
+            console.log('Menu visibility toggled, hidden class:', mobileNav.classList.contains('hidden'));
         });
         
         // Close menu when clicking on navigation links
@@ -16,6 +23,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 mobileNav.classList.add('hidden');
             }
         });
+    } else {
+        console.log('Mobile menu elements not found');
     }
     
     // Enhanced search functionality for both desktop and mobile
