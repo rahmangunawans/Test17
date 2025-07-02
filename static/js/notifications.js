@@ -337,6 +337,10 @@ class NotificationManager {
         const isUnread = !notification.is_read;
         const typeClass = this.getNotificationTypeClass(notification.type);
         
+        // Show read time if notification has been read
+        const readInfo = notification.read_at ? 
+            `<span class="text-xs text-gray-400 dark:text-gray-500"> • Dibaca ${this.getTimeAgo(notification.read_at)}</span>` : '';
+        
         return `
             <div class="notification-item p-3 border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors duration-150 ${isUnread ? 'bg-blue-50 dark:bg-blue-900/20' : ''}"
                  data-notification-id="${notification.id}">
@@ -355,7 +359,7 @@ class NotificationManager {
                             ${notification.message}
                         </p>
                         <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                            ${timeAgo}
+                            ${timeAgo}${readInfo}
                         </p>
                     </div>
                 </div>
@@ -376,16 +380,32 @@ class NotificationManager {
     }
     
     getTimeAgo(dateString) {
-        const date = new Date(dateString);
-        const now = new Date();
-        const diffInSeconds = Math.floor((now - date) / 1000);
+        if (!dateString) return '';
         
-        if (diffInSeconds < 60) return 'Baru saja';
-        if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} menit yang lalu`;
-        if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} jam yang lalu`;
-        if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)} hari yang lalu`;
-        
-        return date.toLocaleDateString('id-ID');
+        try {
+            // Parse the date from database (ISO format)
+            const date = new Date(dateString);
+            const now = new Date();
+            
+            // Check if date is valid
+            if (isNaN(date.getTime())) {
+                console.warn('Invalid date string:', dateString);
+                return 'Waktu tidak valid';
+            }
+            
+            const diffInSeconds = Math.floor((now - date) / 1000);
+            
+            if (diffInSeconds < 0) return 'Di masa depan'; // Handle future dates
+            if (diffInSeconds < 60) return 'Baru saja';
+            if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} menit yang lalu`;
+            if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} jam yang lalu`;
+            if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)} hari yang lalu`;
+            
+            return date.toLocaleDateString('id-ID');
+        } catch (error) {
+            console.error('Error parsing date:', error, dateString);
+            return 'Waktu tidak valid';
+        }
     }
     
     toggleNotificationDropdown() {
@@ -420,13 +440,9 @@ class NotificationManager {
                 const notification = this.notifications.find(n => n.id === notificationId);
                 if (notification && !notification.is_read) {
                     notification.is_read = true;
+                    notification.read_at = new Date().toISOString(); // Set read_at timestamp
                     this.unreadCount = Math.max(0, this.unreadCount - 1);
                     this.updateUI();
-                }
-                
-                // Emit to socket for real-time update
-                if (this.socket) {
-                    this.socket.emit('mark_notification_read', { notification_id: notificationId });
                 }
             }
         } catch (error) {
@@ -445,8 +461,12 @@ class NotificationManager {
             
             if (response.ok) {
                 // Update local state
+                const currentTime = new Date().toISOString();
                 this.notifications.forEach(notification => {
-                    notification.is_read = true;
+                    if (!notification.is_read) {
+                        notification.is_read = true;
+                        notification.read_at = currentTime; // Set read_at timestamp
+                    }
                 });
                 this.unreadCount = 0;
                 this.updateUI();
