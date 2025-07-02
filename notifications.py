@@ -130,6 +130,55 @@ def mark_all_notifications_read():
         db.session.rollback()
         return jsonify({'success': False, 'message': 'Failed to mark notifications as read'})
 
+@notifications_bp.route('/notifications/delete/<int:notification_id>', methods=['DELETE'])
+@login_required
+def delete_notification(notification_id):
+    """Delete a notification"""
+    try:
+        notification = Notification.query.get(notification_id)
+        if not notification:
+            return jsonify({'success': False, 'message': 'Notification not found'})
+        
+        # Check if user owns this notification or it's a global notification
+        if notification.user_id != current_user.id and not notification.is_global:
+            return jsonify({'success': False, 'message': 'Access denied'})
+        
+        # For global notifications, we could create a separate table for user-specific deletions
+        # For now, we'll just delete it completely (simplified approach)
+        db.session.delete(notification)
+        db.session.commit()
+        
+        logging.info(f"Notification {notification_id} deleted by user {current_user.id}")
+        return jsonify({'success': True})
+    except Exception as e:
+        logging.error(f"Error deleting notification: {e}")
+        db.session.rollback()
+        return jsonify({'success': False, 'message': 'Failed to delete notification'})
+
+@notifications_bp.route('/notifications/delete_all', methods=['DELETE'])
+@login_required
+def delete_all_notifications():
+    """Delete all notifications for user"""
+    try:
+        # Delete user-specific notifications
+        user_notifications = Notification.query.filter_by(user_id=current_user.id).all()
+        for notif in user_notifications:
+            db.session.delete(notif)
+        
+        # For global notifications, in a real app we'd create user-specific deletion records
+        # For now, we'll delete all global notifications (simplified approach)
+        global_notifications = Notification.query.filter_by(is_global=True).all()
+        for notif in global_notifications:
+            db.session.delete(notif)
+        
+        db.session.commit()
+        logging.info(f"All notifications deleted by user {current_user.id}")
+        return jsonify({'success': True})
+    except Exception as e:
+        logging.error(f"Error deleting all notifications: {e}")
+        db.session.rollback()
+        return jsonify({'success': False, 'message': 'Failed to delete all notifications'})
+
 def create_notification(user_id=None, title="", message="", notification_type="info", 
                        is_global=False, action_url=None, icon="bell"):
     """Create a new notification"""

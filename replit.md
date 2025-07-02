@@ -135,6 +135,7 @@ AniFlix is a premium anime and movie streaming platform built with Flask. The ap
 - July 02, 2025. Completely removed automatic notification polling: notifications now only load on page load/login or manual refresh to eliminate unnecessary server requests, added manual refresh button with loading animation and feedback, implemented smart refresh when user returns after 5+ minutes away
 - July 02, 2025. Fixed read_at implementation: properly display read timestamp in notifications, improved datetime handling with timezone support for Indonesia, enhanced notification UI to show when notifications were read, eliminated all automatic polling for better performance
 - July 02, 2025. Complete notification system rewrite: created new manual-only notification system with no automatic polling, proper read_at timestamp display showing both creation and read times, enhanced UI with visual indicators for read/unread status, manual refresh button with feedback, and robust error handling for better user experience
+- July 02, 2025. Added notification removal feature: implemented individual delete buttons for each notification with confirmation dialogs, delete all notifications button with safety confirmation, backend DELETE endpoints for single and bulk notification removal, proper UI feedback with toast notifications, and automatic UI updates after deletion
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.

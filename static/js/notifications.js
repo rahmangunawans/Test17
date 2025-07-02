@@ -47,8 +47,11 @@ class NotificationManager {
                     <button id="refresh-notifications" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors" title="Refresh notifikasi">
                         <i class="fas fa-sync-alt"></i>
                     </button>
-                    <button id="mark-all-read" class="text-sm text-blue-600 dark:text-blue-400 hover:underline">
-                        Tandai semua dibaca
+                    <button id="mark-all-read" class="text-sm text-blue-600 dark:text-blue-400 hover:underline" title="Tandai semua dibaca">
+                        <i class="fas fa-check-double"></i>
+                    </button>
+                    <button id="delete-all-notifications" class="text-sm text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 transition-colors" title="Hapus semua notifikasi">
+                        <i class="fas fa-trash-alt"></i>
                     </button>
                 </div>
             </div>
@@ -87,6 +90,15 @@ class NotificationManager {
             refreshBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 this.manualRefreshNotifications();
+            });
+        }
+        
+        // Delete all notifications
+        const deleteAllBtn = document.getElementById('delete-all-notifications');
+        if (deleteAllBtn) {
+            deleteAllBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.deleteAllNotifications();
             });
         }
         
@@ -259,13 +271,13 @@ class NotificationManager {
         }
         
         return `
-            <div class="notification-item p-3 border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors duration-150 ${isUnread ? 'bg-blue-50 dark:bg-blue-900/20' : 'bg-gray-50 dark:bg-gray-700/50'}"
+            <div class="notification-item p-3 border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-150 ${isUnread ? 'bg-blue-50 dark:bg-blue-900/20' : 'bg-gray-50 dark:bg-gray-700/50'}"
                  data-notification-id="${notification.id}">
                 <div class="flex items-start space-x-3">
                     <div class="flex-shrink-0">
                         <i class="fas fa-${notification.icon} ${typeClass} text-lg"></i>
                     </div>
-                    <div class="flex-1 min-w-0">
+                    <div class="flex-1 min-w-0 cursor-pointer" onclick="window.notificationManager.handleNotificationClick(${notification.id})">
                         <div class="flex items-center justify-between">
                             <p class="text-sm font-medium text-gray-900 dark:text-white truncate">
                                 ${notification.title}
@@ -278,6 +290,14 @@ class NotificationManager {
                         <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">
                             ${timeInfo}
                         </p>
+                    </div>
+                    <div class="flex-shrink-0">
+                        <button class="delete-notification-btn text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 p-1 rounded transition-colors" 
+                                data-notification-id="${notification.id}" 
+                                title="Hapus notifikasi"
+                                onclick="event.stopPropagation(); window.notificationManager.deleteNotification(${notification.id})">
+                            <i class="fas fa-times text-sm"></i>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -403,6 +423,92 @@ class NotificationManager {
                 message: 'Gagal menandai semua notifikasi sebagai dibaca',
                 type: 'error',
                 icon: 'exclamation-circle'
+            });
+        }
+    }
+    
+    async deleteNotification(notificationId) {
+        if (!confirm('Apakah Anda yakin ingin menghapus notifikasi ini?')) {
+            return;
+        }
+        
+        try {
+            const response = await fetch(`/api/notifications/delete/${notificationId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            if (response.ok) {
+                // Find the notification before removing it
+                const deletedNotification = this.notifications.find(n => n.id === notificationId);
+                
+                // Remove from local state
+                this.notifications = this.notifications.filter(n => n.id !== notificationId);
+                
+                // Update unread count
+                if (deletedNotification && !deletedNotification.is_read) {
+                    this.unreadCount = Math.max(0, this.unreadCount - 1);
+                }
+                
+                this.updateUI();
+                
+                this.showNotificationToast({
+                    title: 'Berhasil',
+                    message: 'Notifikasi berhasil dihapus',
+                    type: 'success',
+                    icon: 'check'
+                });
+            } else {
+                throw new Error('Failed to delete notification');
+            }
+        } catch (error) {
+            console.error('Failed to delete notification:', error);
+            this.showNotificationToast({
+                title: 'Error',
+                message: 'Gagal menghapus notifikasi',
+                type: 'error',
+                icon: 'exclamation-triangle'
+            });
+        }
+    }
+    
+    async deleteAllNotifications() {
+        if (!confirm('Apakah Anda yakin ingin menghapus SEMUA notifikasi? Tindakan ini tidak dapat dibatalkan.')) {
+            return;
+        }
+        
+        try {
+            const response = await fetch('/api/notifications/delete_all', {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            if (response.ok) {
+                // Clear local state
+                this.notifications = [];
+                this.unreadCount = 0;
+                this.updateUI();
+                
+                this.showNotificationToast({
+                    title: 'Berhasil',
+                    message: 'Semua notifikasi berhasil dihapus',
+                    type: 'success',
+                    icon: 'check'
+                });
+            } else {
+                throw new Error('Failed to delete all notifications');
+            }
+        } catch (error) {
+            console.error('Failed to delete all notifications:', error);
+            this.showNotificationToast({
+                title: 'Error',
+                message: 'Gagal menghapus semua notifikasi',
+                type: 'error',
+                icon: 'exclamation-triangle'
             });
         }
     }
