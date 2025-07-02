@@ -14,10 +14,12 @@ document.addEventListener('DOMContentLoaded', function() {
         if (isMenuOpen) {
             mobileMenu.classList.remove('hidden');
             mobileMenu.classList.add('show');
+            mobileMenuButton.classList.add('active');
             document.body.style.overflow = 'hidden';
         } else {
             mobileMenu.classList.add('hidden');
             mobileMenu.classList.remove('show');
+            mobileMenuButton.classList.remove('active');
             document.body.style.overflow = '';
         }
     }
