@@ -3,7 +3,7 @@ from flask_login import login_required, current_user
 from flask_socketio import SocketIO, emit, join_room, leave_room, disconnect
 from app import db
 from models import Notification, User
-from datetime import datetime
+from datetime import datetime, timedelta
 import logging
 
 notifications_bp = Blueprint('notifications', __name__)
@@ -16,11 +16,31 @@ def init_socketio(app, socketio_instance):
     global socketio
     socketio = socketio_instance
 
+def cleanup_old_notifications():
+    """Delete notifications older than 5 days"""
+    try:
+        five_days_ago = datetime.utcnow() - timedelta(days=5)
+        old_notifications = Notification.query.filter(
+            Notification.created_at < five_days_ago
+        ).all()
+        
+        if old_notifications:
+            for notification in old_notifications:
+                db.session.delete(notification)
+            db.session.commit()
+            logging.info(f"Cleaned up {len(old_notifications)} old notifications")
+    except Exception as e:
+        logging.error(f"Failed to cleanup old notifications: {e}")
+        db.session.rollback()
+
 @notifications_bp.route('/notifications')
 @login_required
 def get_notifications():
     """Get user notifications via API"""
     try:
+        # Clean up old notifications first
+        cleanup_old_notifications()
+        
         # Get user-specific notifications
         user_notifications = Notification.query.filter_by(
             user_id=current_user.id

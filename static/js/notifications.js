@@ -103,17 +103,19 @@ class NotificationManager {
     }
     
     startFastPolling() {
-        // Poll for new notifications every 5 seconds for real-time experience
-        this.pollInterval = setInterval(() => {
-            this.loadNotifications();
-        }, 5000);
-        
-        // Also check when tab becomes visible again
+        // Check for notifications only when tab becomes visible
         document.addEventListener('visibilitychange', () => {
             if (!document.hidden) {
                 this.loadNotifications();
             }
         });
+        
+        // Poll only every 60 seconds to reduce server load
+        this.pollInterval = setInterval(() => {
+            if (!document.hidden) {
+                this.loadNotifications();
+            }
+        }, 60000);
     }
     
     startPolling() {
@@ -370,9 +372,25 @@ class NotificationManager {
                 });
                 this.unreadCount = 0;
                 this.updateUI();
+                
+                // Show success feedback
+                this.showNotificationToast({
+                    title: 'Berhasil',
+                    message: 'Semua notifikasi telah ditandai sebagai dibaca',
+                    type: 'success',
+                    icon: 'check-circle'
+                });
+            } else {
+                throw new Error('Failed to mark all as read');
             }
         } catch (error) {
             console.error('Failed to mark all notifications as read:', error);
+            this.showNotificationToast({
+                title: 'Error',
+                message: 'Gagal menandai semua notifikasi sebagai dibaca',
+                type: 'error',
+                icon: 'exclamation-circle'
+            });
         }
     }
     
