@@ -42,13 +42,23 @@ def admin_dashboard():
         recent_content = db.session.query(Content).order_by(Content.created_at.desc()).limit(5).all()
         recent_users = db.session.query(User).order_by(User.created_at.desc()).limit(5).all()
         
+        # User management data
+        user_search = request.args.get('user_search', '')
+        user_query = User.query
+        if user_search:
+            user_query = user_query.filter(User.email.contains(user_search))
+        
+        # Get users for dashboard (limited to 10)
+        dashboard_users = user_query.order_by(User.created_at.desc()).limit(10).all()
+        
         return render_template('admin/dashboard.html',
                              total_users=total_users,
                              total_content=total_content,
                              total_episodes=total_episodes,
                              vip_users=vip_users,
                              recent_content=recent_content,
-                             recent_users=recent_users)
+                             recent_users=recent_users,
+                             dashboard_users=dashboard_users)
     except Exception as e:
         logging.error(f"Admin dashboard error: {str(e)}")
         flash(f'Dashboard loading error. Please contact administrator.', 'error')
@@ -226,17 +236,11 @@ def delete_episode(episode_id):
 @login_required
 @admin_required
 def admin_users():
-    page = request.args.get('page', 1, type=int)
-    search = request.args.get('search', '')
-    
-    query = User.query
-    if search:
-        query = query.filter(User.email.contains(search))
-    
-    users = query.order_by(User.created_at.desc()).paginate(
-        page=page, per_page=20, error_out=False)
-    
-    return render_template('admin/users.html', users=users, search=search)
+    # Redirect to dashboard with user management section
+    user_search = request.args.get('search', '')
+    if user_search:
+        return redirect(url_for('admin.admin_dashboard', user_search=user_search) + '#user-management')
+    return redirect(url_for('admin.admin_dashboard') + '#user-management')
 
 @admin_bp.route('/users/<int:user_id>/toggle_admin', methods=['POST'])
 @login_required
@@ -270,7 +274,7 @@ def toggle_admin(user_id):
         db.session.rollback()
         flash(f'Error updating user: {str(e)}', 'error')
     
-    return redirect(url_for('admin.admin_users'))
+    return redirect(url_for('admin.admin_dashboard') + '#user-management')
 
 @admin_bp.route('/content/<int:content_id>/edit', methods=['GET', 'POST'])
 @login_required
@@ -350,7 +354,7 @@ def edit_user(user_id):
             
             db.session.commit()
             flash(f'User {user.username} updated successfully!', 'success')
-            return redirect(url_for('admin.admin_users'))
+            return redirect(url_for('admin.admin_dashboard') + '#user-management')
         except Exception as e:
             db.session.rollback()
             flash(f'Error updating user: {str(e)}', 'error')
@@ -368,7 +372,7 @@ def delete_user(user_id):
     # Prevent deleting current admin user
     if user.id == current_user.id:
         flash('You cannot delete your own account', 'error')
-        return redirect(url_for('admin.admin_users'))
+        return redirect(url_for('admin.admin_dashboard') + '#user-management')
     
     try:
         # Delete associated data
@@ -381,7 +385,7 @@ def delete_user(user_id):
         db.session.rollback()
         flash(f'Error deleting user: {str(e)}', 'error')
     
-    return redirect(url_for('admin.admin_users'))
+    return redirect(url_for('admin.admin_dashboard') + '#user-management')
 
 @admin_bp.route('/admin/analytics')
 @login_required
@@ -456,7 +460,7 @@ def edit_user_details(user_id):
             
             db.session.commit()
             flash(f'User {user.username} updated successfully!', 'success')
-            return redirect(url_for('admin.admin_users'))
+            return redirect(url_for('admin.admin_dashboard') + '#user-management')
             
         except Exception as e:
             db.session.rollback()
@@ -474,7 +478,7 @@ def remove_user(user_id):
     # Prevent deletion of current admin
     if user.id == current_user.id:
         flash('Cannot delete your own account!', 'error')
-        return redirect(url_for('admin.admin_users'))
+        return redirect(url_for('admin.admin_dashboard') + '#user-management')
     
     try:
         username = user.username
@@ -486,7 +490,7 @@ def remove_user(user_id):
         flash(f'Error deleting user: {str(e)}', 'error')
         logging.error(f"Error deleting user {user_id}: {e}")
     
-    return redirect(url_for('admin.admin_users'))
+    return redirect(url_for('admin.admin_dashboard') + '#user-management')
 
 @admin_bp.route('/user/<int:user_id>/toggle-vip', methods=['POST'])
 @admin_required
@@ -511,4 +515,4 @@ def toggle_vip(user_id):
         flash(f'Error updating VIP status: {str(e)}', 'error')
         logging.error(f"Error toggling VIP for user {user_id}: {e}")
     
-    return redirect(url_for('admin.admin_users'))
+    return redirect(url_for('admin.admin_dashboard') + '#user-management')
