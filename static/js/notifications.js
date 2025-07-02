@@ -97,13 +97,27 @@ class NotificationManager {
     }
     
     initSocket() {
-        // Skip Socket.IO for now to improve performance
-        // Use polling instead
-        this.startPolling();
+        // Use fast polling for near real-time experience (more stable than Socket.IO in this environment)
+        console.log('Initializing fast notification polling for real-time experience');
+        this.startFastPolling();
+    }
+    
+    startFastPolling() {
+        // Poll for new notifications every 5 seconds for real-time experience
+        this.pollInterval = setInterval(() => {
+            this.loadNotifications();
+        }, 5000);
+        
+        // Also check when tab becomes visible again
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) {
+                this.loadNotifications();
+            }
+        });
     }
     
     startPolling() {
-        // Poll for new notifications every 30 seconds
+        // Regular polling for fallback - every 30 seconds
         setInterval(() => {
             this.loadNotifications();
         }, 30000);
@@ -148,7 +162,22 @@ class NotificationManager {
             const data = await response.json();
             
             if (data.success) {
-                this.notifications = data.notifications;
+                const oldNotifications = this.notifications || [];
+                const newNotifications = data.notifications;
+                
+                // Detect new notifications for real-time toast
+                if (oldNotifications.length > 0) {
+                    const oldIds = new Set(oldNotifications.map(n => n.id));
+                    const freshNotifications = newNotifications.filter(n => !oldIds.has(n.id));
+                    
+                    // Show toast for new notifications
+                    freshNotifications.forEach(notification => {
+                        console.log('New notification detected:', notification.title);
+                        this.showNotificationToast(notification);
+                    });
+                }
+                
+                this.notifications = newNotifications;
                 this.unreadCount = data.unread_count;
                 this.updateUI();
             }

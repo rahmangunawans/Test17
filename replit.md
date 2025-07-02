@@ -129,6 +129,8 @@ AniFlix is a premium anime and movie streaming platform built with Flask. The ap
 - July 02, 2025. Added comprehensive real-time notification system with Socket.IO: notification bell in nav, real-time push notifications, admin notification management panel, automatic subscription success notifications, and toast notifications with action URLs
 - July 02, 2025. Fixed "add episode" functionality by adding missing thumbnail_url column to Episode model and optimized performance by replacing Socket.IO with lightweight polling to eliminate worker timeouts
 - July 02, 2025. Successfully migrated from Replit Agent to standard Replit environment: configured local PostgreSQL database, updated database connection logic to prioritize Replit's DATABASE_URL, ensured all dependencies work correctly, and verified full application functionality
+- July 02, 2025. Added Trailer URL field to Add Content form with full backend integration for content management
+- July 02, 2025. Implemented real-time notifications with Socket.IO: replaced polling with WebSocket connections, added Socket.IO client library, configured real-time event emission for new content/episodes, and verified successful connection with instant notification delivery
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.

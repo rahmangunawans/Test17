@@ -111,14 +111,8 @@ def create_notification(user_id=None, title="", message="", notification_type="i
         db.session.add(notification)
         db.session.commit()
         
-        # Emit real-time notification via SocketIO
-        if socketio:
-            if is_global:
-                # Send to all connected users
-                socketio.emit('new_notification', notification.to_dict(), broadcast=True)
-            elif user_id:
-                # Send to specific user
-                socketio.emit('new_notification', notification.to_dict(), room=f'user_{user_id}')
+        # Real-time notification via fast polling (Socket.IO disabled for stability)
+        logging.info(f"New notification created: {title} - {message}")
         
         return notification
     except Exception as e:
