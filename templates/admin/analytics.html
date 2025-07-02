@@ -1,132 +1,167 @@
-{% extends "admin/base.html" %}
+{% extends "responsive_base.html" %}
 
-{% block page_title %}Analytics{% endblock %}
+{% block title %}Analytics - AniFlix{% endblock %}
 
 {% block content %}
-<div class="mb-8">
-    <h1 class="text-3xl font-bold text-white">Analytics Dashboard</h1>
-    <p class="text-gray-400">Platform performance and viewing statistics</p>
-</div>
-
-<!-- Popular Content -->
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-    <div class="bg-gray-800 p-6 rounded-lg shadow-md">
-        <h2 class="text-xl font-bold text-white mb-4">
-            <i class="fas fa-fire text-orange-500 mr-2"></i>Most Popular Content
-        </h2>
-        <div class="space-y-3">
-            {% for content in popular_content %}
-            <div class="flex items-center justify-between p-3 bg-gray-700 rounded-lg">
-                <div>
-                    <h3 class="font-semibold text-white">{{ content.title }}</h3>
-                </div>
-                <div class="text-right">
-                    <span class="text-lg font-bold text-indigo-400">{{ content.views }}</span>
-                    <div class="text-xs text-gray-400">views</div>
-                </div>
-            </div>
-            {% else %}
-            <p class="text-gray-400 text-center py-8">No viewing data available yet</p>
-            {% endfor %}
+<div class="min-h-screen bg-gray-900 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-white">Analytics Dashboard</h1>
+            <p class="text-gray-400">Platform performance and viewing statistics</p>
         </div>
-    </div>
 
-    <!-- Completion Statistics -->
-    <div class="bg-gray-800 p-6 rounded-lg shadow-md">
-        <h2 class="text-xl font-bold text-white mb-4">
-            <i class="fas fa-chart-pie text-green-500 mr-2"></i>Viewing Status
-        </h2>
-        <div class="space-y-4">
-            {% for stat in completion_stats %}
-            <div class="flex items-center justify-between">
+        <!-- Statistics Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="bg-gray-800 rounded-lg p-6">
                 <div class="flex items-center">
-                    {% if stat.status == 'completed' %}
-                        <div class="w-4 h-4 bg-green-500 rounded-full mr-3"></div>
-                        <span class="text-white">Completed</span>
+                    <div class="p-3 rounded-full bg-blue-600 text-white mr-4">
+                        <i class="fas fa-users text-xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-gray-400 text-sm">Total Users</p>
+                        <p class="text-2xl font-bold text-white">{{ total_users }}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-gray-800 rounded-lg p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-green-600 text-white mr-4">
+                        <i class="fas fa-crown text-xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-gray-400 text-sm">VIP Users</p>
+                        <p class="text-2xl font-bold text-white">{{ vip_users }}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-gray-800 rounded-lg p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-red-600 text-white mr-4">
+                        <i class="fas fa-tv text-xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-gray-400 text-sm">Total Content</p>
+                        <p class="text-2xl font-bold text-white">{{ total_content }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Popular Content & Viewing Stats -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <div class="bg-gray-800 rounded-lg p-6">
+                <h2 class="text-xl font-bold text-white mb-4">
+                    <i class="fas fa-fire text-orange-500 mr-2"></i>Most Popular Content
+                </h2>
+                <div class="space-y-3">
+                    {% for content in popular_content %}
+                    <div class="flex items-center justify-between p-3 bg-gray-700 rounded-lg">
+                        <div>
+                            <h3 class="font-semibold text-white">{{ content.title }}</h3>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-lg font-bold text-indigo-400">{{ content.views }}</span>
+                            <div class="text-xs text-gray-400">views</div>
+                        </div>
+                    </div>
                     {% else %}
-                        <div class="w-4 h-4 bg-yellow-500 rounded-full mr-3"></div>
-                        <span class="text-white">On-going</span>
-                    {% endif %}
-                </div>
-                <div class="text-right">
-                    <span class="text-lg font-bold text-white">{{ stat.count }}</span>
-                    <div class="text-xs text-gray-400">episodes</div>
+                    <p class="text-gray-400 text-center py-8">No viewing data available yet</p>
+                    {% endfor %}
                 </div>
             </div>
-            {% else %}
-            <p class="text-gray-400 text-center py-8">No viewing statistics available yet</p>
-            {% endfor %}
-        </div>
-    </div>
-</div>
 
-<!-- Additional Statistics -->
-<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-    <div class="bg-gradient-to-r from-blue-500 to-blue-600 p-6 rounded-lg text-white">
-        <div class="flex items-center">
-            <div class="p-3 bg-white bg-opacity-20 rounded-full">
-                <i class="fas fa-eye text-2xl"></i>
-            </div>
-            <div class="ml-4">
-                <h3 class="text-lg font-semibold">Total Views</h3>
-                <p class="text-2xl font-bold">
-                    {% set total_views = popular_content|sum(attribute='views') %}
-                    {{ total_views or 0 }}
-                </p>
-            </div>
-        </div>
-    </div>
-
-    <div class="bg-gradient-to-r from-green-500 to-green-600 p-6 rounded-lg text-white">
-        <div class="flex items-center">
-            <div class="p-3 bg-white bg-opacity-20 rounded-full">
-                <i class="fas fa-check-circle text-2xl"></i>
-            </div>
-            <div class="ml-4">
-                <h3 class="text-lg font-semibold">Completed Episodes</h3>
-                <p class="text-2xl font-bold">
+            <div class="bg-gray-800 rounded-lg p-6">
+                <h2 class="text-xl font-bold text-white mb-4">
+                    <i class="fas fa-chart-pie text-green-500 mr-2"></i>Viewing Status
+                </h2>
+                <div class="space-y-4">
                     {% for stat in completion_stats %}
-                        {% if stat.status == 'completed' %}{{ stat.count }}{% endif %}
-                    {% else %}0{% endfor %}
-                </p>
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            {% if stat.status == 'completed' %}
+                                <div class="w-4 h-4 bg-green-500 rounded-full mr-3"></div>
+                                <span class="text-white">Completed</span>
+                            {% else %}
+                                <div class="w-4 h-4 bg-yellow-500 rounded-full mr-3"></div>
+                                <span class="text-white">On-going</span>
+                            {% endif %}
+                        </div>
+                        <div class="text-right">
+                            <span class="text-lg font-bold text-white">{{ stat.count }}</span>
+                            <div class="text-xs text-gray-400">episodes</div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <p class="text-gray-400 text-center py-8">No viewing statistics available yet</p>
+                    {% endfor %}
+                </div>
             </div>
         </div>
-    </div>
 
-    <div class="bg-gradient-to-r from-yellow-500 to-yellow-600 p-6 rounded-lg text-white">
-        <div class="flex items-center">
-            <div class="p-3 bg-white bg-opacity-20 rounded-full">
-                <i class="fas fa-play-circle text-2xl"></i>
-            </div>
-            <div class="ml-4">
-                <h3 class="text-lg font-semibold">On-going Episodes</h3>
-                <p class="text-2xl font-bold">
-                    {% for stat in completion_stats %}
-                        {% if stat.status == 'on-going' %}{{ stat.count }}{% endif %}
-                    {% else %}0{% endfor %}
-                </p>
+        <!-- Content Distribution -->
+        <div class="bg-gray-800 rounded-lg p-6 mb-8">
+            <h2 class="text-2xl font-bold text-white mb-6">Content Overview</h2>
+            <div class="grid md:grid-cols-3 gap-6">
+                <div class="text-center">
+                    <div class="p-4 bg-blue-600 rounded-full inline-block mb-4">
+                        <i class="fas fa-tv text-white text-2xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-white">Total Content</h3>
+                    <p class="text-3xl font-bold text-blue-400">{{ total_content }}</p>
+                </div>
+                
+                <div class="text-center">
+                    <div class="p-4 bg-green-600 rounded-full inline-block mb-4">
+                        <i class="fas fa-play-circle text-white text-2xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-white">Anime Series</h3>
+                    <p class="text-3xl font-bold text-green-400">{{ anime_count }}</p>
+                </div>
+                
+                <div class="text-center">
+                    <div class="p-4 bg-red-600 rounded-full inline-block mb-4">
+                        <i class="fas fa-film text-white text-2xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-white">Movies</h3>
+                    <p class="text-3xl font-bold text-red-400">{{ movie_count }}</p>
+                </div>
             </div>
         </div>
-    </div>
-</div>
 
-<!-- Viewing Trends Notice -->
-<div class="mt-8 bg-gray-800 border border-gray-700 rounded-lg p-6">
-    <div class="flex items-start">
-        <div class="flex-shrink-0">
-            <i class="fas fa-info-circle text-blue-400 text-xl"></i>
+        <!-- Admin Actions -->
+        <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <a href="{{ url_for('admin.admin_dashboard') }}" 
+               class="bg-gray-800 hover:bg-gray-700 rounded-lg p-6 block text-center transition-colors">
+                <i class="fas fa-tachometer-alt text-blue-500 text-4xl mb-4"></i>
+                <h3 class="text-white font-semibold mb-2">Dashboard</h3>
+                <p class="text-gray-400 text-sm">Back to main dashboard</p>
+            </a>
+            
+            <a href="{{ url_for('admin.admin_content') }}" 
+               class="bg-gray-800 hover:bg-gray-700 rounded-lg p-6 block text-center transition-colors">
+                <i class="fas fa-cog text-yellow-500 text-4xl mb-4"></i>
+                <h3 class="text-white font-semibold mb-2">Manage Content</h3>
+                <p class="text-gray-400 text-sm">Edit existing content</p>
+            </a>
+            
+            <a href="{{ url_for('admin.admin_users') }}" 
+               class="bg-gray-800 hover:bg-gray-700 rounded-lg p-6 block text-center transition-colors">
+                <i class="fas fa-users text-green-500 text-4xl mb-4"></i>
+                <h3 class="text-white font-semibold mb-2">Manage Users</h3>
+                <p class="text-gray-400 text-sm">View and manage users</p>
+            </a>
+            
+            <a href="{{ url_for('index') }}" 
+               class="bg-gray-800 hover:bg-gray-700 rounded-lg p-6 block text-center transition-colors">
+                <i class="fas fa-eye text-red-500 text-4xl mb-4"></i>
+                <h3 class="text-white font-semibold mb-2">Preview Site</h3>
+                <p class="text-gray-400 text-sm">View as user</p>
+            </a>
         </div>
-        <div class="ml-3">
-            <h3 class="text-lg font-medium text-white">Analytics Information</h3>
-            <div class="mt-2 text-sm text-gray-300">
-                <p>Analytics data is updated in real-time as users interact with your content. The viewing status tracking helps you understand user engagement patterns:</p>
-                <ul class="mt-2 list-disc list-inside space-y-1">
-                    <li><strong>On-going:</strong> Episodes that users have started but not completed</li>
-                    <li><strong>Completed:</strong> Episodes that users have watched to the end</li>
-                    <li><strong>Views:</strong> Total number of times content has been accessed</li>
-                </ul>
-            </div>
-        </div>
+
     </div>
 </div>
 {% endblock %}

@@ -119,6 +119,7 @@ AniFlix is a premium anime and movie streaming platform built with Flask. The ap
 
 ## Changelog
 - July 02, 2025. Initial setup
+- July 02, 2025. Fixed analytics page template consistency - changed from admin/base.html to responsive_base.html to match other admin pages
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
