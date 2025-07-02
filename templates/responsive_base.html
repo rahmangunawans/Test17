@@ -109,7 +109,6 @@
         .trailer-close-btn:hover {
             background: rgba(255, 0, 0, 0.7);
         }
-        }
 
         .nav-link {
             position: relative;
@@ -656,6 +655,7 @@
         // Mobile menu toggle
         const mobileMenuButton = document.getElementById('mobile-menu-button');
         const mobileMenu = document.getElementById('mobile-menu');
+        const mobileMenuClose = document.getElementById('mobile-menu-close');
 
         if (mobileMenuButton && mobileMenu) {
             mobileMenuButton.addEventListener('click', function(e) {
@@ -675,6 +675,16 @@
                     icon.className = 'fas fa-bars text-xl';
                 }
             });
+            
+            // Handle mobile menu close button
+            if (mobileMenuClose) {
+                mobileMenuClose.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    mobileMenu.classList.add('hidden');
+                    const icon = mobileMenuButton.querySelector('i');
+                    icon.className = 'fas fa-bars text-xl';
+                });
+            }
             
             // Close mobile menu when clicking outside
             document.addEventListener('click', function(e) {
