@@ -20,10 +20,7 @@ class NotificationManager {
             this.setupUI();
         }
         
-        // Initialize Socket.IO connection
-        this.initSocket();
-        
-        // Load existing notifications
+        // Load notifications only once on page load/login
         this.loadNotifications();
     }
     
@@ -47,9 +44,14 @@ class NotificationManager {
         container.innerHTML = `
             <div class="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Notifikasi</h3>
-                <button id="mark-all-read" class="text-sm text-blue-600 dark:text-blue-400 hover:underline">
-                    Tandai semua dibaca
-                </button>
+                <div class="flex items-center space-x-2">
+                    <button id="refresh-notifications" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors" title="Refresh notifikasi">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                    <button id="mark-all-read" class="text-sm text-blue-600 dark:text-blue-400 hover:underline">
+                        Tandai semua dibaca
+                    </button>
+                </div>
             </div>
             <div id="notifications-list" class="max-h-80 overflow-y-auto">
                 <div class="p-4 text-center text-gray-500 dark:text-gray-400">
@@ -80,6 +82,15 @@ class NotificationManager {
             });
         }
         
+        // Manual refresh notifications
+        const refreshBtn = document.getElementById('refresh-notifications');
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.manualRefreshNotifications();
+            });
+        }
+        
         // Close dropdown when clicking outside
         document.addEventListener('click', (e) => {
             if (this.notificationContainer && !this.notificationContainer.contains(e.target)) {
@@ -94,36 +105,56 @@ class NotificationManager {
                 this.toggleNotificationDropdown();
             }
         });
+        
+        // Keyboard shortcut for refresh (Ctrl/Cmd + Shift + R when notification panel is open)
+        document.addEventListener('keydown', (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'R') {
+                if (!this.notificationContainer.classList.contains('hidden')) {
+                    e.preventDefault();
+                    this.manualRefreshNotifications();
+                }
+            }
+        });
     }
     
     initSocket() {
-        // Use fast polling for near real-time experience (more stable than Socket.IO in this environment)
-        console.log('Initializing fast notification polling for real-time experience');
-        this.startFastPolling();
+        // No automatic polling - notifications load only on page load/login or manual refresh
+        console.log('Notification system initialized - load only on login/manual refresh');
+        this.setupManualRefresh();
     }
     
-    startFastPolling() {
-        // Check for notifications only when tab becomes visible
+    setupManualRefresh() {
+        // Add manual refresh button to notification container
+        // This will be set up when UI is created
+        
+        // Optional: Listen for page visibility changes to refresh when user returns
         document.addEventListener('visibilitychange', () => {
-            if (!document.hidden) {
+            if (!document.hidden && this.shouldRefreshOnFocus) {
                 this.loadNotifications();
+                this.shouldRefreshOnFocus = false; // Only refresh once per focus
             }
         });
         
-        // Poll only every 60 seconds to reduce server load
-        this.pollInterval = setInterval(() => {
-            if (!document.hidden) {
-                this.loadNotifications();
-            }
-        }, 60000);
+        // Set flag to refresh when user comes back after 5+ minutes away
+        this.setupFocusRefresh();
     }
     
-    startPolling() {
-        // Regular polling for fallback - every 30 seconds
-        setInterval(() => {
-            this.loadNotifications();
-        }, 30000);
+    setupFocusRefresh() {
+        let lastActiveTime = Date.now();
+        
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                lastActiveTime = Date.now();
+            } else {
+                // If user was away for more than 5 minutes, refresh notifications
+                if (Date.now() - lastActiveTime > 5 * 60 * 1000) {
+                    this.shouldRefreshOnFocus = true;
+                }
+            }
+        });
     }
+    
+    // Polling removed - notifications only load on demand
     
     initSocketDisabled() {
         // Initialize Socket.IO connection
@@ -164,19 +195,54 @@ class NotificationManager {
             const data = await response.json();
             
             if (data.success) {
+                this.notifications = data.notifications;
+                this.unreadCount = data.unread_count;
+                this.updateUI();
+            }
+        } catch (error) {
+            console.error('Failed to load notifications:', error);
+        }
+    }
+    
+    async manualRefreshNotifications() {
+        const refreshBtn = document.getElementById('refresh-notifications');
+        if (!refreshBtn) return;
+        
+        // Show loading animation
+        const originalIcon = refreshBtn.innerHTML;
+        refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        refreshBtn.disabled = true;
+        
+        try {
+            const response = await fetch('/api/notifications');
+            const data = await response.json();
+            
+            if (data.success) {
                 const oldNotifications = this.notifications || [];
                 const newNotifications = data.notifications;
                 
-                // Detect new notifications for real-time toast
+                // Check for new notifications since last load
                 if (oldNotifications.length > 0) {
                     const oldIds = new Set(oldNotifications.map(n => n.id));
                     const freshNotifications = newNotifications.filter(n => !oldIds.has(n.id));
                     
-                    // Show toast for new notifications
-                    freshNotifications.forEach(notification => {
-                        console.log('New notification detected:', notification.title);
-                        this.showNotificationToast(notification);
-                    });
+                    if (freshNotifications.length > 0) {
+                        // Show toast for new notifications found
+                        this.showNotificationToast({
+                            title: 'Notifikasi Baru',
+                            message: `${freshNotifications.length} notifikasi baru ditemukan`,
+                            type: 'info',
+                            icon: 'bell'
+                        });
+                    } else {
+                        // Show "no new notifications" feedback
+                        this.showNotificationToast({
+                            title: 'Tidak Ada Update',
+                            message: 'Tidak ada notifikasi baru',
+                            type: 'info',
+                            icon: 'check'
+                        });
+                    }
                 }
                 
                 this.notifications = newNotifications;
@@ -184,7 +250,19 @@ class NotificationManager {
                 this.updateUI();
             }
         } catch (error) {
-            console.error('Failed to load notifications:', error);
+            console.error('Failed to refresh notifications:', error);
+            this.showNotificationToast({
+                title: 'Error',
+                message: 'Gagal memuat notifikasi terbaru',
+                type: 'error',
+                icon: 'exclamation-triangle'
+            });
+        } finally {
+            // Restore button
+            setTimeout(() => {
+                refreshBtn.innerHTML = originalIcon;
+                refreshBtn.disabled = false;
+            }, 500);
         }
     }
     
