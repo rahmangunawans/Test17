@@ -1,57 +1,19 @@
 // Main application JavaScript
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Mobile menu toggle - Optimized
-    const mobileMenuButton = document.getElementById('mobile-menu-button');
-    const mobileMenu = document.getElementById('mobile-menu');
-    let isMenuOpen = false;
+    // Simple Mobile menu toggle
+    const mobileToggle = document.getElementById('mobile-menu-toggle');
+    const mobileNav = document.getElementById('mobile-navigation');
     
-    function toggleMobileMenu() {
-        if (!mobileMenu) return;
-        
-        isMenuOpen = !isMenuOpen;
-        
-        if (isMenuOpen) {
-            mobileMenu.classList.remove('hidden');
-            mobileMenu.classList.add('show');
-            mobileMenuButton.classList.add('active');
-            document.body.style.overflow = 'hidden';
-        } else {
-            mobileMenu.classList.add('hidden');
-            mobileMenu.classList.remove('show');
-            mobileMenuButton.classList.remove('active');
-            document.body.style.overflow = '';
-        }
-    }
-    
-    // Single event listener for menu button
-    if (mobileMenuButton && mobileMenu) {
-        mobileMenuButton.addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            toggleMobileMenu();
+    if (mobileToggle && mobileNav) {
+        mobileToggle.addEventListener('click', function() {
+            mobileNav.classList.toggle('hidden');
         });
         
-        // Close menu events
-        mobileMenu.addEventListener('click', function(e) {
-            // Close on backdrop click or close button
-            if (e.target === mobileMenu || e.target.closest('#mobile-menu-close')) {
-                e.preventDefault();
-                if (isMenuOpen) toggleMobileMenu();
-            }
-        });
-        
-        // Close on navigation link click
-        mobileMenu.addEventListener('click', function(e) {
-            if (e.target.tagName === 'A' && e.target.closest('a[href]')) {
-                if (isMenuOpen) toggleMobileMenu();
-            }
-        });
-        
-        // Close on Escape key
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape' && isMenuOpen) {
-                toggleMobileMenu();
+        // Close menu when clicking on navigation links
+        mobileNav.addEventListener('click', function(e) {
+            if (e.target.tagName === 'A') {
+                mobileNav.classList.add('hidden');
             }
         });
     }

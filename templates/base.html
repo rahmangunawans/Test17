@@ -88,17 +88,20 @@
                     </div>
                 </div>
                 <div class="md:hidden">
-                    <button id="mobile-menu-button" class="mobile-menu-btn">
-                        <span class="hamburger-line"></span>
-                        <span class="hamburger-line"></span>
-                        <span class="hamburger-line"></span>
+                    <button type="button" id="mobile-menu-toggle" class="p-2 text-gray-300 hover:text-white">
+                        <span class="sr-only">Open menu</span>
+                        <div class="w-6 h-6 flex flex-col justify-center items-center">
+                            <span class="block w-5 h-0.5 bg-current mb-1"></span>
+                            <span class="block w-5 h-0.5 bg-current mb-1"></span>
+                            <span class="block w-5 h-0.5 bg-current"></span>
+                        </div>
                     </button>
                 </div>
             </div>
         </div>
 
         <!-- Mobile menu -->
-        <div id="mobile-menu" class="mobile-menu bg-gray-900 md:hidden hidden">
+        <div id="mobile-navigation" class="md:hidden hidden bg-gray-900">
             <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
                 <a href="{{ url_for('index') }}" class="block px-3 py-2 rounded-md text-base font-medium text-white">Home</a>
                 <a href="{{ url_for('content.anime_list') }}" class="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:text-white">Anime</a>
