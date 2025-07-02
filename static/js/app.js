@@ -67,6 +67,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const mobileSearchInputLogged = document.getElementById('mobile-search-input-logged');
     let searchTimeout;
     let currentSearchQuery = '';
+    let searchCache = new Map(); // Cache for search results
+    let lastSearchTime = 0;
     
     // Initialize search inputs
     
@@ -93,7 +95,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 showSearchLoading(containerId);
                 searchTimeout = setTimeout(() => {
                     performSearch(query, containerId);
-                }, 200);
+                }, 500);
             } else {
                 hideSearchResults(containerId);
             }
@@ -201,7 +203,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 showSearchLoading();
                 searchTimeout = setTimeout(() => {
                     performSearch(query);
-                }, 200); // Reduced delay for faster response
+                }, 500); // Optimized delay to reduce server load
             } else {
                 hideSearchResults();
             }
@@ -308,8 +310,28 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeWatchProgress();
 });
 
-// Enhanced search functionality
+// Enhanced search functionality with caching
 function performSearch(query, containerId) {
+    const now = Date.now();
+    const cacheKey = query.toLowerCase().trim();
+    
+    // Check cache first (cache for 30 seconds)
+    if (searchCache.has(cacheKey)) {
+        const cachedData = searchCache.get(cacheKey);
+        if (now - cachedData.timestamp < 30000) {
+            hideSearchLoading(containerId);
+            displaySearchResults(cachedData.results, cachedData.total, query, containerId);
+            return;
+        }
+    }
+    
+    // Throttle requests (minimum 300ms between requests)
+    if (now - lastSearchTime < 300) {
+        return;
+    }
+    
+    lastSearchTime = now;
+    
     fetch(`/api/search?q=${encodeURIComponent(query)}`)
         .then(response => {
             if (!response.ok) {
@@ -318,6 +340,19 @@ function performSearch(query, containerId) {
             return response.json();
         })
         .then(data => {
+            // Cache the results
+            searchCache.set(cacheKey, {
+                results: data.results || [],
+                total: data.total || 0,
+                timestamp: now
+            });
+            
+            // Limit cache size to prevent memory issues
+            if (searchCache.size > 50) {
+                const firstKey = searchCache.keys().next().value;
+                searchCache.delete(firstKey);
+            }
+            
             hideSearchLoading(containerId);
             displaySearchResults(data.results || [], data.total || 0, query, containerId);
         })

@@ -217,31 +217,32 @@ def search():
 
 @content_bp.route('/api/search')
 def api_search():
-    """Real-time search API endpoint"""
+    """Optimized real-time search API endpoint"""
     query = request.args.get('q', '').strip()
     if len(query) < 2:
         return jsonify({'results': [], 'total': 0})
     
-    # Enhanced search with fuzzy matching
+    # Single optimized database query with ranking
     search_term = f"%{query.lower()}%"
     
-    # Primary search - exact matches get priority
-    exact_results = Content.query.filter(
-        db.func.lower(Content.title).like(search_term)
-    ).order_by(Content.rating.desc()).limit(5).all()
-    
-    # Secondary search - broader matches
-    broader_results = Content.query.filter(
-        db.and_(
-            ~Content.id.in_([r.id for r in exact_results]),
-            db.or_(
-                db.func.lower(Content.description).like(search_term),
-                db.func.lower(Content.genre).like(search_term)
-            )
+    # Use a single query with CASE-based ranking for better performance
+    results = db.session.query(Content).filter(
+        db.or_(
+            db.func.lower(Content.title).like(search_term),
+            db.func.lower(Content.description).like(search_term),
+            db.func.lower(Content.genre).like(search_term)
         )
-    ).order_by(Content.rating.desc()).limit(3).all()
+    ).order_by(
+        # Priority ranking: exact title match first, then by rating
+        db.case(
+            (db.func.lower(Content.title).like(search_term), 1),
+            else_=2
+        ),
+        Content.rating.desc(),
+        Content.created_at.desc()
+    ).limit(8).all()
     
-    all_results = exact_results + broader_results
+    all_results = results
     
     return jsonify({
         'results': [{
