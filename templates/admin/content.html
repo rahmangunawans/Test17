@@ -16,47 +16,46 @@
             <p class="text-gray-400">Manage existing anime series and movies</p>
         </div>
 
-        <!-- Search Bar -->
-        <div class="bg-gray-800 rounded-lg p-6 mb-6">
-            <form method="GET" class="flex flex-col sm:flex-row gap-4">
-                <div class="flex-1">
-                    <div class="relative">
-                        <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                        <input type="text" 
-                               name="search" 
-                               value="{{ search or '' }}"
-                               placeholder="Search anime, movies, or genres..."
-                               class="w-full pl-10 pr-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent">
-                    </div>
-                </div>
-                <div class="flex gap-2">
-                    <button type="submit" 
-                            class="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg text-sm">
-                        <i class="fas fa-search mr-2"></i>Search
-                    </button>
-                    {% if search %}
-                    <a href="{{ url_for('admin.admin_content') }}" 
-                       class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg text-sm">
-                        <i class="fas fa-times mr-2"></i>Clear
-                    </a>
-                    {% endif %}
-                </div>
-            </form>
-        </div>
-
         <!-- Content Table -->
         <div class="bg-gray-800 rounded-lg overflow-hidden">
             <div class="px-6 py-4 border-b border-gray-700">
-                <div class="flex items-center justify-between">
-                    <h2 class="text-xl font-semibold text-white">
-                        {% if search %}Search Results ({{ content.total }}){% else %}All Content ({{ content.total }}){% endif %}
-                    </h2>
-                    <a href="{{ url_for('admin.add_content') }}" 
-                       class="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg text-sm hover:shadow-lg transition-all"
-                       title="Add New Content">
-                        <i class="fas fa-plus"></i>
-                        <span class="hidden sm:inline ml-2">Add New Content</span>
-                    </a>
+                <div class="flex flex-col lg:flex-row lg:items-center gap-4">
+                    <div class="flex items-center justify-between lg:justify-start flex-1">
+                        <h2 class="text-xl font-semibold text-white">
+                            {% if search %}Search Results ({{ content.total }}){% else %}All Content ({{ content.total }}){% endif %}
+                        </h2>
+                    </div>
+                    
+                    <!-- Search Form -->
+                    <div class="flex-1 max-w-md">
+                        <form method="GET" class="flex gap-2">
+                            <div class="flex-1 relative">
+                                <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm"></i>
+                                <input type="text" 
+                                       name="search" 
+                                       value="{{ search or '' }}"
+                                       placeholder="Search content..."
+                                       class="w-full pl-9 pr-3 py-2 text-sm bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent">
+                            </div>
+                            {% if search %}
+                            <a href="{{ url_for('admin.admin_content') }}" 
+                               class="bg-gray-600 hover:bg-gray-700 text-white px-3 py-2 rounded-lg text-sm transition-all"
+                               title="Clear Search">
+                                <i class="fas fa-times"></i>
+                            </a>
+                            {% endif %}
+                        </form>
+                    </div>
+                    
+                    <!-- Add Button -->
+                    <div>
+                        <a href="{{ url_for('admin.add_content') }}" 
+                           class="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg text-sm hover:shadow-lg transition-all"
+                           title="Add New Content">
+                            <i class="fas fa-plus"></i>
+                            <span class="hidden sm:inline ml-2">Add New Content</span>
+                        </a>
+                    </div>
                 </div>
             </div>
             
