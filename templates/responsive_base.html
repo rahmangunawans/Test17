@@ -172,16 +172,16 @@
                     </div>
                     <div class="hidden md:block">
                         <div class="ml-10 flex items-baseline space-x-4">
-                            <a href="{{ url_for('index') }}" class="nav-link text-white px-3 py-2 rounded-md text-sm font-medium">Home</a>
+                            <a href="{{ url_for('index') }}" class="nav-link {% if request.endpoint == 'index' %}text-white{% else %}text-gray-300 hover:text-white{% endif %} px-3 py-2 rounded-md text-sm font-medium">Home</a>
                             <a href="{{ url_for('content.anime_list') }}"
-                                class="nav-link text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Anime</a>
+                                class="nav-link {% if request.endpoint == 'content.anime_list' %}text-white{% else %}text-gray-300 hover:text-white{% endif %} px-3 py-2 rounded-md text-sm font-medium">Anime</a>
                             <a href="{{ url_for('content.movies_list') }}"
-                                class="nav-link text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Movies</a>
+                                class="nav-link {% if request.endpoint == 'content.movies_list' %}text-white{% else %}text-gray-300 hover:text-white{% endif %} px-3 py-2 rounded-md text-sm font-medium">Movies</a>
                             <a href="{{ url_for('content.genres') }}"
-                                class="nav-link text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Genres</a>
+                                class="nav-link {% if request.endpoint == 'content.genres' %}text-white{% else %}text-gray-300 hover:text-white{% endif %} px-3 py-2 rounded-md text-sm font-medium">Genres</a>
                             {% if current_user.is_authenticated %}
                                 <a href="{{ url_for('dashboard') }}"
-                                    class="nav-link text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Dashboard</a>
+                                    class="nav-link {% if request.endpoint == 'dashboard' %}text-white{% else %}text-gray-300 hover:text-white{% endif %} px-3 py-2 rounded-md text-sm font-medium">Dashboard</a>
                             {% endif %}
                         </div>
                     </div>
@@ -261,29 +261,29 @@
                 <div class="flex-1 overflow-y-auto">
                     <div class="p-4 space-y-2">
                         <a href="{{ url_for('index') }}" 
-                           class="flex items-center px-4 py-3 text-white bg-red-600 rounded-lg font-medium transition-all duration-200">
+                           class="flex items-center px-4 py-3 {% if request.endpoint == 'index' %}text-white bg-red-600{% else %}text-gray-300 hover:text-white hover:bg-gray-800{% endif %} rounded-lg font-medium transition-all duration-200">
                             <i class="fas fa-home mr-3"></i>
                             Home
                         </a>
                         <a href="{{ url_for('content.anime_list') }}"
-                           class="flex items-center px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg font-medium transition-all duration-200">
+                           class="flex items-center px-4 py-3 {% if request.endpoint == 'content.anime_list' %}text-white bg-red-600{% else %}text-gray-300 hover:text-white hover:bg-gray-800{% endif %} rounded-lg font-medium transition-all duration-200">
                             <i class="fas fa-play-circle mr-3"></i>
                             Anime
                         </a>
                         <a href="{{ url_for('content.movies_list') }}"
-                           class="flex items-center px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg font-medium transition-all duration-200">
+                           class="flex items-center px-4 py-3 {% if request.endpoint == 'content.movies_list' %}text-white bg-red-600{% else %}text-gray-300 hover:text-white hover:bg-gray-800{% endif %} rounded-lg font-medium transition-all duration-200">
                             <i class="fas fa-film mr-3"></i>
                             Movies
                         </a>
                         <a href="{{ url_for('content.genres') }}"
-                           class="flex items-center px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg font-medium transition-all duration-200">
+                           class="flex items-center px-4 py-3 {% if request.endpoint == 'content.genres' %}text-white bg-red-600{% else %}text-gray-300 hover:text-white hover:bg-gray-800{% endif %} rounded-lg font-medium transition-all duration-200">
                             <i class="fas fa-tags mr-3"></i>
                             Genres
                         </a>
                         
                         {% if current_user.is_authenticated %}
                             <a href="{{ url_for('dashboard') }}"
-                               class="flex items-center px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg font-medium transition-all duration-200">
+                               class="flex items-center px-4 py-3 {% if request.endpoint == 'dashboard' %}text-white bg-red-600{% else %}text-gray-300 hover:text-white hover:bg-gray-800{% endif %} rounded-lg font-medium transition-all duration-200">
                                 <i class="fas fa-tachometer-alt mr-3"></i>
                                 Dashboard
                             </a>
