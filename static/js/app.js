@@ -13,8 +13,18 @@ document.addEventListener('DOMContentLoaded', function() {
         mobileToggle.addEventListener('click', function(e) {
             e.preventDefault();
             console.log('Mobile menu toggle clicked');
-            mobileNav.classList.toggle('hidden');
-            console.log('Menu visibility toggled, hidden class:', mobileNav.classList.contains('hidden'));
+            console.log('Before toggle - classes:', mobileNav.className);
+            
+            if (mobileNav.classList.contains('hidden')) {
+                mobileNav.classList.remove('hidden');
+                console.log('Menu opened');
+            } else {
+                mobileNav.classList.add('hidden');
+                console.log('Menu closed');
+            }
+            
+            console.log('After toggle - classes:', mobileNav.className);
+            console.log('Is hidden:', mobileNav.classList.contains('hidden'));
         });
         
         // Close menu when clicking on navigation links
