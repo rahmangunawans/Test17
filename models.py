@@ -67,6 +67,7 @@ class Episode(db.Model):
     description = db.Column(db.Text)
     duration = db.Column(db.Integer)  # Duration in minutes
     video_url = db.Column(db.String(500))
+    thumbnail_url = db.Column(db.String(500))  # Episode thumbnail
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     # Relationships
