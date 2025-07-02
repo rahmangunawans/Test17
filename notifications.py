@@ -133,7 +133,7 @@ def notify_new_episode(content_title, episode_number, episode_title, content_id)
         message=f"Episode {episode_number} dari {content_title} - {episode_title} sudah dapat ditonton",
         notification_type="episode",
         is_global=True,
-        action_url=f"/content/{content_id}",
+        action_url=f"/anime/{content_id}",
         icon="play-circle"
     )
 
@@ -145,7 +145,7 @@ def notify_new_content(content_title, content_type, content_id):
         message=f"{content_title} telah ditambahkan ke platform",
         notification_type="content",
         is_global=True,
-        action_url=f"/content/{content_id}",
+        action_url=f"/anime/{content_id}",
         icon="plus-circle"
     )
 
