@@ -92,3 +92,32 @@ class Subscription(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     user = db.relationship('User', backref='subscriptions')
+
+class Notification(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)  # None for global notifications
+    title = db.Column(db.String(200), nullable=False)
+    message = db.Column(db.Text, nullable=False)
+    type = db.Column(db.String(50), default='info')  # info, success, warning, error, episode, content
+    is_read = db.Column(db.Boolean, default=False)
+    is_global = db.Column(db.Boolean, default=False)  # Global notifications for all users
+    action_url = db.Column(db.String(500))  # Optional URL for notification action
+    icon = db.Column(db.String(100), default='bell')  # Font Awesome icon class
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    read_at = db.Column(db.DateTime)
+    
+    user = db.relationship('User', backref='notifications')
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'title': self.title,
+            'message': self.message,
+            'type': self.type,
+            'is_read': self.is_read,
+            'is_global': self.is_global,
+            'action_url': self.action_url,
+            'icon': self.icon,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'read_at': self.read_at.isoformat() if self.read_at else None
+        }

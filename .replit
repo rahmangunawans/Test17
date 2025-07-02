@@ -2,7 +2,7 @@ modules = ["web", "nodejs-20", "python-3.11"]
 
 [nix]
 channel = "stable-24_05"
-packages = ["cargo", "freetype", "lcms2", "libiconv", "libimagequant", "libjpeg", "libtiff", "libwebp", "libxcrypt", "openjpeg", "openssl", "postgresql", "rustc", "tcl", "tk", "zlib"]
+packages = ["cargo", "freetype", "iana-etc", "lcms2", "libiconv", "libimagequant", "libjpeg", "libtiff", "libwebp", "libxcrypt", "openjpeg", "openssl", "postgresql", "rustc", "tcl", "tk", "zlib"]
 
 [deployment]
 deploymentTarget = "autoscale"

@@ -4,6 +4,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from flask_login import login_required, current_user
 from models import User, Subscription
 from app import db
+from notifications import notify_subscription_success
 from datetime import datetime, timedelta
 import logging
 
@@ -125,6 +126,9 @@ def subscription_success():
                 current_user.max_devices = 2  # VIP users get 2 devices
                 
                 db.session.commit()
+                
+                # Send notification about successful subscription
+                notify_subscription_success(current_user.id, plan_type)
                 
                 flash(f'Subscription activated successfully! Welcome to AniFlix VIP!', 'success')
                 logging.info(f"User {current_user.email} upgraded to {plan_type}")

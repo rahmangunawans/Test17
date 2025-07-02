@@ -1,7 +1,8 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
 from functools import wraps
-from models import db, Content, Episode, User, WatchHistory
+from models import db, Content, Episode, User, WatchHistory, Notification
+from notifications import create_notification, notify_admin_message, notify_new_episode, notify_new_content
 from werkzeug.security import generate_password_hash
 import logging
 
@@ -549,3 +550,99 @@ def toggle_vip(user_id):
         logging.error(f"Error toggling VIP for user {user_id}: {e}")
     
     return redirect(url_for('admin.admin_users'))
+
+@admin_bp.route('/notifications')
+@admin_required
+def admin_notifications():
+    """Admin notification management page"""
+    # Get recent notifications
+    recent_notifications = Notification.query.order_by(Notification.created_at.desc()).limit(20).all()
+    
+    # Get notification statistics
+    total_notifications = Notification.query.count()
+    unread_notifications = Notification.query.filter_by(is_read=False).count()
+    global_notifications = Notification.query.filter_by(is_global=True).count()
+    
+    return render_template('admin/notifications.html',
+                         recent_notifications=recent_notifications,
+                         total_notifications=total_notifications,
+                         unread_notifications=unread_notifications,
+                         global_notifications=global_notifications)
+
+@admin_bp.route('/notifications/send', methods=['GET', 'POST'])
+@admin_required
+def send_notification():
+    """Send notification to users"""
+    if request.method == 'POST':
+        try:
+            title = request.form.get('title', '').strip()
+            message = request.form.get('message', '').strip()
+            notification_type = request.form.get('type', 'info')
+            is_global = request.form.get('is_global') == 'on'
+            user_id = request.form.get('user_id')
+            action_url = request.form.get('action_url', '').strip()
+            icon = request.form.get('icon', 'bell')
+            
+            if not title or not message:
+                flash('Title and message are required.', 'error')
+                return redirect(url_for('admin.send_notification'))
+            
+            # If not global, user_id is required
+            if not is_global and not user_id:
+                flash('User selection is required for individual notifications.', 'error')
+                return redirect(url_for('admin.send_notification'))
+            
+            # Create notification
+            notification = create_notification(
+                user_id=int(user_id) if user_id and not is_global else None,
+                title=title,
+                message=message,
+                notification_type=notification_type,
+                is_global=is_global,
+                action_url=action_url if action_url else None,
+                icon=icon
+            )
+            
+            if notification:
+                if is_global:
+                    flash('Global notification sent successfully to all users!', 'success')
+                else:
+                    user = User.query.get(user_id)
+                    flash(f'Notification sent successfully to {user.username}!', 'success')
+            else:
+                flash('Failed to send notification.', 'error')
+                
+        except Exception as e:
+            logging.error(f"Error sending notification: {e}")
+            flash('Failed to send notification.', 'error')
+            
+        return redirect(url_for('admin.admin_notifications'))
+    
+    # GET request - show form
+    users = User.query.order_by(User.username).all()
+    return render_template('admin/send_notification.html', users=users)
+
+@admin_bp.route('/notifications/test')
+@admin_required
+def test_notification():
+    """Send a test notification"""
+    try:
+        # Send test notification to current admin
+        notification = create_notification(
+            user_id=current_user.id,
+            title="Test Notification",
+            message="This is a test notification to verify the real-time notification system is working correctly.",
+            notification_type="info",
+            icon="flask"
+        )
+        
+        if notification:
+            flash('Test notification sent successfully!', 'success')
+        else:
+            flash('Failed to send test notification.', 'error')
+            
+    except Exception as e:
+        logging.error(f"Error sending test notification: {e}")
+        flash('Failed to send test notification.', 'error')
+        
+    return redirect(url_for('admin.admin_notifications'))
