@@ -28,37 +28,15 @@ class NotificationManager {
     }
     
     setupUI() {
-        // Create notification bell in navigation
-        this.createNotificationBell();
+        // Get existing notification bell from template
+        this.notificationBell = document.getElementById('notification-bell');
+        this.notificationBadge = document.getElementById('notification-badge');
         
         // Create notification container
         this.createNotificationContainer();
         
         // Setup event listeners
         this.setupEventListeners();
-    }
-    
-    createNotificationBell() {
-        // Find navigation area to add notification bell
-        const nav = document.querySelector('nav .flex.items-center');
-        if (!nav) return;
-        
-        // Create notification bell button
-        const bellContainer = document.createElement('div');
-        bellContainer.className = 'relative mr-4';
-        bellContainer.innerHTML = `
-            <button id="notification-bell" 
-                    class="relative p-2 text-gray-300 hover:text-white transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800 rounded-lg">
-                <i class="fas fa-bell text-lg"></i>
-                <span id="notification-badge" 
-                      class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center hidden">0</span>
-            </button>
-        `;
-        
-        nav.appendChild(bellContainer);
-        
-        this.notificationBell = document.getElementById('notification-bell');
-        this.notificationBadge = document.getElementById('notification-badge');
     }
     
     createNotificationContainer() {
