@@ -156,13 +156,22 @@
 
         /* Admin Page Scroll Fix */
         .admin-content {
-            max-height: none;
-            overflow-y: visible;
+            max-height: none !important;
+            overflow-y: visible !important;
+            height: auto !important;
         }
 
         .admin-table-container {
-            max-height: none;
-            overflow-y: visible;
+            max-height: none !important;
+            overflow-y: visible !important;
+            height: auto !important;
+        }
+
+        /* Ensure body can scroll normally */
+        html, body {
+            height: auto !important;
+            overflow-y: auto !important;
+            scroll-behavior: smooth;
         }
 
         .carousel-item {
