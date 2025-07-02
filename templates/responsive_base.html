@@ -200,6 +200,108 @@
             background: #dc2626;
         }
 
+        /* Enhanced Admin Animations */
+        .admin-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transform: translateY(0);
+        }
+
+        .admin-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(233, 69, 96, 0.2);
+        }
+
+        .admin-button {
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .admin-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .admin-button:hover::before {
+            left: 100%;
+        }
+
+        .search-input {
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .search-input:focus {
+            transform: scale(1.02);
+            box-shadow: 0 0 0 3px rgba(233, 69, 96, 0.1);
+        }
+
+        .action-button {
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transform: scale(1);
+        }
+
+        .action-button:hover {
+            transform: scale(1.1);
+        }
+
+        .action-button:active {
+            transform: scale(0.95);
+        }
+
+        .table-row {
+            transition: all 0.2s ease;
+            border-left: 3px solid transparent;
+        }
+
+        .table-row:hover {
+            background-color: rgba(55, 65, 81, 0.3);
+            border-left-color: #e94560;
+            transform: translateX(2px);
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        .slide-in {
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(-10px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .pulse-glow {
+            animation: pulseGlow 2s infinite;
+        }
+
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 0 5px rgba(233, 69, 96, 0.3); }
+            50% { box-shadow: 0 0 20px rgba(233, 69, 96, 0.6); }
+        }
+
+        .loading-spinner {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
         .carousel-item {
             scroll-snap-align: start;
             flex-shrink: 0;
@@ -802,12 +904,96 @@
         // Close modal when clicking outside
         document.addEventListener('DOMContentLoaded', function() {
             const modal = document.getElementById('trailer-modal');
-            modal.addEventListener('click', function(e) {
-                if (e.target === modal) {
-                    closeTrailerModal();
+            if (modal) {
+                modal.addEventListener('click', function(e) {
+                    if (e.target === modal) {
+                        closeTrailerModal();
+                    }
+                });
+            }
+            
+            // Initialize admin animations
+            initializeAdminAnimations();
+        });
+
+        /* Admin Animations */
+        function initializeAdminAnimations() {
+            // Stagger animation for table rows
+            const tableRows = document.querySelectorAll('.table-row');
+            tableRows.forEach((row, index) => {
+                row.style.animationDelay = `${index * 0.1}s`;
+            });
+
+            // Real-time search animation
+            const searchInputs = document.querySelectorAll('.search-input');
+            searchInputs.forEach(input => {
+                input.addEventListener('input', function() {
+                    this.style.transform = 'scale(1.02)';
+                    setTimeout(() => {
+                        this.style.transform = 'scale(1)';
+                    }, 200);
+                });
+            });
+
+            // Action button ripple effect
+            const actionButtons = document.querySelectorAll('.action-button');
+            actionButtons.forEach(button => {
+                button.addEventListener('click', function(e) {
+                    const rect = this.getBoundingClientRect();
+                    const ripple = document.createElement('div');
+                    ripple.style.position = 'absolute';
+                    ripple.style.borderRadius = '50%';
+                    ripple.style.background = 'rgba(255,255,255,0.3)';
+                    ripple.style.transform = 'scale(0)';
+                    ripple.style.animation = 'ripple 0.6s linear';
+                    ripple.style.left = (e.clientX - rect.left - 10) + 'px';
+                    ripple.style.top = (e.clientY - rect.top - 10) + 'px';
+                    ripple.style.width = ripple.style.height = '20px';
+                    ripple.style.pointerEvents = 'none';
+                    
+                    this.style.position = 'relative';
+                    this.style.overflow = 'hidden';
+                    this.appendChild(ripple);
+                    
+                    setTimeout(() => {
+                        if (ripple.parentNode) {
+                            ripple.remove();
+                        }
+                    }, 600);
+                });
+            });
+
+            // Search form auto-submit with delay (commented out for now)
+            /*
+            const searchForms = document.querySelectorAll('form');
+            searchForms.forEach(form => {
+                const searchInput = form.querySelector('.search-input');
+                if (searchInput) {
+                    let timeout;
+                    searchInput.addEventListener('input', function() {
+                        clearTimeout(timeout);
+                        timeout = setTimeout(() => {
+                            if (this.value.length >= 2 || this.value.length === 0) {
+                                form.submit();
+                            }
+                        }, 1000);
+                    });
                 }
             });
-        });
+            */
+        }
+
+        // Add ripple keyframe animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes ripple {
+                to {
+                    transform: scale(4);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
     </script>
 </body>
 

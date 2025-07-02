@@ -17,7 +17,7 @@
         </div>
 
         <!-- Content Table -->
-        <div class="bg-gray-800 rounded-lg overflow-hidden">
+        <div class="bg-gray-800 rounded-lg overflow-hidden admin-card fade-in">
             <div class="px-6 py-4 border-b border-gray-700">
                 <div class="flex flex-col lg:flex-row lg:items-center gap-4">
                     <div class="flex items-center justify-between lg:justify-start flex-1">
@@ -35,7 +35,7 @@
                                        name="search" 
                                        value="{{ search or '' }}"
                                        placeholder="Search content..."
-                                       class="w-full pl-9 pr-3 py-2 text-sm bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent">
+                                       class="w-full pl-9 pr-3 py-2 text-sm bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent search-input">
                             </div>
                             {% if search %}
                             <a href="{{ url_for('admin.admin_content') }}" 
@@ -50,7 +50,7 @@
                     <!-- Add Button -->
                     <div>
                         <a href="{{ url_for('admin.add_content') }}" 
-                           class="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg text-sm hover:shadow-lg transition-all"
+                           class="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg text-sm hover:shadow-lg transition-all admin-button pulse-glow"
                            title="Add New Content">
                             <i class="fas fa-plus"></i>
                             <span class="hidden sm:inline ml-2">Add New Content</span>
@@ -74,7 +74,7 @@
                     </thead>
                     <tbody class="divide-y divide-gray-700">
                         {% for item in content.items %}
-                        <tr class="hover:bg-gray-700">
+                        <tr class="table-row slide-in">
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="flex items-center">
                                     <div class="flex-shrink-0 h-16 w-12">
@@ -116,24 +116,24 @@
                             <td class="px-3 sm:px-6 py-4 whitespace-nowrap text-sm">
                                 <div class="flex space-x-1 sm:space-x-2">
                                     <a href="{{ url_for('admin.manage_episodes', content_id=item.id) }}" 
-                                       class="p-2 text-purple-400 hover:text-purple-300 hover:bg-purple-900 hover:bg-opacity-30 rounded transition-all" 
+                                       class="p-2 text-purple-400 hover:text-purple-300 hover:bg-purple-900 hover:bg-opacity-30 rounded transition-all action-button" 
                                        title="Manage Episodes">
                                         <i class="fas fa-list text-sm"></i>
                                     </a>
                                     <a href="{{ url_for('admin.edit_content', content_id=item.id) }}" 
-                                       class="p-2 text-yellow-400 hover:text-yellow-300 hover:bg-yellow-900 hover:bg-opacity-30 rounded transition-all" 
+                                       class="p-2 text-yellow-400 hover:text-yellow-300 hover:bg-yellow-900 hover:bg-opacity-30 rounded transition-all action-button" 
                                        title="Edit Content">
                                         <i class="fas fa-edit text-sm"></i>
                                     </a>
                                     <a href="{{ url_for('content.anime_redirect', content_id=item.id) }}" 
-                                       class="p-2 text-green-400 hover:text-green-300 hover:bg-green-900 hover:bg-opacity-30 rounded transition-all" 
+                                       class="p-2 text-green-400 hover:text-green-300 hover:bg-green-900 hover:bg-opacity-30 rounded transition-all action-button" 
                                        title="Preview">
                                         <i class="fas fa-eye text-sm"></i>
                                     </a>
                                     <form method="POST" action="{{ url_for('admin.delete_content', content_id=item.id) }}" 
                                           class="inline" onsubmit="return confirm('Are you sure you want to delete this content?')">
                                         <button type="submit" 
-                                                class="p-2 text-red-400 hover:text-red-300 hover:bg-red-900 hover:bg-opacity-30 rounded transition-all" 
+                                                class="p-2 text-red-400 hover:text-red-300 hover:bg-red-900 hover:bg-opacity-30 rounded transition-all action-button" 
                                                 title="Delete Content">
                                             <i class="fas fa-trash text-sm"></i>
                                         </button>
