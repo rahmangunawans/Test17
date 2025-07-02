@@ -129,7 +129,50 @@
             width: 100%;
         }
 
-        /* Mobile menu styles are handled by Tailwind classes */
+        /* Custom Hamburger Menu Button */
+        @media (max-width: 768px) {
+            .mobile-menu-btn {
+                position: relative;
+                z-index: 1001;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                width: 30px;
+                height: 30px;
+                background: transparent;
+                border: none;
+                cursor: pointer;
+                padding: 0;
+                margin: 0;
+            }
+            
+            .hamburger-line {
+                display: block;
+                width: 20px;
+                height: 2px;
+                background-color: #d1d5db;
+                margin: 2px 0;
+                transition: all 0.3s ease;
+                border-radius: 1px;
+            }
+            
+            .mobile-menu-btn:hover .hamburger-line {
+                background-color: #ffffff;
+            }
+            
+            .mobile-menu-btn.active .hamburger-line:nth-child(1) {
+                transform: rotate(45deg) translate(5px, 5px);
+            }
+            
+            .mobile-menu-btn.active .hamburger-line:nth-child(2) {
+                opacity: 0;
+            }
+            
+            .mobile-menu-btn.active .hamburger-line:nth-child(3) {
+                transform: rotate(-45deg) translate(7px, -6px);
+            }
+        }
 
         /* Custom scrollbar */
         ::-webkit-scrollbar {
@@ -218,9 +261,11 @@
                         {% endif %}
                     </div>
                 </div>
-                <div class="md:hidden flex items-center">
-                    <button id="mobile-menu-button" type="button" class="relative z-50 text-gray-300 hover:text-white focus:outline-none p-2 rounded-md border border-gray-600 hover:border-gray-400 bg-gray-800 hover:bg-gray-700 transition-all duration-200">
-                        <i class="fas fa-bars text-xl"></i>
+                <div class="md:hidden">
+                    <button id="mobile-menu-button" class="mobile-menu-btn">
+                        <span class="hamburger-line"></span>
+                        <span class="hamburger-line"></span>
+                        <span class="hamburger-line"></span>
                     </button>
                 </div>
             </div>
@@ -663,16 +708,10 @@
                 
                 if (mobileMenu.classList.contains('hidden')) {
                     mobileMenu.classList.remove('hidden');
+                    mobileMenuButton.classList.add('active');
                 } else {
                     mobileMenu.classList.add('hidden');
-                }
-                
-                // Toggle hamburger icon
-                const icon = mobileMenuButton.querySelector('i');
-                if (!mobileMenu.classList.contains('hidden')) {
-                    icon.className = 'fas fa-times text-xl';
-                } else {
-                    icon.className = 'fas fa-bars text-xl';
+                    mobileMenuButton.classList.remove('active');
                 }
             });
             
@@ -681,8 +720,7 @@
                 mobileMenuClose.addEventListener('click', function(e) {
                     e.preventDefault();
                     mobileMenu.classList.add('hidden');
-                    const icon = mobileMenuButton.querySelector('i');
-                    icon.className = 'fas fa-bars text-xl';
+                    mobileMenuButton.classList.remove('active');
                 });
             }
             
@@ -690,8 +728,7 @@
             document.addEventListener('click', function(e) {
                 if (!mobileMenuButton.contains(e.target) && !mobileMenu.contains(e.target)) {
                     mobileMenu.classList.add('hidden');
-                    const icon = mobileMenuButton.querySelector('i');
-                    icon.className = 'fas fa-bars text-xl';
+                    mobileMenuButton.classList.remove('active');
                 }
             });
         }
