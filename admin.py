@@ -402,7 +402,7 @@ def delete_user(user_id):
     
     return redirect(url_for('admin.admin_users'))
 
-@admin_bp.route('/admin/analytics')
+@admin_bp.route('/analytics')
 @login_required
 @admin_required
 def admin_analytics():

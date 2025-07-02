@@ -1,37 +1,39 @@
 {% extends "admin/base.html" %}
 
+{% block page_title %}Analytics{% endblock %}
+
 {% block content %}
 <div class="mb-8">
-    <h1 class="text-3xl font-bold text-gray-900">Analytics Dashboard</h1>
-    <p class="text-gray-600">Platform performance and viewing statistics</p>
+    <h1 class="text-3xl font-bold text-white">Analytics Dashboard</h1>
+    <p class="text-gray-400">Platform performance and viewing statistics</p>
 </div>
 
 <!-- Popular Content -->
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-    <div class="bg-white p-6 rounded-lg shadow-md">
-        <h2 class="text-xl font-bold text-gray-900 mb-4">
+    <div class="bg-gray-800 p-6 rounded-lg shadow-md">
+        <h2 class="text-xl font-bold text-white mb-4">
             <i class="fas fa-fire text-orange-500 mr-2"></i>Most Popular Content
         </h2>
         <div class="space-y-3">
             {% for content in popular_content %}
-            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+            <div class="flex items-center justify-between p-3 bg-gray-700 rounded-lg">
                 <div>
-                    <h3 class="font-semibold text-gray-900">{{ content.title }}</h3>
+                    <h3 class="font-semibold text-white">{{ content.title }}</h3>
                 </div>
                 <div class="text-right">
-                    <span class="text-lg font-bold text-indigo-600">{{ content.views }}</span>
-                    <div class="text-xs text-gray-500">views</div>
+                    <span class="text-lg font-bold text-indigo-400">{{ content.views }}</span>
+                    <div class="text-xs text-gray-400">views</div>
                 </div>
             </div>
             {% else %}
-            <p class="text-gray-500 text-center py-8">No viewing data available yet</p>
+            <p class="text-gray-400 text-center py-8">No viewing data available yet</p>
             {% endfor %}
         </div>
     </div>
 
     <!-- Completion Statistics -->
-    <div class="bg-white p-6 rounded-lg shadow-md">
-        <h2 class="text-xl font-bold text-gray-900 mb-4">
+    <div class="bg-gray-800 p-6 rounded-lg shadow-md">
+        <h2 class="text-xl font-bold text-white mb-4">
             <i class="fas fa-chart-pie text-green-500 mr-2"></i>Viewing Status
         </h2>
         <div class="space-y-4">
@@ -40,19 +42,19 @@
                 <div class="flex items-center">
                     {% if stat.status == 'completed' %}
                         <div class="w-4 h-4 bg-green-500 rounded-full mr-3"></div>
-                        <span class="text-gray-900">Completed</span>
+                        <span class="text-white">Completed</span>
                     {% else %}
                         <div class="w-4 h-4 bg-yellow-500 rounded-full mr-3"></div>
-                        <span class="text-gray-900">On-going</span>
+                        <span class="text-white">On-going</span>
                     {% endif %}
                 </div>
                 <div class="text-right">
-                    <span class="text-lg font-bold text-gray-900">{{ stat.count }}</span>
-                    <div class="text-xs text-gray-500">episodes</div>
+                    <span class="text-lg font-bold text-white">{{ stat.count }}</span>
+                    <div class="text-xs text-gray-400">episodes</div>
                 </div>
             </div>
             {% else %}
-            <p class="text-gray-500 text-center py-8">No viewing statistics available yet</p>
+            <p class="text-gray-400 text-center py-8">No viewing statistics available yet</p>
             {% endfor %}
         </div>
     </div>
@@ -109,14 +111,14 @@
 </div>
 
 <!-- Viewing Trends Notice -->
-<div class="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-6">
+<div class="mt-8 bg-gray-800 border border-gray-700 rounded-lg p-6">
     <div class="flex items-start">
         <div class="flex-shrink-0">
-            <i class="fas fa-info-circle text-blue-500 text-xl"></i>
+            <i class="fas fa-info-circle text-blue-400 text-xl"></i>
         </div>
         <div class="ml-3">
-            <h3 class="text-lg font-medium text-blue-900">Analytics Information</h3>
-            <div class="mt-2 text-sm text-blue-700">
+            <h3 class="text-lg font-medium text-white">Analytics Information</h3>
+            <div class="mt-2 text-sm text-gray-300">
                 <p>Analytics data is updated in real-time as users interact with your content. The viewing status tracking helps you understand user engagement patterns:</p>
                 <ul class="mt-2 list-disc list-inside space-y-1">
                     <li><strong>On-going:</strong> Episodes that users have started but not completed</li>
