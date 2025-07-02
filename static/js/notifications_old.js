@@ -1,4 +1,4 @@
-// Manual-only notification system - No automatic polling
+// Manual-only notification system
 class NotificationManager {
     constructor() {
         this.notifications = [];
@@ -6,6 +6,7 @@ class NotificationManager {
         this.notificationContainer = null;
         this.notificationBell = null;
         this.notificationBadge = null;
+        this.lastRefreshTime = null;
         
         this.init();
     }
@@ -97,21 +98,28 @@ class NotificationManager {
             }
         });
         
-        // Keyboard shortcuts
+        // Keyboard shortcut for notifications (Ctrl/Cmd + Shift + N)
         document.addEventListener('keydown', (e) => {
             if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'N') {
                 e.preventDefault();
                 this.toggleNotificationDropdown();
             }
-            
-            // Refresh shortcut when notification panel is open
+        });
+        
+        // Keyboard shortcut for refresh (Ctrl/Cmd + Shift + R when notification panel is open)
+        document.addEventListener('keydown', (e) => {
             if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'R') {
-                if (this.notificationContainer && !this.notificationContainer.classList.contains('hidden')) {
+                if (!this.notificationContainer.classList.contains('hidden')) {
                     e.preventDefault();
                     this.manualRefreshNotifications();
                 }
             }
         });
+    }
+    
+    setupManualRefresh() {
+        // No automatic polling - only manual refresh
+        console.log('Manual refresh system ready');
     }
     
     async loadNotifications() {
@@ -130,6 +138,7 @@ class NotificationManager {
             if (data.success) {
                 this.notifications = data.notifications || [];
                 this.unreadCount = data.unread_count || 0;
+                this.lastRefreshTime = new Date();
                 this.updateUI();
                 console.log(`Loaded ${this.notifications.length} notifications, ${this.unreadCount} unread`);
             }
@@ -151,20 +160,20 @@ class NotificationManager {
         refreshBtn.disabled = true;
         
         try {
-            const oldCount = this.notifications.length;
+            const oldNotifications = [...this.notifications];
             const oldUnreadCount = this.unreadCount;
             
             // Reload notifications
             await this.loadNotifications();
             
-            // Show feedback based on changes
-            const newCount = this.notifications.length - oldCount;
+            // Check for changes
+            const newNotificationCount = this.notifications.length - oldNotifications.length;
             const unreadChange = this.unreadCount - oldUnreadCount;
             
-            if (newCount > 0) {
+            if (newNotificationCount > 0) {
                 this.showNotificationToast({
                     title: 'Notifikasi Baru',
-                    message: `${newCount} notifikasi baru ditemukan`,
+                    message: `${newNotificationCount} notifikasi baru ditemukan`,
                     type: 'success',
                     icon: 'bell'
                 });
@@ -203,6 +212,8 @@ class NotificationManager {
         }
     }
     
+    // No addNotification function needed - only manual refresh
+    
     updateUI() {
         this.updateNotificationBadge();
         this.updateNotificationList();
@@ -213,6 +224,12 @@ class NotificationManager {
             if (this.unreadCount > 0) {
                 this.notificationBadge.textContent = this.unreadCount > 99 ? '99+' : this.unreadCount.toString();
                 this.notificationBadge.classList.remove('hidden');
+                
+                // Add pulse animation for new notifications
+                this.notificationBell.classList.add('animate-pulse');
+                setTimeout(() => {
+                    this.notificationBell.classList.remove('animate-pulse');
+                }, 2000);
             } else {
                 this.notificationBadge.classList.add('hidden');
             }
@@ -300,9 +317,11 @@ class NotificationManager {
         if (!dateString) return '';
         
         try {
+            // Parse the date from database (ISO format)
             const date = new Date(dateString);
             const now = new Date();
             
+            // Check if date is valid
             if (isNaN(date.getTime())) {
                 console.warn('Invalid date string:', dateString);
                 return 'Waktu tidak valid';
@@ -310,7 +329,7 @@ class NotificationManager {
             
             const diffInSeconds = Math.floor((now - date) / 1000);
             
-            if (diffInSeconds < 0) return 'Di masa depan';
+            if (diffInSeconds < 0) return 'Di masa depan'; // Handle future dates
             if (diffInSeconds < 60) return 'Baru saja';
             if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} menit yang lalu`;
             if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} jam yang lalu`;
@@ -355,7 +374,7 @@ class NotificationManager {
                 const notification = this.notifications.find(n => n.id === notificationId);
                 if (notification && !notification.is_read) {
                     notification.is_read = true;
-                    notification.read_at = new Date().toISOString();
+                    notification.read_at = new Date().toISOString(); // Set read_at timestamp
                     this.unreadCount = Math.max(0, this.unreadCount - 1);
                     this.updateUI();
                 }
@@ -380,7 +399,7 @@ class NotificationManager {
                 this.notifications.forEach(notification => {
                     if (!notification.is_read) {
                         notification.is_read = true;
-                        notification.read_at = currentTime;
+                        notification.read_at = currentTime; // Set read_at timestamp
                     }
                 });
                 this.unreadCount = 0;
@@ -439,6 +458,16 @@ class NotificationManager {
             this.removeToast(toast);
         });
         
+        // Add click to view functionality
+        toast.addEventListener('click', (e) => {
+            if (e.target === closeBtn || closeBtn.contains(e.target)) return;
+            
+            if (notification.action_url) {
+                window.location.href = notification.action_url;
+            }
+            this.removeToast(toast);
+        });
+        
         document.body.appendChild(toast);
         
         // Animate in
@@ -470,25 +499,30 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// For testing purposes
+// Global functions for triggering notifications (for testing/admin use)
 function testNotification() {
     if (window.notificationManager) {
         window.notificationManager.showNotificationToast({
+            id: Date.now(),
             title: 'Test Notification',
-            message: 'This is a test notification to verify the system works',
+            message: 'This is a test notification to check the system.',
             type: 'info',
-            icon: 'bell'
+            icon: 'bell',
+            action_url: null
         });
     }
 }
 
 function createTestNotification(title, message, type = 'info') {
-    if (window.notificationManager) {
-        window.notificationManager.showNotificationToast({
+    fetch('/api/notifications', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
             title: title,
             message: message,
-            type: type,
-            icon: type === 'success' ? 'check' : type === 'error' ? 'exclamation-triangle' : 'bell'
-        });
-    }
+            type: type
+        })
+    });
 }
