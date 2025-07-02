@@ -129,6 +129,7 @@
                                             data-username="{{ user.username }}" 
                                             data-email="{{ user.email }}" 
                                             data-subscription="{{ user.subscription_type }}"
+                                            data-expires="{{ user.subscription_expires.strftime('%Y-%m-%d') if user.subscription_expires else '' }}"
                                             onclick="editUserFromButton(this)" 
                                             class="text-blue-400 hover:text-blue-300" 
                                             title="Edit User">
@@ -279,12 +280,20 @@
                 <div>
                     <label class="block text-sm font-medium text-gray-300 mb-2">Subscription Type</label>
                     <select name="subscription_type" id="editSubscription" 
-                            class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-red-500">
+                            class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-red-500"
+                            onchange="toggleExpirationDate()">
                         <option value="free">Free</option>
                         <option value="vip_monthly">VIP Monthly</option>
                         <option value="vip_3month">VIP 3 Month</option>
                         <option value="vip_yearly">VIP Yearly</option>
                     </select>
+                </div>
+                
+                <div id="expirationDateField" class="hidden">
+                    <label class="block text-sm font-medium text-gray-300 mb-2">VIP Expiration Date</label>
+                    <input type="date" name="subscription_expires" id="editExpiration"
+                           class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-red-500">
+                    <p class="text-xs text-gray-400 mt-1">Leave empty to auto-calculate based on subscription type</p>
                 </div>
                 
                 <div>
@@ -315,13 +324,47 @@ function editUserFromButton(button) {
     const username = button.dataset.username;
     const email = button.dataset.email;
     const subscriptionType = button.dataset.subscription;
+    const expires = button.dataset.expires;
     
     document.getElementById('editUsername').value = username || '';
     document.getElementById('editEmail').value = email || '';
     document.getElementById('editSubscription').value = subscriptionType || 'free';
+    document.getElementById('editExpiration').value = expires || '';
     document.getElementById('editUserForm').action = `/admin/users/${userId}/edit`;
+    
+    // Show/hide expiration date field based on subscription type
+    toggleExpirationDate();
+    
     document.getElementById('editUserModal').classList.remove('hidden');
     document.getElementById('editUserModal').classList.add('flex');
+}
+
+function toggleExpirationDate() {
+    const subscriptionType = document.getElementById('editSubscription').value;
+    const expirationField = document.getElementById('expirationDateField');
+    
+    if (subscriptionType === 'free') {
+        expirationField.classList.add('hidden');
+        document.getElementById('editExpiration').value = '';
+    } else {
+        expirationField.classList.remove('hidden');
+        
+        // If no date is set, suggest a default based on subscription type
+        const expirationInput = document.getElementById('editExpiration');
+        if (!expirationInput.value) {
+            const today = new Date();
+            let days = 30; // default monthly
+            
+            switch (subscriptionType) {
+                case 'vip_monthly': days = 30; break;
+                case 'vip_3month': days = 90; break;
+                case 'vip_yearly': days = 365; break;
+            }
+            
+            today.setDate(today.getDate() + days);
+            expirationInput.value = today.toISOString().split('T')[0];
+        }
+    }
 }
 
 function closeEditUserModal() {

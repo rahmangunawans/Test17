@@ -330,20 +330,39 @@ def edit_user(user_id):
     
     if request.method == 'POST':
         try:
+            # Update basic user info
+            user.username = request.form.get('username', user.username)
+            user.email = request.form.get('email', user.email)
+            
             # Update subscription type
             subscription_type = request.form.get('subscription_type')
             user.subscription_type = subscription_type
             
-            # Update subscription expiry if VIP
+            # Handle VIP expiration - check if custom date is provided
+            custom_expiration = request.form.get('subscription_expires')
             if subscription_type != 'free':
-                from datetime import datetime, timedelta
-                days_map = {
-                    'vip_monthly': 30,
-                    'vip_3month': 90,
-                    'vip_yearly': 365
-                }
-                if subscription_type in days_map:
-                    user.subscription_expires = datetime.utcnow() + timedelta(days=days_map[subscription_type])
+                if custom_expiration:
+                    # Use custom expiration date
+                    from datetime import datetime
+                    user.subscription_expires = datetime.strptime(custom_expiration, '%Y-%m-%d')
+                else:
+                    # Auto-calculate based on subscription type
+                    from datetime import datetime, timedelta
+                    days_map = {
+                        'vip_monthly': 30,
+                        'vip_3month': 90,
+                        'vip_yearly': 365
+                    }
+                    if subscription_type in days_map:
+                        user.subscription_expires = datetime.utcnow() + timedelta(days=days_map[subscription_type])
+            else:
+                # Free user - clear expiration
+                user.subscription_expires = None
+            
+            # Reset password if provided
+            new_password = request.form.get('new_password')
+            if new_password and new_password.strip():
+                user.password_hash = generate_password_hash(new_password)
             
             # Update max devices
             user.max_devices = 2 if subscription_type != 'free' else 1
