@@ -15,11 +15,17 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('Mobile menu toggle clicked');
             console.log('Before toggle - classes:', mobileNav.className);
             
-            if (mobileNav.classList.contains('hidden')) {
+            // Check if menu is currently visible
+            const isHidden = mobileNav.classList.contains('hidden') || 
+                           window.getComputedStyle(mobileNav).display === 'none';
+            
+            if (isHidden) {
                 mobileNav.classList.remove('hidden');
+                mobileNav.style.display = 'block';
                 console.log('Menu opened');
             } else {
                 mobileNav.classList.add('hidden');
+                mobileNav.style.display = 'none';
                 console.log('Menu closed');
             }
             
