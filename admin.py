@@ -96,6 +96,10 @@ def add_content():
             )
             db.session.add(content)
             db.session.commit()
+            
+            # Create notification for new content
+            notify_new_content(content.title, content.content_type, content.id)
+            
             flash(f'Content "{content.title}" added successfully!', 'success')
             return redirect(url_for('admin.admin_content'))
         except Exception as e:
@@ -189,6 +193,10 @@ def add_episode(content_id):
             )
             db.session.add(episode)
             db.session.commit()
+            
+            # Create notification for new episode
+            notify_new_episode(content.title, episode.episode_number, episode.title, content.id)
+            
             flash(f'Episode {episode.episode_number} added successfully!', 'success')
             return redirect(url_for('admin.manage_episodes', content_id=content_id))
         except Exception as e:

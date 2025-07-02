@@ -99,24 +99,30 @@ def create_notification(user_id=None, title="", message="", notification_type="i
                        is_global=False, action_url=None, icon="bell"):
     """Create a new notification"""
     try:
-        notification = Notification(
-            user_id=user_id,
-            title=title,
-            message=message,
-            type=notification_type,
-            is_global=is_global,
-            action_url=action_url,
-            icon=icon
-        )
+        from models import Notification
+        from app import db
+        
+        logging.info(f"Creating notification: {title} - Global: {is_global}")
+        
+        notification = Notification()
+        notification.user_id = user_id
+        notification.title = title
+        notification.message = message
+        notification.type = notification_type
+        notification.is_global = is_global
+        notification.action_url = action_url
+        notification.icon = icon
+        
         db.session.add(notification)
         db.session.commit()
         
-        # Real-time notification via fast polling (Socket.IO disabled for stability)
-        logging.info(f"New notification created: {title} - {message}")
+        logging.info(f"Notification created successfully with ID: {notification.id}")
         
         return notification
     except Exception as e:
         logging.error(f"Error creating notification: {e}")
+        import traceback
+        logging.error(f"Full traceback: {traceback.format_exc()}")
         db.session.rollback()
         return None
 
