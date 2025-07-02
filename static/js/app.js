@@ -13,9 +13,11 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (isMenuOpen) {
             mobileMenu.classList.remove('hidden');
+            mobileMenu.classList.add('show');
             document.body.style.overflow = 'hidden';
         } else {
             mobileMenu.classList.add('hidden');
+            mobileMenu.classList.remove('show');
             document.body.style.overflow = '';
         }
     }

@@ -88,15 +88,17 @@
                     </div>
                 </div>
                 <div class="md:hidden flex items-center">
-                    <button id="mobile-menu-button" class="text-gray-300 hover:text-white focus:outline-none">
-                        <i class="fas fa-bars text-xl"></i>
+                    <button id="mobile-menu-button" class="text-gray-300 hover:text-white focus:outline-none p-2">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                        </svg>
                     </button>
                 </div>
             </div>
         </div>
 
         <!-- Mobile menu -->
-        <div id="mobile-menu" class="mobile-menu bg-gray-900 md:hidden">
+        <div id="mobile-menu" class="mobile-menu bg-gray-900 md:hidden hidden">
             <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
                 <a href="{{ url_for('index') }}" class="block px-3 py-2 rounded-md text-base font-medium text-white">Home</a>
                 <a href="{{ url_for('content.anime_list') }}" class="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:text-white">Anime</a>
