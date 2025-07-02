@@ -97,12 +97,49 @@ body main:first-child {
     #mobile-menu-button {
         position: relative;
         z-index: 1001;
-        display: block !important;
+        display: inline-flex !important;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+    }
+    
+    /* Remove any pseudo-elements that might cause duplication */
+    #mobile-menu-button::before,
+    #mobile-menu-button::after {
+        display: none !important;
+    }
+    
+    /* Ensure only one SVG icon */
+    #mobile-menu-button svg {
+        display: block;
+        width: 24px;
+        height: 24px;
     }
     
     /* Hide desktop menu on mobile */
     .hidden.md\:block {
         display: none !important;
+    }
+    
+    /* Force hide any duplicate icons or elements */
+    .md\:hidden .fas,
+    .md\:hidden .fa,
+    .md\:hidden i[class*="fa"] {
+        display: none !important;
+    }
+    
+    /* Ensure clean mobile button appearance */
+    .md\:hidden button {
+        background: transparent !important;
+        border: none !important;
+        outline: none !important;
+    }
+    
+    /* Prevent icon duplication from font-awesome */
+    .md\:hidden::before,
+    .md\:hidden::after {
+        content: none !important;
     }
     
     /* Mobile menu styling */
