@@ -91,7 +91,7 @@ def add_content():
                 rating=float(request.form['rating']),
                 content_type=request.form['content_type'],
                 thumbnail_url=request.form['thumbnail_url'],
-
+                trailer_url=request.form['trailer_url'],
                 is_featured=bool(request.form.get('is_featured'))
             )
             db.session.add(content)
@@ -119,7 +119,7 @@ def edit_content(content_id):
             content.rating = float(request.form['rating'])
             content.content_type = request.form['content_type']
             content.thumbnail_url = request.form['thumbnail_url']
-
+            content.trailer_url = request.form['trailer_url']
             content.is_featured = bool(request.form.get('is_featured'))
             
             db.session.commit()

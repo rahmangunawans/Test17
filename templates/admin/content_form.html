@@ -72,7 +72,13 @@
                            placeholder="https://example.com/poster.jpg">
                 </div>
                 
-
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-2">Trailer URL</label>
+                    <input type="url" name="trailer_url" 
+                           value="{{ content.trailer_url if content else '' }}"
+                           class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-red-500"
+                           placeholder="https://www.youtube.com/embed/example">
+                </div>
                 
                 <div>
                     <label class="block text-sm font-medium text-gray-300 mb-2">Description</label>
