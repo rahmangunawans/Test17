@@ -172,8 +172,8 @@
                                          class="h-12 w-auto rounded" 
                                          style="max-width: 200px;">
                                 {% else %}
-                                    <span id="logo-preview-text" class="text-2xl font-bold text-red-500">
-                                        {{ site_title or 'Ani' }}<span class="text-white">Flix</span>
+                                    <span id="logo-preview-text" class="text-2xl font-bold">
+                                        <span class="text-red-500">Ani</span><span class="text-white">Flix</span>
                                     </span>
                                 {% endif %}
                             </div>
@@ -457,8 +457,8 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 // Show text fallback
                 previewContainer.innerHTML = `
-                    <span class="text-2xl font-bold text-red-500">
-                        Ani<span class="text-white">Flix</span>
+                    <span class="text-2xl font-bold">
+                        <span class="text-red-500">Ani</span><span class="text-white">Flix</span>
                     </span>
                 `;
             }
