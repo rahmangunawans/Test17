@@ -2,8 +2,16 @@
 
 {% block title %}Manage Users - Admin - AniFlix{% endblock %}
 
+{% block head %}
+<style>
+.admin-users-container {
+    min-height: calc(100vh + 200px); /* Minimal 200px lebih dari tinggi viewport */
+}
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="bg-gray-900 pt-24 pb-8">
+<div class="bg-gray-900 pt-24 pb-8 admin-users-container">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Header -->
         <div class="mb-8">
