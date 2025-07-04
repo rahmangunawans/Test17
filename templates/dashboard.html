@@ -256,8 +256,10 @@
                                     <i class="fas {% if history.completed %}fa-redo{% else %}fa-play{% endif %} mr-1"></i>
                                     {% if history.completed %}Rewatch{% else %}Continue{% endif %}
                                 </a>
-                                <button onclick="showEditModal({{ history.episode.id }}, {{ history.episode.title|tojson }}, {{ history.content.id }})"
-                                        class="bg-gray-600 text-white px-3 py-1.5 rounded-lg hover:bg-gray-700 text-xs transition-colors inline-flex items-center ml-2">
+                                <button class="edit-history-btn bg-gray-600 text-white px-3 py-1.5 rounded-lg hover:bg-gray-700 text-xs transition-colors inline-flex items-center ml-2"
+                                        data-episode-id="{{ history.episode.id }}"
+                                        data-episode-title="{{ history.episode.title }}"
+                                        data-content-id="{{ history.content.id }}">
                                     <i class="fas fa-edit mr-1"></i>Edit
                                 </button>
                             </div>
@@ -293,8 +295,10 @@
                                 <i class="fas {% if history.completed %}fa-redo{% else %}fa-play{% endif %} mr-2"></i>
                                 {% if history.completed %}Rewatch{% else %}Continue{% endif %}
                             </a>
-                            <button onclick="showEditModal({{ history.episode.id }}, {{ history.episode.title|tojson }}, {{ history.content.id }})"
-                                    class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 text-sm transition-colors flex items-center">
+                            <button class="edit-history-btn bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 text-sm transition-colors flex items-center"
+                                    data-episode-id="{{ history.episode.id }}"
+                                    data-episode-title="{{ history.episode.title }}"
+                                    data-content-id="{{ history.content.id }}">
                                 <i class="fas fa-edit mr-2"></i>Edit
                             </button>
                         </div>

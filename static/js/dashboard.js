@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeTooltips();
     initializeProgressIndicators();
     initializeQuickActions();
+    initializeEditButtons();
 });
 
 // Search and Filter functionality
@@ -453,3 +454,16 @@ window.deleteItem = function(type, id, name) {
 window.editItem = function(type, id) {
     window.location.href = `/admin/${type}/${id}/edit`;
 };
+
+// Initialize edit buttons for watch history
+function initializeEditButtons() {
+    const editButtons = document.querySelectorAll('.edit-history-btn');
+    editButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const episodeId = this.getAttribute('data-episode-id');
+            const episodeTitle = this.getAttribute('data-episode-title');
+            const contentId = this.getAttribute('data-content-id');
+            showEditModal(episodeId, episodeTitle, contentId);
+        });
+    });
+}
