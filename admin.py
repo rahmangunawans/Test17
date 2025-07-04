@@ -1,10 +1,12 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
 from functools import wraps
-from models import db, Content, Episode, User, WatchHistory, Notification
+from models import db, Content, Episode, User, WatchHistory, Notification, SystemSettings
 from notifications import create_notification, notify_admin_message, notify_new_episode, notify_new_content
 from werkzeug.security import generate_password_hash
+from sqlalchemy import text, inspect
 import logging
+import json
 
 admin_bp = Blueprint('admin', __name__)
 
@@ -817,3 +819,226 @@ def update_system_settings():
         db.session.rollback()
     
     return redirect(url_for('admin.system_settings'))
+
+# Database Management API Routes for CRUD functionality
+
+@admin_bp.route('/api/table-data')
+@admin_required
+def get_table_data():
+    """Get table data with pagination and search"""
+    try:
+        table_name = request.args.get('table', '')
+        page = int(request.args.get('page', 1))
+        limit = int(request.args.get('limit', 10))
+        search_term = request.args.get('search', '')
+        search_column = request.args.get('column', '')
+        
+        if not table_name:
+            return jsonify({'success': False, 'error': 'Table name required'})
+        
+        # Map table names to models
+        table_models = {
+            'users': User,
+            'content': Content,
+            'episodes': Episode,
+            'system_settings': SystemSettings,
+            'notifications': Notification,
+            'watch_history': WatchHistory
+        }
+        
+        if table_name not in table_models:
+            return jsonify({'success': False, 'error': 'Invalid table name'})
+        
+        model = table_models[table_name]
+        
+        # Get table columns
+        inspector = inspect(db.engine)
+        columns = [column['name'] for column in inspector.get_columns(table_name)]
+        
+        # Build query
+        query = db.session.query(model)
+        
+        # Apply search filter if provided
+        if search_term:
+            if search_column and search_column in columns:
+                # Search in specific column
+                query = query.filter(getattr(model, search_column).like(f'%{search_term}%'))
+            else:
+                # Search in all text columns
+                text_filters = []
+                for col in columns:
+                    try:
+                        column_attr = getattr(model, col)
+                        if hasattr(column_attr.type, 'python_type') and column_attr.type.python_type == str:
+                            text_filters.append(column_attr.like(f'%{search_term}%'))
+                    except:
+                        continue
+                
+                if text_filters:
+                    from sqlalchemy import or_
+                    query = query.filter(or_(*text_filters))
+        
+        # Get total count
+        total = query.count()
+        
+        # Apply pagination
+        offset = (page - 1) * limit
+        records = query.offset(offset).limit(limit).all()
+        
+        # Convert records to dictionaries
+        data = []
+        for record in records:
+            record_dict = {}
+            for col in columns:
+                value = getattr(record, col, None)
+                if value is not None:
+                    # Handle datetime objects
+                    if hasattr(value, 'isoformat'):
+                        value = value.isoformat()
+                    record_dict[col] = value
+                else:
+                    record_dict[col] = None
+            data.append(record_dict)
+        
+        return jsonify({
+            'success': True,
+            'data': data,
+            'columns': columns,
+            'total': total,
+            'page': page,
+            'limit': limit
+        })
+        
+    except Exception as e:
+        logging.error(f"Error getting table data: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)})
+
+@admin_bp.route('/api/add-record', methods=['POST'])
+@admin_required
+def add_record():
+    """Add new record to table"""
+    try:
+        data = request.get_json()
+        table_name = data.get('table', '')
+        record_data = data.get('data', {})
+        
+        if not table_name or not record_data:
+            return jsonify({'success': False, 'error': 'Table name and data required'})
+        
+        # Map table names to models
+        table_models = {
+            'users': User,
+            'content': Content,
+            'episodes': Episode,
+            'system_settings': SystemSettings,
+            'notifications': Notification,
+            'watch_history': WatchHistory
+        }
+        
+        if table_name not in table_models:
+            return jsonify({'success': False, 'error': 'Invalid table name'})
+        
+        model = table_models[table_name]
+        
+        # Create new record
+        new_record = model(**record_data)
+        db.session.add(new_record)
+        db.session.commit()
+        
+        return jsonify({'success': True, 'message': 'Record added successfully'})
+        
+    except Exception as e:
+        db.session.rollback()
+        logging.error(f"Error adding record: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)})
+
+@admin_bp.route('/api/update-record', methods=['PUT'])
+@admin_required
+def update_record():
+    """Update existing record"""
+    try:
+        data = request.get_json()
+        table_name = data.get('table', '')
+        record_id = data.get('id', '')
+        record_data = data.get('data', {})
+        
+        if not table_name or not record_id or not record_data:
+            return jsonify({'success': False, 'error': 'Table name, ID, and data required'})
+        
+        # Map table names to models
+        table_models = {
+            'users': User,
+            'content': Content,
+            'episodes': Episode,
+            'system_settings': SystemSettings,
+            'notifications': Notification,
+            'watch_history': WatchHistory
+        }
+        
+        if table_name not in table_models:
+            return jsonify({'success': False, 'error': 'Invalid table name'})
+        
+        model = table_models[table_name]
+        
+        # Find record by ID
+        record = db.session.query(model).filter(model.id == record_id).first()
+        
+        if not record:
+            return jsonify({'success': False, 'error': 'Record not found'})
+        
+        # Update record attributes
+        for key, value in record_data.items():
+            if hasattr(record, key):
+                setattr(record, key, value)
+        
+        db.session.commit()
+        
+        return jsonify({'success': True, 'message': 'Record updated successfully'})
+        
+    except Exception as e:
+        db.session.rollback()
+        logging.error(f"Error updating record: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)})
+
+@admin_bp.route('/api/delete-record', methods=['DELETE'])
+@admin_required
+def delete_record():
+    """Delete record from table"""
+    try:
+        data = request.get_json()
+        table_name = data.get('table', '')
+        record_id = data.get('id', '')
+        
+        if not table_name or not record_id:
+            return jsonify({'success': False, 'error': 'Table name and ID required'})
+        
+        # Map table names to models
+        table_models = {
+            'users': User,
+            'content': Content,
+            'episodes': Episode,
+            'system_settings': SystemSettings,
+            'notifications': Notification,
+            'watch_history': WatchHistory
+        }
+        
+        if table_name not in table_models:
+            return jsonify({'success': False, 'error': 'Invalid table name'})
+        
+        model = table_models[table_name]
+        
+        # Find and delete record
+        record = db.session.query(model).filter(model.id == record_id).first()
+        
+        if not record:
+            return jsonify({'success': False, 'error': 'Record not found'})
+        
+        db.session.delete(record)
+        db.session.commit()
+        
+        return jsonify({'success': True, 'message': 'Record deleted successfully'})
+        
+    except Exception as e:
+        db.session.rollback()
+        logging.error(f"Error deleting record: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)})

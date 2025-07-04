@@ -290,6 +290,69 @@
                     </button>
                 </form>
             </div>
+
+            <!-- Database Management -->
+            <div class="setting-card bg-gray-800 rounded-lg p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-semibold text-white">
+                        <i class="fas fa-table text-purple-400 mr-2"></i>
+                        Database Management (CRUD)
+                    </h3>
+                    <button onclick="showAddRecordModal()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
+                        <i class="fas fa-plus mr-2"></i>Add Record
+                    </button>
+                </div>
+                
+                <!-- Table Selection -->
+                <div class="mb-4">
+                    <label for="table_select" class="block text-sm font-medium text-gray-300 mb-2">Select Table:</label>
+                    <select id="table_select" onchange="loadTableData()" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500">
+                        <option value="">-- Select Table --</option>
+                        <option value="users">Users</option>
+                        <option value="content">Content</option>
+                        <option value="episodes">Episodes</option>
+                        <option value="system_settings">System Settings</option>
+                        <option value="notifications">Notifications</option>
+                        <option value="watch_history">Watch History</option>
+                    </select>
+                </div>
+
+                <!-- Search and Filter -->
+                <div class="mb-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <input type="text" id="search_input" placeholder="Search records..." 
+                           class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500">
+                    <select id="filter_column" class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500">
+                        <option value="">All Columns</option>
+                    </select>
+                    <button onclick="searchTableData()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
+                        <i class="fas fa-search mr-2"></i>Search
+                    </button>
+                </div>
+
+                <!-- Data Table -->
+                <div id="table_container" class="overflow-x-auto">
+                    <div class="text-center text-gray-400 py-8">
+                        <i class="fas fa-table text-4xl mb-4"></i>
+                        <p>Select a table to view and manage data</p>
+                    </div>
+                </div>
+
+                <!-- Pagination -->
+                <div id="pagination_container" class="mt-4 flex justify-between items-center" style="display: none;">
+                    <div class="text-gray-400 text-sm">
+                        Showing <span id="records_info">0</span> records
+                    </div>
+                    <div class="flex space-x-2">
+                        <button onclick="previousPage()" id="prev_btn" class="bg-gray-700 hover:bg-gray-600 text-white px-3 py-1 rounded text-sm">
+                            Previous
+                        </button>
+                        <span id="page_info" class="text-gray-400 px-3 py-1 text-sm"></span>
+                        <button onclick="nextPage()" id="next_btn" class="bg-gray-700 hover:bg-gray-600 text-white px-3 py-1 rounded text-sm">
+                            Next
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Recent Activity -->
@@ -995,6 +1058,295 @@ function setLogoUrl(url) {
             window.updateLogoPreview();
         }
     }
+}
+
+// Database Management CRUD Functions
+let currentTable = '';
+let currentPage = 1;
+let recordsPerPage = 10;
+let totalRecords = 0;
+
+function loadTableData() {
+    const tableSelect = document.getElementById('table_select');
+    currentTable = tableSelect.value;
+    
+    if (!currentTable) {
+        document.getElementById('table_container').innerHTML = `
+            <div class="text-center text-gray-400 py-8">
+                <i class="fas fa-table text-4xl mb-4"></i>
+                <p>Select a table to view and manage data</p>
+            </div>
+        `;
+        document.getElementById('pagination_container').style.display = 'none';
+        return;
+    }
+    
+    // Show loading
+    document.getElementById('table_container').innerHTML = `
+        <div class="text-center text-gray-400 py-8">
+            <i class="fas fa-spinner fa-spin text-4xl mb-4"></i>
+            <p>Loading data...</p>
+        </div>
+    `;
+    
+    // Fetch table data
+    fetch(`/admin/api/table-data?table=${currentTable}&page=${currentPage}&limit=${recordsPerPage}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                displayTableData(data.data, data.columns);
+                totalRecords = data.total;
+                updatePagination();
+                updateFilterColumns(data.columns);
+            } else {
+                showError('Failed to load table data: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showError('Failed to load table data');
+        });
+}
+
+function displayTableData(data, columns) {
+    if (!data || data.length === 0) {
+        document.getElementById('table_container').innerHTML = `
+            <div class="text-center text-gray-400 py-8">
+                <i class="fas fa-empty-set text-4xl mb-4"></i>
+                <p>No data found in this table</p>
+            </div>
+        `;
+        return;
+    }
+    
+    let tableHtml = `
+        <table class="min-w-full bg-gray-700 rounded-lg overflow-hidden">
+            <thead class="bg-gray-600">
+                <tr>
+                    ${columns.map(col => `<th class="px-4 py-2 text-left text-white font-medium">${col}</th>`).join('')}
+                    <th class="px-4 py-2 text-left text-white font-medium">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+    
+    data.forEach((row, index) => {
+        tableHtml += `<tr class="border-t border-gray-600 hover:bg-gray-600">`;
+        columns.forEach(col => {
+            let value = row[col];
+            if (value === null || value === undefined) value = '-';
+            if (typeof value === 'string' && value.length > 50) {
+                value = value.substring(0, 50) + '...';
+            }
+            tableHtml += `<td class="px-4 py-2 text-gray-300">${value}</td>`;
+        });
+        tableHtml += `
+            <td class="px-4 py-2">
+                <div class="flex space-x-2">
+                    <button onclick="editRecord('${row.id || row[columns[0]]}')" 
+                            class="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-sm">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button onclick="deleteRecord('${row.id || row[columns[0]]}')" 
+                            class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-sm">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </td>
+        </tr>`;
+    });
+    
+    tableHtml += `</tbody></table>`;
+    document.getElementById('table_container').innerHTML = tableHtml;
+}
+
+function updateFilterColumns(columns) {
+    const filterSelect = document.getElementById('filter_column');
+    filterSelect.innerHTML = '<option value="">All Columns</option>';
+    columns.forEach(col => {
+        filterSelect.innerHTML += `<option value="${col}">${col}</option>`;
+    });
+}
+
+function updatePagination() {
+    const totalPages = Math.ceil(totalRecords / recordsPerPage);
+    document.getElementById('records_info').textContent = `${((currentPage - 1) * recordsPerPage) + 1}-${Math.min(currentPage * recordsPerPage, totalRecords)} of ${totalRecords}`;
+    document.getElementById('page_info').textContent = `Page ${currentPage} of ${totalPages}`;
+    
+    document.getElementById('prev_btn').disabled = currentPage <= 1;
+    document.getElementById('next_btn').disabled = currentPage >= totalPages;
+    
+    document.getElementById('pagination_container').style.display = 'flex';
+}
+
+function previousPage() {
+    if (currentPage > 1) {
+        currentPage--;
+        loadTableData();
+    }
+}
+
+function nextPage() {
+    const totalPages = Math.ceil(totalRecords / recordsPerPage);
+    if (currentPage < totalPages) {
+        currentPage++;
+        loadTableData();
+    }
+}
+
+function searchTableData() {
+    const searchTerm = document.getElementById('search_input').value;
+    const filterColumn = document.getElementById('filter_column').value;
+    
+    if (!currentTable) {
+        showError('Please select a table first');
+        return;
+    }
+    
+    // Reset to first page when searching
+    currentPage = 1;
+    
+    // Add search parameters to the fetch URL
+    let url = `/admin/api/table-data?table=${currentTable}&page=${currentPage}&limit=${recordsPerPage}`;
+    if (searchTerm) url += `&search=${encodeURIComponent(searchTerm)}`;
+    if (filterColumn) url += `&column=${encodeURIComponent(filterColumn)}`;
+    
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                displayTableData(data.data, data.columns);
+                totalRecords = data.total;
+                updatePagination();
+            } else {
+                showError('Search failed: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showError('Search failed');
+        });
+}
+
+function showAddRecordModal() {
+    if (!currentTable) {
+        showError('Please select a table first');
+        return;
+    }
+    
+    // For now, show a simple alert - can be enhanced with a proper modal
+    const newRecord = prompt(`Add new record to ${currentTable}\\nEnter JSON data (e.g., {"name": "value"})`);
+    
+    if (newRecord) {
+        try {
+            const data = JSON.parse(newRecord);
+            addRecord(data);
+        } catch (e) {
+            showError('Invalid JSON format');
+        }
+    }
+}
+
+function addRecord(data) {
+    fetch('/admin/api/add-record', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            table: currentTable,
+            data: data
+        })
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            showSuccess('Record added successfully');
+            loadTableData();
+        } else {
+            showError('Failed to add record: ' + result.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showError('Failed to add record');
+    });
+}
+
+function editRecord(id) {
+    const newData = prompt(`Edit record ID: ${id}\\nEnter JSON data to update (e.g., {"name": "new value"})`);
+    
+    if (newData) {
+        try {
+            const data = JSON.parse(newData);
+            updateRecord(id, data);
+        } catch (e) {
+            showError('Invalid JSON format');
+        }
+    }
+}
+
+function updateRecord(id, data) {
+    fetch('/admin/api/update-record', {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            table: currentTable,
+            id: id,
+            data: data
+        })
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            showSuccess('Record updated successfully');
+            loadTableData();
+        } else {
+            showError('Failed to update record: ' + result.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showError('Failed to update record');
+    });
+}
+
+function deleteRecord(id) {
+    if (confirm(`Are you sure you want to delete record ID: ${id}?`)) {
+        fetch('/admin/api/delete-record', {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                table: currentTable,
+                id: id
+            })
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.success) {
+                showSuccess('Record deleted successfully');
+                loadTableData();
+            } else {
+                showError('Failed to delete record: ' + result.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showError('Failed to delete record');
+        });
+    }
+}
+
+function showError(message) {
+    showNotification(message, 'error');
+}
+
+function showSuccess(message) {
+    showNotification(message, 'success');
 }
 </script>
 {% endblock %}
