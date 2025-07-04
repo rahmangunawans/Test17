@@ -468,6 +468,9 @@ document.addEventListener('DOMContentLoaded', function() {
                          style="max-width: 200px;">
                     <div class="text-xs text-gray-400 mt-1">Alt text: ${alt || 'Logo'}</div>
                 `;
+                
+                // Also update navigation logo
+                updateNavigationLogo(url, alt);
             };
             img.onerror = function() {
                 previewContainer.innerHTML = `
@@ -504,6 +507,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
                 <div class="text-xs text-gray-400 mt-1">Text logo: "${displayText}"</div>
             `;
+            
+            // Also update navigation logo in real-time
+            updateNavigationLogo(url, displayText);
             
             console.log('Professor Debug - Text logo updated with:', displayText);
         }
@@ -629,11 +635,38 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Function to update navigation logo in real-time (disabled for now to prevent issues)
+    // Function to update navigation logo in real-time
     function updateNavigationLogo(url, alt) {
-        console.log('Navigation logo update skipped to prevent UI issues');
-        // Note: This function is disabled to prevent navigation corruption
-        // Only the preview container is updated for real-time feedback
+        console.log('Updating navigation logo - URL:', url, 'Alt:', alt);
+        
+        // Find navigation logo elements
+        const navLogos = document.querySelectorAll('nav .logo, .nav-logo, .site-logo');
+        
+        navLogos.forEach(logoElement => {
+            if (url && url.length > 10) {
+                // Update with image
+                logoElement.innerHTML = `<img src="${url}" alt="${alt || 'Logo'}" class="h-8 w-auto">`;
+            } else {
+                // Update with text logo
+                const displayText = alt || 'AniFlix';
+                let logoHtml;
+                
+                if (displayText.toLowerCase().includes('aniflix')) {
+                    const aniIndex = displayText.toLowerCase().indexOf('ani');
+                    if (aniIndex !== -1) {
+                        const aniPart = displayText.substring(aniIndex, aniIndex + 3);
+                        const flixPart = displayText.substring(aniIndex + 3);
+                        logoHtml = `<span class="text-red-500">${aniPart}</span><span class="text-white">${flixPart}</span>`;
+                    } else {
+                        logoHtml = `<span class="text-white">${displayText}</span>`;
+                    }
+                } else {
+                    logoHtml = `<span class="text-white">${displayText}</span>`;
+                }
+                
+                logoElement.innerHTML = logoHtml;
+            }
+        });
     }
     
     // Function to update navigation title in real-time
