@@ -135,10 +135,7 @@ def check_maintenance_mode():
         if any(request.path.startswith(route) for route in secret_admin_paths):
             return
         
-        # Check for admin bypass parameter - allow bypass without login for admin access
-        admin_bypass = request.args.get('admin_bypass') == 'true'
-        if admin_bypass:
-            return  # Allow admin bypass with URL parameter (no login required)
+        # Admin bypass parameter removed for security reasons
         
         # Check if maintenance mode is enabled
         maintenance_enabled = SystemSettings.get_setting('maintenance_enabled', 'false') == 'true'
