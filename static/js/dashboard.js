@@ -274,6 +274,120 @@ function shareAnime(animeId) {
     }
 }
 
+// Edit watch history modal functions
+function showEditModal(episodeId, episodeTitle, contentId) {
+    // Create modal HTML
+    const modalHTML = `
+        <div id="editModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div class="bg-gray-800 rounded-lg p-6 w-full max-w-md mx-4">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-bold text-white">Edit Watch Progress</h3>
+                    <button onclick="closeEditModal()" class="text-gray-400 hover:text-white">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="mb-4">
+                    <p class="text-gray-300 text-sm mb-2">Episode: ${episodeTitle}</p>
+                    <label class="block text-white text-sm font-medium mb-2">
+                        Mark as:
+                    </label>
+                    <div class="space-y-2">
+                        <button onclick="updateWatchStatus(${episodeId}, 'completed')" 
+                                class="w-full bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition-colors">
+                            <i class="fas fa-check-circle mr-2"></i>Mark as Completed
+                        </button>
+                        <button onclick="updateWatchStatus(${episodeId}, 'ongoing')" 
+                                class="w-full bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-700 transition-colors">
+                            <i class="fas fa-clock mr-2"></i>Mark as Ongoing
+                        </button>
+                        <button onclick="removeFromHistory(${episodeId})" 
+                                class="w-full bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition-colors">
+                            <i class="fas fa-trash mr-2"></i>Remove from History
+                        </button>
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-2 mt-6">
+                    <button onclick="closeEditModal()" 
+                            class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 transition-colors">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Add modal to body
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+}
+
+function closeEditModal() {
+    const modal = document.getElementById('editModal');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+function updateWatchStatus(episodeId, status) {
+    fetch('/api/watch-history/update', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            episode_id: episodeId,
+            status: status
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('Watch status updated successfully!', 'success');
+            closeEditModal();
+            // Refresh the page to show updated status
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
+        } else {
+            showNotification(data.message || 'Failed to update watch status', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Failed to update watch status', 'error');
+    });
+}
+
+function removeFromHistory(episodeId) {
+    if (confirm('Are you sure you want to remove this from your watch history?')) {
+        fetch('/api/watch-history/remove', {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                episode_id: episodeId
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification('Removed from watch history!', 'success');
+                closeEditModal();
+                // Refresh the page to show updated history
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+            } else {
+                showNotification(data.message || 'Failed to remove from history', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('Failed to remove from history', 'error');
+        });
+    }
+}
+
 function showNotification(message, type = 'info') {
     const notification = document.createElement('div');
     notification.className = `fixed top-4 right-4 z-50 px-6 py-4 rounded-lg text-white font-medium transform translate-x-full transition-transform duration-300 ${

@@ -356,3 +356,74 @@ def toggle_watchlist(anime_id):
         'success': True,
         'message': 'Watchlist feature coming soon!'
     })
+
+@app.route('/api/watch-history/update', methods=['POST'])
+@login_required
+def update_watch_history():
+    """Update watch history status"""
+    try:
+        from models import WatchHistory, Episode
+        data = request.get_json()
+        episode_id = data.get('episode_id')
+        status = data.get('status')
+        
+        if not episode_id or not status:
+            return jsonify({'success': False, 'message': 'Missing required data'})
+        
+        # Find the watch history record
+        history = WatchHistory.query.filter_by(
+            user_id=current_user.id,
+            episode_id=episode_id
+        ).first()
+        
+        if not history:
+            return jsonify({'success': False, 'message': 'Watch history not found'})
+        
+        # Update status
+        if status == 'completed':
+            history.completed = True
+            history.status = 'completed'
+            # Set watch time to full duration if episode has duration
+            if history.episode.duration:
+                history.watch_time = history.episode.duration * 60
+        elif status == 'ongoing':
+            history.completed = False
+            history.status = 'on-going'
+        
+        db.session.commit()
+        return jsonify({'success': True, 'message': 'Watch status updated successfully'})
+        
+    except Exception as e:
+        db.session.rollback()
+        logging.error(f"Error updating watch history: {e}")
+        return jsonify({'success': False, 'message': 'Failed to update watch status'})
+
+@app.route('/api/watch-history/remove', methods=['DELETE'])
+@login_required
+def remove_watch_history():
+    """Remove episode from watch history"""
+    try:
+        from models import WatchHistory
+        data = request.get_json()
+        episode_id = data.get('episode_id')
+        
+        if not episode_id:
+            return jsonify({'success': False, 'message': 'Missing episode ID'})
+        
+        # Find and delete the watch history record
+        history = WatchHistory.query.filter_by(
+            user_id=current_user.id,
+            episode_id=episode_id
+        ).first()
+        
+        if not history:
+            return jsonify({'success': False, 'message': 'Watch history not found'})
+        
+        db.session.delete(history)
+        db.session.commit()
+        return jsonify({'success': True, 'message': 'Removed from watch history successfully'})
+        
+    except Exception as e:
+        db.session.rollback()
+        logging.error(f"Error removing watch history: {e}")
+        return jsonify({'success': False, 'message': 'Failed to remove from watch history'})
