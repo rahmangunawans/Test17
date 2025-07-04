@@ -137,8 +137,11 @@ def check_maintenance_mode():
         
         # Admin bypass parameter removed for security reasons
         
-        # Maintenance mode permanently disabled as per user request
-        maintenance_enabled = False
+        # Check if maintenance mode is enabled (controllable via System Settings)
+        try:
+            maintenance_enabled = SystemSettings.get_setting('maintenance_enabled', 'false') == 'true'
+        except:
+            maintenance_enabled = False  # Default to disabled if no setting found
         
         if maintenance_enabled:
             # Check if user is admin first (most important check)
