@@ -411,11 +411,11 @@
                                      onload="console.log('Logo loaded successfully:', this.src);"
                                      data-debug="logo-image">
                                 <span class="text-2xl font-bold text-red-500" style="display: none;">
-                                    {{ system_settings.site_title or 'Ani' }}<span class="text-white">Flix</span>
+                                    <span class="text-red-500">Ani</span><span class="text-white">Flix</span>
                                 </span>
                             {% else %}
                                 <span class="text-2xl font-bold text-red-500">
-                                    {{ system_settings.site_title or 'Ani' }}<span class="text-white">Flix</span>
+                                    <span class="text-red-500">Ani</span><span class="text-white">Flix</span>
                                 </span>
                             {% endif %}
                         </a>
@@ -1163,19 +1163,14 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             console.log('=== LOGO DEBUG INFO ===');
-            console.log('System Settings Debug:', {
-                logoUrl: '{{ system_settings.site_logo_url }}',
-                logoAlt: '{{ system_settings.site_logo_alt }}',
-                siteTitle: '{{ system_settings.site_title }}',
-                maintenanceEnabled: {{ system_settings.maintenance_enabled|tojson }}
-            });
+            console.log('Logo URL: {{ system_settings.site_logo_url or "empty" }}');
+            console.log('Site Title: {{ system_settings.site_title or "AniFlix" }}');
             
             const logoImg = document.querySelector('[data-debug="logo-image"]');
             if (logoImg) {
-                console.log('Logo element found:', logoImg.src);
-                console.log('Logo visible:', logoImg.offsetWidth > 0 && logoImg.offsetHeight > 0);
+                console.log('Logo element found and loaded');
             } else {
-                console.log('Logo element NOT found - using text fallback');
+                console.log('Using text fallback: AniFlix');
             }
         });
     </script>
