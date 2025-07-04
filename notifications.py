@@ -17,7 +17,7 @@ def init_socketio(app, socketio_instance):
     socketio = socketio_instance
 
 def cleanup_old_notifications():
-    """Delete notifications older than 5 days"""
+    """Delete notifications older than 5 days and their read records"""
     try:
         five_days_ago = datetime.utcnow() - timedelta(days=5)
         old_notifications = Notification.query.filter(
@@ -25,10 +25,48 @@ def cleanup_old_notifications():
         ).all()
         
         if old_notifications:
+            notification_ids = [notif.id for notif in old_notifications]
+            
+            # Delete associated NotificationRead records first
+            old_read_records = NotificationRead.query.filter(
+                NotificationRead.notification_id.in_(notification_ids)
+            ).all()
+            
+            for read_record in old_read_records:
+                db.session.delete(read_record)
+            
+            # Then delete the notifications
             for notification in old_notifications:
                 db.session.delete(notification)
+            
             db.session.commit()
-            logging.info(f"Cleaned up {len(old_notifications)} old notifications")
+            logging.info(f"Cleaned up {len(old_notifications)} old notifications and {len(old_read_records)} read records")
+        
+        # Also clean up orphaned read records (for notifications that no longer exist)
+        orphaned_reads = NotificationRead.query.filter(
+            ~NotificationRead.notification_id.in_(
+                db.session.query(Notification.id).scalar_subquery()
+            )
+        ).all()
+        
+        if orphaned_reads:
+            for read_record in orphaned_reads:
+                db.session.delete(read_record)
+            db.session.commit()
+            logging.info(f"Cleaned up {len(orphaned_reads)} orphaned read records")
+        
+        # Clean up very old read records (older than 30 days) to prevent database bloat
+        thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+        very_old_reads = NotificationRead.query.filter(
+            NotificationRead.read_at < thirty_days_ago
+        ).all()
+        
+        if very_old_reads:
+            for read_record in very_old_reads:
+                db.session.delete(read_record)
+            db.session.commit()
+            logging.info(f"Cleaned up {len(very_old_reads)} very old read records")
+            
     except Exception as e:
         logging.error(f"Failed to cleanup old notifications: {e}")
         db.session.rollback()
