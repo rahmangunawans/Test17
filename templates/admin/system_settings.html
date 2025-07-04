@@ -459,6 +459,7 @@ document.addEventListener('DOMContentLoaded', function() {
                              class="h-12 w-auto rounded" 
                              style="max-width: 200px;">
                     `;
+                    console.log('Preview container updated with image');
                     
                     // Also update navigation logo in real-time
                     updateNavigationLogo(url, alt);
@@ -579,23 +580,34 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Function to update navigation logo in real-time
     function updateNavigationLogo(url, alt) {
-        const navLogo = document.querySelector('.navbar-brand');
-        const footerLogo = document.querySelector('.footer-logo');
+        console.log('Updating navigation logo:', { url, alt });
         
-        if (navLogo) {
-            if (url) {
-                navLogo.innerHTML = `<img src="${url}" alt="${alt}" class="h-8 w-auto">`;
-            } else {
-                navLogo.innerHTML = `<span class="text-2xl font-bold"><span class="text-red-500">Ani</span><span class="text-white">Flix</span></span>`;
-            }
-        }
+        // Find all logo elements in navigation and footer
+        const logoSelectors = [
+            '.navbar-brand',
+            '.footer-logo', 
+            'a[href="/"]',
+            '.logo-text',
+            '.site-logo'
+        ];
         
-        if (footerLogo) {
-            if (url) {
-                footerLogo.innerHTML = `<img src="${url}" alt="${alt}" class="h-6 w-auto">`;
-            } else {
-                footerLogo.innerHTML = `<span class="text-xl font-bold"><span class="text-red-500">Ani</span><span class="text-white">Flix</span></span>`;
-            }
+        logoSelectors.forEach(selector => {
+            const elements = document.querySelectorAll(selector);
+            elements.forEach(element => {
+                if (element) {
+                    console.log('Found logo element:', selector);
+                    if (url) {
+                        element.innerHTML = `<img src="${url}" alt="${alt}" class="h-8 w-auto max-w-[200px]">`;
+                    } else {
+                        element.innerHTML = `<span class="text-2xl font-bold"><span class="text-red-500">Ani</span><span class="text-white">Flix</span></span>`;
+                    }
+                }
+            });
+        });
+        
+        // Also update page title
+        if (alt && alt !== 'Logo') {
+            document.title = alt + ' - Admin System Settings';
         }
     }
     
