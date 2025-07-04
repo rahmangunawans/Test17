@@ -128,6 +128,27 @@
                                value="{{ site_logo_url }}"
                                class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                                placeholder="https://example.com/logo.png">
+                        <div class="mt-2 text-xs text-gray-400">
+                            <strong>Contoh URL logo:</strong>
+                            <div class="mt-1 space-y-1">
+                                <button type="button" class="text-purple-400 hover:text-purple-300 block" 
+                                        onclick="setLogoUrl('https://img.icons8.com/color/48/000000/video-playlist.png');">
+                                    🎬 Video Playlist Icon
+                                </button>
+                                <button type="button" class="text-purple-400 hover:text-purple-300 block" 
+                                        onclick="setLogoUrl('https://img.icons8.com/color/48/000000/film-reel.png');">
+                                    🎞️ Film Reel Icon  
+                                </button>
+                                <button type="button" class="text-purple-400 hover:text-purple-300 block" 
+                                        onclick="setLogoUrl('https://img.icons8.com/color/48/000000/tv-show.png');">
+                                    📺 TV Show Icon
+                                </button>
+                                <button type="button" class="text-purple-400 hover:text-purple-300 block" 
+                                        onclick="setLogoUrl('');">
+                                    🗑️ Hapus Logo (Kembali ke teks)
+                                </button>
+                            </div>
+                        </div>
                     </div>
                     
                     <div>
@@ -140,13 +161,25 @@
                                placeholder="AniFlix">
                     </div>
                     
-                    {% if site_logo_url %}
+                    <!-- Logo Preview Section -->
                     <div class="mt-4">
-                        <label class="block text-sm font-medium text-gray-300 mb-2">Current Logo Preview</label>
-                        <img src="{{ site_logo_url }}" alt="{{ site_logo_alt }}" 
-                             class="h-12 w-auto rounded border border-gray-600">
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Logo Preview</label>
+                        <div class="bg-gray-700 border border-gray-600 rounded-lg p-4 h-20 flex items-center justify-center">
+                            <div id="logo-preview-container" class="flex items-center justify-center">
+                                {% if site_logo_url %}
+                                    <img src="{{ site_logo_url }}" alt="{{ site_logo_alt }}" 
+                                         id="logo-preview-image" 
+                                         class="h-12 w-auto rounded" 
+                                         style="max-width: 200px;">
+                                {% else %}
+                                    <span id="logo-preview-text" class="text-2xl font-bold text-red-500">
+                                        {{ site_title or 'Ani' }}<span class="text-white">Flix</span>
+                                    </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <p class="text-gray-400 text-xs mt-2">Preview akan update otomatis saat Anda mengetik URL logo</p>
                     </div>
-                    {% endif %}
                     
                     <button type="submit" class="action-button w-full bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
                         <i class="fas fa-save mr-2"></i>
@@ -385,20 +418,59 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Logo preview update
     const logoUrl = document.getElementById('logo_url');
-    if (logoUrl) {
-        logoUrl.addEventListener('input', function() {
-            const url = this.value;
-            const preview = document.querySelector('.current-logo-preview img');
-            if (url && preview) {
-                preview.src = url;
-                preview.onerror = function() {
-                    this.style.display = 'none';
+    const logoAlt = document.getElementById('logo_alt');
+    const previewContainer = document.getElementById('logo-preview-container');
+    
+    if (logoUrl && previewContainer) {
+        function updateLogoPreview() {
+            const url = logoUrl.value.trim();
+            const alt = logoAlt ? logoAlt.value.trim() : 'Logo';
+            
+            if (url) {
+                // Show image preview
+                previewContainer.innerHTML = `
+                    <img src="${url}" alt="${alt}" 
+                         id="logo-preview-image" 
+                         class="h-12 w-auto rounded" 
+                         style="max-width: 200px; display: none;">
+                    <div id="logo-loading" class="text-gray-400">
+                        <i class="fas fa-spinner fa-spin mr-2"></i>Loading...
+                    </div>
+                `;
+                
+                const img = document.getElementById('logo-preview-image');
+                const loading = document.getElementById('logo-loading');
+                
+                img.onload = function() {
+                    loading.style.display = 'none';
+                    img.style.display = 'block';
                 };
-                preview.onload = function() {
-                    this.style.display = 'block';
+                
+                img.onerror = function() {
+                    previewContainer.innerHTML = `
+                        <div class="text-red-400 text-center">
+                            <i class="fas fa-exclamation-triangle mr-2"></i>
+                            <div class="text-sm">URL logo tidak valid</div>
+                        </div>
+                    `;
                 };
+            } else {
+                // Show text fallback
+                previewContainer.innerHTML = `
+                    <span class="text-2xl font-bold text-red-500">
+                        Ani<span class="text-white">Flix</span>
+                    </span>
+                `;
             }
-        });
+        }
+        
+        logoUrl.addEventListener('input', updateLogoPreview);
+        if (logoAlt) {
+            logoAlt.addEventListener('input', updateLogoPreview);
+        }
+        
+        // Make updateLogoPreview accessible globally
+        window.updateLogoPreview = updateLogoPreview;
     }
 });
 
@@ -435,6 +507,17 @@ function showSettingsSuccess(message) {
     setTimeout(() => {
         notification.remove();
     }, 3000);
+}
+
+// Function to set logo URL and update preview
+function setLogoUrl(url) {
+    const logoUrlInput = document.getElementById('logo_url');
+    if (logoUrlInput) {
+        logoUrlInput.value = url;
+        if (window.updateLogoPreview) {
+            window.updateLogoPreview();
+        }
+    }
 }
 </script>
 {% endblock %}
