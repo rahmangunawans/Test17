@@ -412,11 +412,35 @@
                                      id="nav-logo-image"
                                      data-debug="logo-image">
                                 <span class="text-2xl font-bold text-red-500" style="display: none;" id="nav-logo-text">
-                                    <span class="text-red-500">Ani</span><span class="text-white">Flix</span>
+                                    {% set logo_text = system_settings.site_logo_alt or 'AniFlix' %}
+                                    {% if 'aniflix' in logo_text.lower() %}
+                                        {% set ani_index = logo_text.lower().find('ani') %}
+                                        {% if ani_index != -1 %}
+                                            {% set ani_part = logo_text[ani_index:ani_index+3] %}
+                                            {% set flix_part = logo_text[ani_index+3:] %}
+                                            <span class="text-red-500">{{ ani_part }}</span><span class="text-white">{{ flix_part }}</span>
+                                        {% else %}
+                                            <span class="text-white">{{ logo_text }}</span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="text-white">{{ logo_text }}</span>
+                                    {% endif %}
                                 </span>
                             {% else %}
                                 <span class="text-2xl font-bold text-red-500" id="nav-logo-text">
-                                    <span class="text-red-500">Ani</span><span class="text-white">Flix</span>
+                                    {% set logo_text = system_settings.site_logo_alt or 'AniFlix' %}
+                                    {% if 'aniflix' in logo_text.lower() %}
+                                        {% set ani_index = logo_text.lower().find('ani') %}
+                                        {% if ani_index != -1 %}
+                                            {% set ani_part = logo_text[ani_index:ani_index+3] %}
+                                            {% set flix_part = logo_text[ani_index+3:] %}
+                                            <span class="text-red-500">{{ ani_part }}</span><span class="text-white">{{ flix_part }}</span>
+                                        {% else %}
+                                            <span class="text-white">{{ logo_text }}</span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="text-white">{{ logo_text }}</span>
+                                    {% endif %}
                                 </span>
                             {% endif %}
                         </a>
@@ -540,7 +564,19 @@
                 <!-- Mobile Header -->
                 <div class="flex items-center justify-between p-4 border-b border-gray-700">
                     <a href="{{ url_for('index') }}" class="text-2xl font-bold text-red-500" id="mobile-nav-logo">
-                        Ani<span class="text-white">Flix</span>
+                        {% set mobile_logo_text = system_settings.site_logo_alt or 'AniFlix' %}
+                        {% if 'aniflix' in mobile_logo_text.lower() %}
+                            {% set ani_index = mobile_logo_text.lower().find('ani') %}
+                            {% if ani_index != -1 %}
+                                {% set ani_part = mobile_logo_text[ani_index:ani_index+3] %}
+                                {% set flix_part = mobile_logo_text[ani_index+3:] %}
+                                {{ ani_part }}<span class="text-white">{{ flix_part }}</span>
+                            {% else %}
+                                <span class="text-white">{{ mobile_logo_text }}</span>
+                            {% endif %}
+                        {% else %}
+                            <span class="text-white">{{ mobile_logo_text }}</span>
+                        {% endif %}
                     </a>
                     <button id="mobile-menu-close" class="text-gray-300 hover:text-white p-2 border border-gray-600 rounded-md bg-gray-800 hover:bg-gray-700 transition-all duration-200">
                         <i class="fas fa-times text-xl"></i>
