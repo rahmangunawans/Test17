@@ -434,7 +434,7 @@ document.addEventListener('DOMContentLoaded', function() {
         updateMaintenancePreview();
     }
     
-    // Simple global function for real-time preview updates
+    // Enhanced real-time preview function with better alt text handling
     window.updatePreviewNow = function() {
         const logoUrl = document.getElementById('logo_url');
         const logoAlt = document.getElementById('logo_alt');
@@ -446,9 +446,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         const url = logoUrl.value.trim();
-        const alt = logoAlt.value.trim() || 'AniFlix';
+        const alt = logoAlt.value.trim(); // Don't use fallback here
         
-        console.log('Updating preview - URL:', url, 'Alt:', alt);
+        console.log('Professor Debug - URL:', url, 'Alt from input:', alt);
         
         if (url && url.length > 10) {
             // Show loading
@@ -463,9 +463,10 @@ document.addEventListener('DOMContentLoaded', function() {
             const img = new Image();
             img.onload = function() {
                 previewContainer.innerHTML = `
-                    <img src="${url}" alt="${alt}" 
+                    <img src="${url}" alt="${alt || 'Logo'}" 
                          class="h-12 w-auto rounded shadow-lg" 
                          style="max-width: 200px;">
+                    <div class="text-xs text-gray-400 mt-1">Alt text: ${alt || 'Logo'}</div>
                 `;
             };
             img.onerror = function() {
@@ -478,20 +479,31 @@ document.addEventListener('DOMContentLoaded', function() {
             };
             img.src = url;
         } else {
-            // Show text logo with real alt text
+            // Show text logo using actual alt text from input
+            const displayText = alt || 'AniFlix'; // Use actual input value
             let logoHtml;
-            if (alt.toLowerCase().includes('aniflix')) {
-                logoHtml = `<span class="text-red-500">Ani</span><span class="text-white">Flix</span>`;
+            
+            // Create text representation based on actual input
+            if (displayText.toLowerCase().includes('aniflix')) {
+                // Split the text to preserve custom extensions like "AniFlixxx"
+                const parts = displayText.match(/^(ani)(flix.*?)$/i);
+                if (parts) {
+                    logoHtml = `<span class="text-red-500">${parts[1]}</span><span class="text-white">${parts[2]}</span>`;
+                } else {
+                    logoHtml = `<span class="text-red-500">Ani</span><span class="text-white">Flix</span>`;
+                }
             } else {
-                logoHtml = `<span class="text-white">${alt}</span>`;
+                logoHtml = `<span class="text-white">${displayText}</span>`;
             }
             
             previewContainer.innerHTML = `
-                <div class="text-2xl font-bold">
+                <div class="text-2xl font-bold transition-all duration-300">
                     ${logoHtml}
                 </div>
-                <div class="text-xs text-gray-400 mt-1">Text logo: ${alt}</div>
+                <div class="text-xs text-gray-400 mt-1">Text logo: "${displayText}"</div>
             `;
+            
+            console.log('Professor Debug - Text logo updated with:', displayText);
         }
     };
     
