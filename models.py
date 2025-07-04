@@ -108,6 +108,7 @@ class Notification(db.Model):
     read_at = db.Column(db.DateTime)
     
     user = db.relationship('User', backref='notifications')
+    read_by = db.relationship('NotificationRead', backref='notification', cascade='all, delete-orphan')
     
     def to_dict(self):
         return {
@@ -134,7 +135,6 @@ class NotificationRead(db.Model):
     __table_args__ = (db.UniqueConstraint('user_id', 'notification_id'),)
     
     user = db.relationship('User', backref='notification_reads')
-    notification = db.relationship('Notification', backref='read_by', cascade='all, delete-orphan')
     
     def __init__(self, user_id, notification_id):
         self.user_id = user_id
