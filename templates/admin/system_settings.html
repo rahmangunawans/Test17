@@ -517,44 +517,53 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Function to update navigation logo in real-time
     window.updateNavigationLogo = function(url, alt) {
-        console.log('Updating navigation logo - URL:', url, 'Alt:', alt);
+        console.log('Professor Debug - Updating navigation logo - URL:', url, 'Alt:', alt);
         
-        // Find main navigation logo container - look for the specific structure
-        const mainNavLogo = document.querySelector('.flex-shrink-0 a');
+        // Find main navigation logo using specific ID
+        const mainNavLogo = document.getElementById('main-nav-logo');
         if (mainNavLogo) {
-            const logoImg = mainNavLogo.querySelector('img[data-debug="logo-image"]');
-            const logoText = mainNavLogo.querySelector('span');
+            let logoImg = document.getElementById('nav-logo-image');
+            let logoText = document.getElementById('nav-logo-text');
+            
+            console.log('Professor Debug - Found elements:', {
+                mainNavLogo: !!mainNavLogo,
+                logoImg: !!logoImg,
+                logoText: !!logoText
+            });
             
             if (url && url.trim() && url.length > 10) {
-                // Show image, hide text
-                if (logoImg) {
-                    logoImg.src = url;
-                    logoImg.alt = alt || 'Logo';
-                    logoImg.style.display = 'block';
-                    logoImg.onerror = function() {
-                        this.style.display = 'none';
-                        if (logoText) logoText.style.display = 'inline';
-                    };
-                } else {
-                    // Create new image element
-                    const newImg = document.createElement('img');
-                    newImg.src = url;
-                    newImg.alt = alt || 'Logo';
-                    newImg.className = 'h-10 w-auto max-w-32 bg-white rounded-md p-1';
-                    newImg.style.filter = 'drop-shadow(0 0 4px rgba(255,255,255,0.3))';
-                    newImg.setAttribute('data-debug', 'logo-image');
-                    newImg.onerror = function() {
-                        this.style.display = 'none';
-                        if (logoText) logoText.style.display = 'inline';
-                    };
-                    mainNavLogo.insertBefore(newImg, mainNavLogo.firstChild);
+                console.log('Professor Debug - Setting image logo');
+                
+                // Create or update image
+                if (!logoImg) {
+                    logoImg = document.createElement('img');
+                    logoImg.id = 'nav-logo-image';
+                    logoImg.className = 'h-10 w-auto max-w-32 bg-white rounded-md p-1';
+                    logoImg.style.filter = 'drop-shadow(0 0 4px rgba(255,255,255,0.3))';
+                    logoImg.setAttribute('data-debug', 'logo-image');
+                    mainNavLogo.appendChild(logoImg);
                 }
                 
+                logoImg.src = url;
+                logoImg.alt = alt || 'Logo';
+                logoImg.style.display = 'block';
+                logoImg.onerror = function() {
+                    console.log('Professor Debug - Image failed to load');
+                    this.style.display = 'none';
+                    if (logoText) logoText.style.display = 'inline';
+                };
+                logoImg.onload = function() {
+                    console.log('Professor Debug - Image loaded successfully');
+                };
+                
+                // Hide text logo
                 if (logoText) {
                     logoText.style.display = 'none';
                 }
             } else {
-                // Show text, hide image
+                console.log('Professor Debug - Setting text logo');
+                
+                // Hide image logo
                 if (logoImg) {
                     logoImg.style.display = 'none';
                 }
@@ -575,24 +584,28 @@ document.addEventListener('DOMContentLoaded', function() {
                     logoHtml = `<span class="text-white">${displayText}</span>`;
                 }
                 
-                if (logoText) {
-                    logoText.innerHTML = logoHtml;
-                    logoText.style.display = 'inline';
-                } else {
-                    // Create new text element
-                    const newText = document.createElement('span');
-                    newText.className = 'text-2xl font-bold text-red-500';
-                    newText.innerHTML = logoHtml;
-                    mainNavLogo.appendChild(newText);
+                // Create or update text logo
+                if (!logoText) {
+                    logoText = document.createElement('span');
+                    logoText.id = 'nav-logo-text';
+                    logoText.className = 'text-2xl font-bold text-red-500';
+                    mainNavLogo.appendChild(logoText);
                 }
+                
+                logoText.innerHTML = logoHtml;
+                logoText.style.display = 'inline';
                 
                 console.log('Professor Debug - Text logo updated with:', displayText);
             }
+        } else {
+            console.log('Professor Debug - Main nav logo element not found');
         }
         
         // Also update mobile navigation logo
-        const mobileNavLogo = document.querySelector('#mobile-navigation .text-2xl');
+        const mobileNavLogo = document.getElementById('mobile-nav-logo');
         if (mobileNavLogo) {
+            console.log('Professor Debug - Updating mobile nav logo');
+            
             if (!url || !url.trim() || url.length <= 10) {
                 const displayText = alt || 'AniFlix';
                 let logoHtml;
@@ -611,7 +624,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 
                 mobileNavLogo.innerHTML = logoHtml;
+                console.log('Professor Debug - Mobile nav logo updated');
             }
+        } else {
+            console.log('Professor Debug - Mobile nav logo element not found');
         }
     };
 

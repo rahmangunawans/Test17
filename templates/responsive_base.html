@@ -401,7 +401,7 @@
             <div class="flex items-center justify-between h-16">
                 <div class="flex items-center">
                     <div class="flex-shrink-0">
-                        <a href="{{ url_for('index') }}" class="flex items-center">
+                        <a href="{{ url_for('index') }}" class="flex items-center" id="main-nav-logo">
                             {% if system_settings.site_logo_url %}
                                 <img src="{{ system_settings.site_logo_url }}" 
                                      alt="{{ system_settings.site_logo_alt or 'AniFlix' }}" 
@@ -409,12 +409,13 @@
                                      style="filter: drop-shadow(0 0 4px rgba(255,255,255,0.3));"
                                      onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';"
                                      onload="console.log('Logo loaded successfully:', this.src);"
+                                     id="nav-logo-image"
                                      data-debug="logo-image">
-                                <span class="text-2xl font-bold text-red-500" style="display: none;">
+                                <span class="text-2xl font-bold text-red-500" style="display: none;" id="nav-logo-text">
                                     <span class="text-red-500">Ani</span><span class="text-white">Flix</span>
                                 </span>
                             {% else %}
-                                <span class="text-2xl font-bold text-red-500">
+                                <span class="text-2xl font-bold text-red-500" id="nav-logo-text">
                                     <span class="text-red-500">Ani</span><span class="text-white">Flix</span>
                                 </span>
                             {% endif %}
@@ -538,7 +539,7 @@
             <div class="flex flex-col h-full">
                 <!-- Mobile Header -->
                 <div class="flex items-center justify-between p-4 border-b border-gray-700">
-                    <a href="{{ url_for('index') }}" class="text-2xl font-bold text-red-500">
+                    <a href="{{ url_for('index') }}" class="text-2xl font-bold text-red-500" id="mobile-nav-logo">
                         Ani<span class="text-white">Flix</span>
                     </a>
                     <button id="mobile-menu-close" class="text-gray-300 hover:text-white p-2 border border-gray-600 rounded-md bg-gray-800 hover:bg-gray-700 transition-all duration-200">
