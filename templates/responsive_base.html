@@ -385,6 +385,12 @@
                 opacity: 1;
             }
         }
+        
+        /* Logo debug styles */
+        [data-debug="logo-image"] {
+            border: 2px solid rgba(255, 0, 0, 0.5) !important;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.8) !important;
+        }
     </style>
 </head>
 
@@ -399,10 +405,17 @@
                             {% if system_settings.site_logo_url %}
                                 <img src="{{ system_settings.site_logo_url }}" 
                                      alt="{{ system_settings.site_logo_alt or 'AniFlix' }}" 
-                                     class="h-8 w-auto">
+                                     class="h-10 w-auto max-w-32 bg-white rounded-md p-1"
+                                     style="filter: drop-shadow(0 0 4px rgba(255,255,255,0.3));"
+                                     onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';"
+                                     onload="console.log('Logo loaded successfully:', this.src);"
+                                     data-debug="logo-image">
+                                <span class="text-2xl font-bold text-red-500" style="display: none;">
+                                    {{ system_settings.site_title or 'Ani' }}<span class="text-white">Flix</span>
+                                </span>
                             {% else %}
                                 <span class="text-2xl font-bold text-red-500">
-                                    {{ system_settings.site_title or 'Ani' }}<span class="text-white">{{ 'Flix' if not system_settings.site_title or 'AniFlix' in system_settings.site_title else '' }}</span>
+                                    {{ system_settings.site_title or 'Ani' }}<span class="text-white">Flix</span>
                                 </span>
                             {% endif %}
                         </a>
@@ -1145,6 +1158,27 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
     <script src="{{ url_for('static', filename='js/notifications.js') }}"></script>
     {% endif %}
+
+    <!-- Logo Debug Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('=== LOGO DEBUG INFO ===');
+            console.log('System Settings Debug:', {
+                logoUrl: '{{ system_settings.site_logo_url }}',
+                logoAlt: '{{ system_settings.site_logo_alt }}',
+                siteTitle: '{{ system_settings.site_title }}',
+                maintenanceEnabled: {{ system_settings.maintenance_enabled|tojson }}
+            });
+            
+            const logoImg = document.querySelector('[data-debug="logo-image"]');
+            if (logoImg) {
+                console.log('Logo element found:', logoImg.src);
+                console.log('Logo visible:', logoImg.offsetWidth > 0 && logoImg.offsetHeight > 0);
+            } else {
+                console.log('Logo element NOT found - using text fallback');
+            }
+        });
+    </script>
 
     <!-- Additional page-specific scripts -->
     {% block scripts %}{% endblock %}
