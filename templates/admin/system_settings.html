@@ -515,6 +515,106 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
     
+    // Function to update navigation logo in real-time
+    window.updateNavigationLogo = function(url, alt) {
+        console.log('Updating navigation logo - URL:', url, 'Alt:', alt);
+        
+        // Find main navigation logo container - look for the specific structure
+        const mainNavLogo = document.querySelector('.flex-shrink-0 a');
+        if (mainNavLogo) {
+            const logoImg = mainNavLogo.querySelector('img[data-debug="logo-image"]');
+            const logoText = mainNavLogo.querySelector('span');
+            
+            if (url && url.trim() && url.length > 10) {
+                // Show image, hide text
+                if (logoImg) {
+                    logoImg.src = url;
+                    logoImg.alt = alt || 'Logo';
+                    logoImg.style.display = 'block';
+                    logoImg.onerror = function() {
+                        this.style.display = 'none';
+                        if (logoText) logoText.style.display = 'inline';
+                    };
+                } else {
+                    // Create new image element
+                    const newImg = document.createElement('img');
+                    newImg.src = url;
+                    newImg.alt = alt || 'Logo';
+                    newImg.className = 'h-10 w-auto max-w-32 bg-white rounded-md p-1';
+                    newImg.style.filter = 'drop-shadow(0 0 4px rgba(255,255,255,0.3))';
+                    newImg.setAttribute('data-debug', 'logo-image');
+                    newImg.onerror = function() {
+                        this.style.display = 'none';
+                        if (logoText) logoText.style.display = 'inline';
+                    };
+                    mainNavLogo.insertBefore(newImg, mainNavLogo.firstChild);
+                }
+                
+                if (logoText) {
+                    logoText.style.display = 'none';
+                }
+            } else {
+                // Show text, hide image
+                if (logoImg) {
+                    logoImg.style.display = 'none';
+                }
+                
+                const displayText = alt || 'AniFlix';
+                let logoHtml;
+                
+                if (displayText.toLowerCase().includes('aniflix')) {
+                    const aniIndex = displayText.toLowerCase().indexOf('ani');
+                    if (aniIndex !== -1) {
+                        const aniPart = displayText.substring(aniIndex, aniIndex + 3);
+                        const flixPart = displayText.substring(aniIndex + 3);
+                        logoHtml = `<span class="text-red-500">${aniPart}</span><span class="text-white">${flixPart}</span>`;
+                    } else {
+                        logoHtml = `<span class="text-white">${displayText}</span>`;
+                    }
+                } else {
+                    logoHtml = `<span class="text-white">${displayText}</span>`;
+                }
+                
+                if (logoText) {
+                    logoText.innerHTML = logoHtml;
+                    logoText.style.display = 'inline';
+                } else {
+                    // Create new text element
+                    const newText = document.createElement('span');
+                    newText.className = 'text-2xl font-bold text-red-500';
+                    newText.innerHTML = logoHtml;
+                    mainNavLogo.appendChild(newText);
+                }
+                
+                console.log('Professor Debug - Text logo updated with:', displayText);
+            }
+        }
+        
+        // Also update mobile navigation logo
+        const mobileNavLogo = document.querySelector('#mobile-navigation .text-2xl');
+        if (mobileNavLogo) {
+            if (!url || !url.trim() || url.length <= 10) {
+                const displayText = alt || 'AniFlix';
+                let logoHtml;
+                
+                if (displayText.toLowerCase().includes('aniflix')) {
+                    const aniIndex = displayText.toLowerCase().indexOf('ani');
+                    if (aniIndex !== -1) {
+                        const aniPart = displayText.substring(aniIndex, aniIndex + 3);
+                        const flixPart = displayText.substring(aniIndex + 3);
+                        logoHtml = `${aniPart}<span class="text-white">${flixPart}</span>`;
+                    } else {
+                        logoHtml = `<span class="text-white">${displayText}</span>`;
+                    }
+                } else {
+                    logoHtml = `<span class="text-white">${displayText}</span>`;
+                }
+                
+                mobileNavLogo.innerHTML = logoHtml;
+            }
+        }
+    };
+
     // Legacy elements for compatibility
     const logoUrl = document.getElementById('logo_url');
     const logoAlt = document.getElementById('logo_alt');
