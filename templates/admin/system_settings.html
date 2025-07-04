@@ -367,6 +367,8 @@
 <script>
 // Real-time System Settings JavaScript
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('System Settings page loaded - initializing real-time features');
+    
     // Show real-time status indicators
     updateSystemStatus();
     
@@ -426,6 +428,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const url = logoUrl.value.trim();
             const alt = logoAlt ? logoAlt.value.trim() : 'Logo';
             
+            console.log('Updating logo preview:', { url, alt });
+            
             if (url) {
                 // Show loading state
                 previewContainer.innerHTML = `
@@ -437,6 +441,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Create new image to test loading
                 const img = new Image();
                 img.onload = function() {
+                    console.log('Logo loaded successfully:', url);
                     previewContainer.innerHTML = `
                         <img src="${url}" alt="${alt}" 
                              id="logo-preview-image" 
@@ -449,16 +454,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 };
                 
                 img.onerror = function() {
+                    console.log('Logo failed to load:', url);
                     previewContainer.innerHTML = `
                         <div class="text-red-400 text-center">
                             <i class="fas fa-exclamation-triangle mr-2"></i>
                             <div class="text-sm">URL logo tidak valid</div>
                         </div>
                     `;
+                    // Still try to update navigation
+                    updateNavigationLogo('', alt);
                 };
                 
                 img.src = url;
             } else {
+                console.log('No logo URL provided, showing text fallback');
                 // Show text fallback
                 previewContainer.innerHTML = `
                     <span id="logo-preview-text" class="text-2xl font-bold">
@@ -471,18 +480,43 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         
-        // Real-time logo preview
+        // Real-time logo preview with immediate feedback
         logoUrl.addEventListener('input', function() {
+            console.log('Logo URL input detected:', logoUrl.value);
             clearTimeout(window.logoUpdateTimeout);
-            window.logoUpdateTimeout = setTimeout(updateLogoPreview, 500);
+            window.logoUpdateTimeout = setTimeout(updateLogoPreview, 300);
+        });
+        
+        logoUrl.addEventListener('keyup', function() {
+            console.log('Logo URL keyup detected:', logoUrl.value);
+            clearTimeout(window.logoUpdateTimeout);
+            window.logoUpdateTimeout = setTimeout(updateLogoPreview, 300);
         });
         
         if (logoAlt) {
             logoAlt.addEventListener('input', function() {
+                console.log('Logo Alt input detected:', logoAlt.value);
                 clearTimeout(window.logoUpdateTimeout);
-                window.logoUpdateTimeout = setTimeout(updateLogoPreview, 500);
+                window.logoUpdateTimeout = setTimeout(updateLogoPreview, 300);
             });
         }
+        
+        // Initialize preview on page load
+        console.log('Initializing logo preview...');
+        updateLogoPreview();
+        
+        // Add debug button for testing
+        const debugBtn = document.createElement('button');
+        debugBtn.type = 'button';
+        debugBtn.className = 'text-xs text-blue-400 hover:text-blue-300 mt-2';
+        debugBtn.textContent = '🔧 Test Real-time';
+        debugBtn.onclick = function() {
+            console.log('Testing real-time functionality...');
+            const testUrl = 'https://img.icons8.com/color/48/000000/video-playlist.png';
+            logoUrl.value = testUrl;
+            updateLogoPreview();
+        };
+        logoUrl.parentElement.appendChild(debugBtn);
         
         // Make updateLogoPreview accessible globally
         window.updateLogoPreview = updateLogoPreview;
@@ -494,10 +528,19 @@ document.addEventListener('DOMContentLoaded', function() {
     
     if (siteTitle) {
         siteTitle.addEventListener('input', function() {
+            console.log('Site title input detected:', siteTitle.value);
             clearTimeout(window.titleUpdateTimeout);
             window.titleUpdateTimeout = setTimeout(function() {
                 updateNavigationTitle(siteTitle.value);
-            }, 500);
+            }, 300);
+        });
+        
+        siteTitle.addEventListener('keyup', function() {
+            console.log('Site title keyup detected:', siteTitle.value);
+            clearTimeout(window.titleUpdateTimeout);
+            window.titleUpdateTimeout = setTimeout(function() {
+                updateNavigationTitle(siteTitle.value);
+            }, 300);
         });
     }
     
