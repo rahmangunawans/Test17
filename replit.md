@@ -83,9 +83,9 @@ AniFlix is a premium anime and movie streaming platform built with Flask. The ap
 - Webhook handling for subscription events
 
 ### Database
-- **Primary**: Supabase PostgreSQL with SSL connection
-- **Fallback**: Replit Database via DATABASE_URL
-- Connection pooling and timeout configuration
+- **Exclusive**: Supabase PostgreSQL with SSL connection
+- Configured for production use with connection pooling and timeout settings
+- No fallback mechanism - always uses Supabase as per user preference
 
 ### CDN and Assets
 - **Tailwind CSS**: Via CDN for styling
@@ -152,6 +152,9 @@ AniFlix is a premium anime and movie streaming platform built with Flask. The ap
 - July 04, 2025. Successfully migrated from Replit Agent to standard Replit environment: verified all packages are installed correctly, configured local PostgreSQL database with proper connection fallback, created system settings table with default values, disabled maintenance mode for normal operation, ensured full application functionality is preserved
 - July 04, 2025. Switched database configuration back to Supabase PostgreSQL per user request: updated app.py to prioritize Supabase connection, fixed indentation issues, application now using Supabase database but needs system settings table setup to disable maintenance mode
 - July 04, 2025. Configured application to use Supabase PostgreSQL database exclusively: application connects successfully to Supabase but requires database setup to create system_settings table and disable maintenance mode, password authentication working correctly
+- July 04, 2025. Permanently configured application to use Supabase database exclusively: removed all database fallback mechanisms per user preference, cleaned up maintenance/setup files (removed 9 redundant Python scripts), enhanced security by removing admin_bypass parameter, successfully disabled maintenance mode permanently
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
+Database preference: Always use Supabase PostgreSQL database exclusively - no fallback mechanisms.
+Code cleanliness: Remove redundant maintenance and setup scripts to keep codebase clean.
