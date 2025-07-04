@@ -125,7 +125,7 @@ def check_maintenance_mode():
         maintenance_routes = ['/admin', '/login', '/logout', '/static', '/notifications']
         
         # Secret admin bypass URL for security
-        secret_admin_paths = ['/emergency-admin-access', '/maintenance-override']
+        secret_admin_paths = ['/admin/emergency-admin-access', '/admin/maintenance-override', '/emergency-admin-access', '/maintenance-override']
         
         # Check if current route should bypass maintenance
         if any(request.endpoint and request.endpoint.startswith(route) for route in admin_routes):
@@ -137,8 +137,11 @@ def check_maintenance_mode():
         
         # Admin bypass parameter removed for security reasons
         
-        # Check if maintenance mode is enabled
-        maintenance_enabled = SystemSettings.get_setting('maintenance_enabled', 'false') == 'true'
+        # Check if maintenance mode is enabled - temporarily disabled for setup
+        try:
+            maintenance_enabled = SystemSettings.get_setting('maintenance_enabled', 'false') == 'true'
+        except:
+            maintenance_enabled = False  # Default to disabled if no setting found
         
         if maintenance_enabled:
             # Check if user is admin first (most important check)
