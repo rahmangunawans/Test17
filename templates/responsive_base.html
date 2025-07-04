@@ -306,6 +306,84 @@
             scroll-snap-align: start;
             flex-shrink: 0;
         }
+
+        /* Profile Page Styles */
+        .profile-avatar {
+            transition: all 0.3s ease;
+        }
+        
+        .profile-avatar:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 30px rgba(239, 68, 68, 0.3);
+        }
+        
+        .profile-card {
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+        
+        .profile-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+        
+        .profile-stat {
+            transition: all 0.2s ease;
+        }
+        
+        .profile-stat:hover {
+            background-color: rgba(239, 68, 68, 0.1);
+            border-color: rgba(239, 68, 68, 0.3);
+        }
+        
+        /* Edit Profile Form Styles */
+        .form-input {
+            transition: all 0.3s ease;
+        }
+        
+        .form-input:focus {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(239, 68, 68, 0.15);
+        }
+        
+        .form-section {
+            transition: all 0.3s ease;
+        }
+        
+        .form-section:hover {
+            transform: translateY(-2px);
+        }
+        
+        /* Enhanced Dropdown Menu */
+        .dropdown-menu {
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(75, 85, 99, 0.3);
+        }
+        
+        .dropdown-item {
+            transition: all 0.15s ease;
+        }
+        
+        .dropdown-item:hover {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(239, 68, 68, 0.05) 100%);
+            transform: translateX(5px);
+        }
+        
+        /* Notification styles */
+        .notification-toast {
+            animation: slideInRight 0.3s ease forwards;
+        }
+        
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
     </style>
 </head>
 
@@ -366,10 +444,47 @@
                                         <span class="text-sm font-medium text-white">{{ current_user.username[0].upper() }}</span>
                                     </div>
                                 </button>
-                                <div class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 focus:outline-none hidden" role="menu" aria-orientation="vertical" aria-labelledby="user-menu-button" tabindex="-1" id="user-menu">
-                                    <a href="{{ url_for('dashboard') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">Your Dashboard</a>
-                                    <a href="{{ url_for('subscription.subscription_page') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">Subscription</a>
-                                    <a href="{{ url_for('auth.logout') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">Sign out</a>
+                                <div class="origin-top-right absolute right-0 mt-2 w-56 rounded-xl shadow-2xl py-2 bg-gray-800 border border-gray-700 ring-1 ring-black ring-opacity-5 focus:outline-none hidden dropdown-menu" role="menu" aria-orientation="vertical" aria-labelledby="user-menu-button" tabindex="-1" id="user-menu">
+                                    <!-- User Info Header -->
+                                    <div class="px-4 py-3 border-b border-gray-700">
+                                        <p class="text-sm font-medium text-white">{{ current_user.username }}</p>
+                                        <p class="text-xs text-gray-400 truncate">{{ current_user.email }}</p>
+                                        {% if current_user.is_vip() %}
+                                        <span class="inline-block mt-1 px-2 py-1 text-xs bg-yellow-500 text-black rounded-full font-medium">
+                                            <i class="fas fa-crown mr-1"></i>VIP
+                                        </span>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <!-- Menu Items -->
+                                    <div class="py-1">
+                                        <a href="{{ url_for('profile') }}" class="flex items-center px-4 py-2 text-sm text-gray-200 hover:bg-gray-700 hover:text-white dropdown-item" role="menuitem">
+                                            <i class="fas fa-user-circle mr-3 text-red-400"></i>
+                                            View Profile
+                                        </a>
+                                        <a href="{{ url_for('dashboard') }}" class="flex items-center px-4 py-2 text-sm text-gray-200 hover:bg-gray-700 hover:text-white dropdown-item" role="menuitem">
+                                            <i class="fas fa-tachometer-alt mr-3 text-blue-400"></i>
+                                            Your Dashboard
+                                        </a>
+                                        <a href="{{ url_for('subscription.subscription_page') }}" class="flex items-center px-4 py-2 text-sm text-gray-200 hover:bg-gray-700 hover:text-white dropdown-item" role="menuitem">
+                                            <i class="fas fa-crown mr-3 text-yellow-400"></i>
+                                            Subscription
+                                        </a>
+                                        {% if current_user.is_admin() %}
+                                        <a href="{{ url_for('admin.admin_dashboard') }}" class="flex items-center px-4 py-2 text-sm text-gray-200 hover:bg-gray-700 hover:text-white dropdown-item" role="menuitem">
+                                            <i class="fas fa-cog mr-3 text-purple-400"></i>
+                                            Admin Panel
+                                        </a>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <!-- Logout -->
+                                    <div class="border-t border-gray-700 py-1">
+                                        <a href="{{ url_for('auth.logout') }}" class="flex items-center px-4 py-2 text-sm text-red-300 hover:bg-red-600 hover:text-white dropdown-item" role="menuitem">
+                                            <i class="fas fa-sign-out-alt mr-3"></i>
+                                            Sign out
+                                        </a>
+                                    </div>
                                 </div>
                             </div>
                         {% else %}
@@ -443,6 +558,11 @@
                         </a>
                         
                         {% if current_user.is_authenticated %}
+                            <a href="{{ url_for('profile') }}"
+                               class="flex items-center px-4 py-3 {% if request.endpoint == 'profile' or request.endpoint == 'edit_profile' %}text-white bg-red-600{% else %}text-gray-300 hover:text-white hover:bg-gray-800{% endif %} rounded-lg font-medium transition-all duration-200">
+                                <i class="fas fa-user-circle mr-3"></i>
+                                Profile
+                            </a>
                             <a href="{{ url_for('dashboard') }}"
                                class="flex items-center px-4 py-3 {% if request.endpoint == 'dashboard' %}text-white bg-red-600{% else %}text-gray-300 hover:text-white hover:bg-gray-800{% endif %} rounded-lg font-medium transition-all duration-200">
                                 <i class="fas fa-tachometer-alt mr-3"></i>

@@ -427,3 +427,76 @@ def remove_watch_history():
         db.session.rollback()
         logging.error(f"Error removing watch history: {e}")
         return jsonify({'success': False, 'message': 'Failed to remove from watch history'})
+
+@app.route('/profile')
+@login_required
+def profile():
+    """View user profile"""
+    return render_template('profile.html')
+
+@app.route('/profile/edit', methods=['GET', 'POST'])
+@login_required
+def edit_profile():
+    """Edit user profile"""
+    from models import User
+    from werkzeug.security import check_password_hash, generate_password_hash
+    
+    if request.method == 'POST':
+        try:
+            # Get form data
+            username = request.form.get('username', '').strip()
+            email = request.form.get('email', '').strip()
+            current_password = request.form.get('current_password', '')
+            new_password = request.form.get('new_password', '')
+            confirm_password = request.form.get('confirm_password', '')
+            
+            # Validation
+            if not username or not email:
+                return render_template('edit_profile.html', error='Username and email are required')
+            
+            # Check if username or email already exists (excluding current user)
+            existing_user_username = User.query.filter(
+                User.username == username, 
+                User.id != current_user.id
+            ).first()
+            
+            existing_user_email = User.query.filter(
+                User.email == email, 
+                User.id != current_user.id
+            ).first()
+            
+            if existing_user_username:
+                return render_template('edit_profile.html', error='Username already exists')
+            
+            if existing_user_email:
+                return render_template('edit_profile.html', error='Email already exists')
+            
+            # Update basic info
+            current_user.username = username
+            current_user.email = email
+            
+            # Handle password change
+            if new_password:
+                if not current_password:
+                    return render_template('edit_profile.html', error='Current password is required to change password')
+                
+                if not check_password_hash(current_user.password_hash, current_password):
+                    return render_template('edit_profile.html', error='Current password is incorrect')
+                
+                if new_password != confirm_password:
+                    return render_template('edit_profile.html', error='New passwords do not match')
+                
+                if len(new_password) < 6:
+                    return render_template('edit_profile.html', error='Password must be at least 6 characters')
+                
+                current_user.password_hash = generate_password_hash(new_password)
+            
+            db.session.commit()
+            return render_template('edit_profile.html', success='Profile updated successfully')
+            
+        except Exception as e:
+            db.session.rollback()
+            logging.error(f"Error updating profile: {e}")
+            return render_template('edit_profile.html', error='Failed to update profile')
+    
+    return render_template('edit_profile.html')
