@@ -486,14 +486,25 @@ document.addEventListener('DOMContentLoaded', function() {
                 img.src = url;
             } else {
                 console.log('No valid logo URL provided, showing text fallback');
-                // Show text fallback with alt text
-                const displayText = alt && alt !== 'Logo' ? alt : 'AniFlix';
+                // Show text fallback with alt text that updates in real-time
+                const displayText = alt && alt !== 'Logo' && alt.trim() !== '' ? alt.trim() : 'AniFlix';
+                
+                // Create dynamic text logo based on alt text
+                let logoHtml;
+                if (displayText.toLowerCase().includes('aniflix')) {
+                    logoHtml = `<span class="text-red-500">Ani</span><span class="text-white">Flix</span>`;
+                } else {
+                    logoHtml = `<span class="text-white">${displayText}</span>`;
+                }
+                
                 previewContainer.innerHTML = `
                     <span id="logo-preview-text" class="text-2xl font-bold transition-all duration-300">
-                        <span class="text-red-500">Ani</span><span class="text-white">Flix</span>
+                        ${logoHtml}
                     </span>
                     <div class="text-xs text-gray-400 mt-1">Text logo: ${displayText}</div>
                 `;
+                
+                console.log('Updated text logo with alt text:', displayText);
             }
         }
         
