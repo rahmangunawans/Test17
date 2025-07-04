@@ -497,32 +497,31 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         
-        // Real-time logo preview with immediate feedback
+        // Real-time logo preview with immediate response
         logoUrl.addEventListener('input', function(e) {
             console.log('Logo URL input detected:', e.target.value);
-            clearTimeout(window.logoUpdateTimeout);
-            window.logoUpdateTimeout = setTimeout(updateLogoPreview, 200);
+            updateLogoPreview();
         });
         
         logoUrl.addEventListener('keyup', function(e) {
             console.log('Logo URL keyup detected:', e.target.value);
-            clearTimeout(window.logoUpdateTimeout);
-            window.logoUpdateTimeout = setTimeout(updateLogoPreview, 200);
+            updateLogoPreview();
         });
         
         logoUrl.addEventListener('paste', function(e) {
             console.log('Logo URL paste detected');
-            setTimeout(function() {
-                console.log('After paste value:', logoUrl.value);
-                updateLogoPreview();
-            }, 50);
+            setTimeout(updateLogoPreview, 100);
         });
         
         if (logoAlt) {
             logoAlt.addEventListener('input', function() {
                 console.log('Logo Alt input detected:', logoAlt.value);
-                clearTimeout(window.logoUpdateTimeout);
-                window.logoUpdateTimeout = setTimeout(updateLogoPreview, 300);
+                updateLogoPreview();
+            });
+            
+            logoAlt.addEventListener('keyup', function() {
+                console.log('Logo Alt keyup detected:', logoAlt.value);
+                updateLogoPreview();
             });
         }
         
