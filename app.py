@@ -28,25 +28,18 @@ app.secret_key = os.environ.get("SESSION_SECRET") or "dev-secret-key-aniflix-202
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0  # Disable caching for development
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
-# Configure the database - use Supabase PostgreSQL as per user preference
-# Try to get the correct Supabase password from environment or use stored one
-supabase_password = os.environ.get("SUPABASE_PASSWORD") or "FpBcsaV9sOVXVZHsI4AkZsJDCBUDKFXDhgJEYXGZBTIWPRWXBZNMZBXJWUKZOYHBQHKJOFKQPGKUHJZUIKJIKJFGDRTYUP"
-
-# If Supabase password is not available, use fallback database
-if not supabase_password or supabase_password == "FpBcsaV9sOVXVZHsI4AkZsJDCBUDKFXDhgJEYXGZBTIWPRWXBZNMZBXJWUKZOYHBQHKJOFKQPGKUHJZUIKJIKJFGDRTYUP":
-    # Use fallback database since Supabase password is not correct
-    database_url = os.environ.get("DATABASE_URL")
-    if database_url:
-        app.config["SQLALCHEMY_DATABASE_URI"] = database_url
-        app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
-            "pool_recycle": 300,
-            "pool_pre_ping": True,
-        }
-        logging.info("Using fallback PostgreSQL database (Supabase password not available)")
-    else:
-        raise Exception("No database configuration found!")
+# Configure the database - prioritize local PostgreSQL database for migration
+database_url = os.environ.get("DATABASE_URL")
+if database_url:
+    app.config["SQLALCHEMY_DATABASE_URI"] = database_url
+    app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
+        "pool_recycle": 300,
+        "pool_pre_ping": True,
+    }
+    logging.info(f"Using local PostgreSQL database with URL: {database_url}")
 else:
-    # Use Supabase with correct password
+    # Fallback to Supabase if local database not available
+    supabase_password = os.environ.get("SUPABASE_PASSWORD") or "FpBcsaV9sOVXVZHsI4AkZsJDCBUDKFXDhgJEYXGZBTIWPRWXBZNMZBXJWUKZOYHBQHKJOFKQPGKUHJZUIKJIKJFGDRTYUP"
     supabase_url = f"postgresql://postgres.heotmyzuxabzfobirhnm:{supabase_password}@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres"
     app.config["SQLALCHEMY_DATABASE_URI"] = supabase_url
     app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
