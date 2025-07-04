@@ -1,0 +1,219 @@
+{% extends "responsive_base.html" %}
+
+{% block title %}System Settings - Admin - AniFlix{% endblock %}
+
+{% block head %}
+<style>
+.system-settings-container {
+    min-height: calc(100vh + 100px);
+}
+
+.setting-card {
+    transition: all 0.3s ease;
+}
+
+.setting-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+}
+
+.action-button {
+    transition: all 0.3s ease;
+}
+
+.action-button:hover {
+    transform: scale(1.05);
+}
+
+.stat-card {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    border: 1px solid #2d3748;
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+    border-color: #e94560;
+    transform: translateY(-3px);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="bg-gray-900 pt-24 pb-8 system-settings-container">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold text-white mb-2">System Settings</h1>
+                    <p class="text-gray-400">Manage and configure system-wide settings</p>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span class="bg-green-600 text-white px-3 py-1 rounded-full text-sm">
+                        <i class="fas fa-database mr-1"></i>
+                        {{ database_info.status }}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- System Statistics -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="stat-card rounded-lg p-6 text-center">
+                <div class="text-3xl font-bold text-blue-400 mb-2">{{ total_users }}</div>
+                <div class="text-gray-300 text-sm">Total Users</div>
+            </div>
+            <div class="stat-card rounded-lg p-6 text-center">
+                <div class="text-3xl font-bold text-green-400 mb-2">{{ total_content }}</div>
+                <div class="text-gray-300 text-sm">Total Content</div>
+            </div>
+            <div class="stat-card rounded-lg p-6 text-center">
+                <div class="text-3xl font-bold text-purple-400 mb-2">{{ total_episodes }}</div>
+                <div class="text-gray-300 text-sm">Total Episodes</div>
+            </div>
+            <div class="stat-card rounded-lg p-6 text-center">
+                <div class="text-3xl font-bold text-yellow-400 mb-2">{{ vip_users }}</div>
+                <div class="text-gray-300 text-sm">VIP Users</div>
+            </div>
+        </div>
+
+        <!-- System Information -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <!-- Database Information -->
+            <div class="setting-card bg-gray-800 rounded-lg p-6">
+                <h3 class="text-xl font-semibold text-white mb-4">
+                    <i class="fas fa-database text-blue-400 mr-2"></i>
+                    Database Information
+                </h3>
+                <div class="space-y-3">
+                    <div class="flex justify-between">
+                        <span class="text-gray-300">Engine:</span>
+                        <span class="text-white font-medium">{{ database_info.engine }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-300">Host:</span>
+                        <span class="text-white font-medium">{{ database_info.host }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-300">Status:</span>
+                        <span class="text-green-400 font-medium">{{ database_info.status }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-300">Notifications:</span>
+                        <span class="text-white font-medium">{{ total_notifications }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- System Actions -->
+            <div class="setting-card bg-gray-800 rounded-lg p-6">
+                <h3 class="text-xl font-semibold text-white mb-4">
+                    <i class="fas fa-tools text-orange-400 mr-2"></i>
+                    System Actions
+                </h3>
+                <div class="space-y-4">
+                    <form action="{{ url_for('admin.update_system_settings') }}" method="POST" class="inline">
+                        <input type="hidden" name="action" value="cleanup_notifications">
+                        <button type="submit" class="action-button w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
+                            <i class="fas fa-broom mr-2"></i>
+                            Cleanup Old Notifications
+                        </button>
+                    </form>
+                    
+                    <form action="{{ url_for('admin.update_system_settings') }}" method="POST" class="inline">
+                        <input type="hidden" name="action" value="optimize_database">
+                        <button type="submit" class="action-button w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
+                            <i class="fas fa-tachometer-alt mr-2"></i>
+                            Optimize Database
+                        </button>
+                    </form>
+                    
+                    <form action="{{ url_for('admin.update_system_settings') }}" method="POST" class="inline">
+                        <input type="hidden" name="action" value="reset_demo_data">
+                        <button type="submit" class="action-button w-full bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
+                            <i class="fas fa-refresh mr-2"></i>
+                            Reset Demo Data
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Recent Content -->
+            <div class="setting-card bg-gray-800 rounded-lg p-6">
+                <h3 class="text-xl font-semibold text-white mb-4">
+                    <i class="fas fa-film text-red-400 mr-2"></i>
+                    Recent Content
+                </h3>
+                <div class="space-y-3">
+                    {% for content in recent_content %}
+                    <div class="flex items-center justify-between py-2 border-b border-gray-700 last:border-b-0">
+                        <div>
+                            <div class="text-white font-medium">{{ content.title }}</div>
+                            <div class="text-gray-400 text-sm">{{ content.genre or 'Unknown' }}</div>
+                        </div>
+                        <div class="text-gray-400 text-sm">
+                            {{ content.created_at.strftime('%d/%m/%Y') }}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Recent Users -->
+            <div class="setting-card bg-gray-800 rounded-lg p-6">
+                <h3 class="text-xl font-semibold text-white mb-4">
+                    <i class="fas fa-users text-green-400 mr-2"></i>
+                    Recent Users
+                </h3>
+                <div class="space-y-3">
+                    {% for user in recent_users %}
+                    <div class="flex items-center justify-between py-2 border-b border-gray-700 last:border-b-0">
+                        <div>
+                            <div class="text-white font-medium">{{ user.username }}</div>
+                            <div class="text-gray-400 text-sm">{{ user.email }}</div>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            {% if user.is_vip() %}
+                            <span class="bg-yellow-600 text-white text-xs px-2 py-1 rounded">VIP</span>
+                            {% endif %}
+                            <div class="text-gray-400 text-sm">
+                                {{ user.created_at.strftime('%d/%m/%Y') }}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Admin Quick Actions -->
+        <div class="mt-8 bg-gray-800 rounded-lg p-6">
+            <h3 class="text-xl font-semibold text-white mb-4">
+                <i class="fas fa-bolt text-yellow-400 mr-2"></i>
+                Quick Actions
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <a href="{{ url_for('admin.admin_users') }}" class="action-button bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg text-center font-medium">
+                    <i class="fas fa-users mr-2"></i>
+                    Manage Users
+                </a>
+                <a href="{{ url_for('admin.admin_content') }}" class="action-button bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded-lg text-center font-medium">
+                    <i class="fas fa-film mr-2"></i>
+                    Manage Content
+                </a>
+                <a href="{{ url_for('admin.admin_notifications') }}" class="action-button bg-purple-600 hover:bg-purple-700 text-white px-4 py-3 rounded-lg text-center font-medium">
+                    <i class="fas fa-bell mr-2"></i>
+                    Notifications
+                </a>
+                <a href="{{ url_for('admin.admin_analytics') }}" class="action-button bg-orange-600 hover:bg-orange-700 text-white px-4 py-3 rounded-lg text-center font-medium">
+                    <i class="fas fa-chart-bar mr-2"></i>
+                    Analytics
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

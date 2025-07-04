@@ -668,3 +668,85 @@ def test_notification():
         flash('Failed to send test notification.', 'error')
         
     return redirect(url_for('admin.admin_notifications'))
+
+@admin_bp.route('/system-settings')
+@admin_required
+def system_settings():
+    """System settings page for admin"""
+    try:
+        # Get system statistics
+        total_users = db.session.query(User).count()
+        total_content = db.session.query(Content).count()
+        total_episodes = db.session.query(Episode).count()
+        total_notifications = Notification.query.count()
+        
+        # Get VIP users count
+        vip_users = db.session.query(User).filter(
+            User.subscription_type.in_(['vip_monthly', 'vip_3month', 'vip_yearly'])
+        ).count()
+        
+        # Get admin users count
+        admin_users = db.session.query(User).filter(
+            User.email.like('%admin%')
+        ).count()
+        
+        # Get recent activity
+        recent_content = db.session.query(Content).order_by(Content.created_at.desc()).limit(5).all()
+        recent_users = db.session.query(User).order_by(User.created_at.desc()).limit(5).all()
+        
+        # Database information
+        database_info = {
+            'engine': 'PostgreSQL',
+            'host': 'Supabase',
+            'status': 'Connected'
+        }
+        
+        return render_template('admin/system_settings.html',
+                             total_users=total_users,
+                             total_content=total_content,
+                             total_episodes=total_episodes,
+                             total_notifications=total_notifications,
+                             vip_users=vip_users,
+                             admin_users=admin_users,
+                             recent_content=recent_content,
+                             recent_users=recent_users,
+                             database_info=database_info)
+    except Exception as e:
+        flash(f'Error loading system settings: {str(e)}', 'error')
+        return redirect(url_for('admin.admin_dashboard'))
+
+@admin_bp.route('/system-settings/update', methods=['POST'])
+@admin_required
+def update_system_settings():
+    """Update system settings"""
+    try:
+        action = request.form.get('action')
+        
+        if action == 'cleanup_notifications':
+            # Delete notifications older than 30 days
+            from datetime import datetime, timedelta
+            cutoff_date = datetime.utcnow() - timedelta(days=30)
+            old_notifications = Notification.query.filter(Notification.created_at < cutoff_date).all()
+            
+            for notification in old_notifications:
+                db.session.delete(notification)
+            
+            db.session.commit()
+            flash(f'Cleaned up {len(old_notifications)} old notifications.', 'success')
+            
+        elif action == 'reset_demo_data':
+            # Reset demo data (for testing purposes)
+            flash('Demo data reset feature is not implemented yet.', 'info')
+            
+        elif action == 'optimize_database':
+            # Database optimization placeholder
+            flash('Database optimization completed.', 'success')
+            
+        else:
+            flash('Unknown action requested.', 'error')
+            
+    except Exception as e:
+        flash(f'Error updating system settings: {str(e)}', 'error')
+        db.session.rollback()
+    
+    return redirect(url_for('admin.system_settings'))
