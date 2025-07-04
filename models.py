@@ -142,3 +142,44 @@ class NotificationRead(db.Model):
     def __init__(self, user_id, notification_id):
         self.user_id = user_id
         self.notification_id = notification_id
+
+
+class SystemSettings(db.Model):
+    """System-wide settings for the application"""
+    id = db.Column(db.Integer, primary_key=True)
+    setting_key = db.Column(db.String(100), unique=True, nullable=False)
+    setting_value = db.Column(db.Text)
+    setting_type = db.Column(db.String(20), default='text')  # text, boolean, url, file
+    description = db.Column(db.String(255))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    def __repr__(self):
+        return f'<SystemSettings {self.setting_key}: {self.setting_value}>'
+    
+    @staticmethod
+    def get_setting(key, default=None):
+        """Get a system setting value"""
+        setting = SystemSettings.query.filter_by(setting_key=key).first()
+        return setting.setting_value if setting else default
+    
+    @staticmethod
+    def set_setting(key, value, setting_type='text', description=None):
+        """Set a system setting value"""
+        setting = SystemSettings.query.filter_by(setting_key=key).first()
+        if setting:
+            setting.setting_value = value
+            setting.setting_type = setting_type
+            if description:
+                setting.description = description
+            setting.updated_at = datetime.utcnow()
+        else:
+            setting = SystemSettings(
+                setting_key=key,
+                setting_value=value,
+                setting_type=setting_type,
+                description=description
+            )
+            db.session.add(setting)
+        db.session.commit()
+        return setting

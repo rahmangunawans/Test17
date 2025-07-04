@@ -77,12 +77,126 @@
             </div>
         </div>
 
-        <!-- System Information -->
+        <!-- System Configuration -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <!-- Maintenance Settings -->
+            <div class="setting-card bg-gray-800 rounded-lg p-6">
+                <h3 class="text-xl font-semibold text-white mb-4">
+                    <i class="fas fa-exclamation-triangle text-yellow-400 mr-2"></i>
+                    Maintenance Settings
+                </h3>
+                <form action="{{ url_for('admin.update_system_settings') }}" method="POST" class="space-y-4">
+                    <input type="hidden" name="action" value="update_maintenance">
+                    
+                    <div class="flex items-center space-x-3">
+                        <input type="checkbox" name="maintenance_enabled" id="maintenance_enabled" 
+                               {% if maintenance_enabled %}checked{% endif %}
+                               class="w-4 h-4 text-red-600 bg-gray-700 border-gray-600 rounded focus:ring-red-500">
+                        <label for="maintenance_enabled" class="text-gray-300">Enable Maintenance Mode</label>
+                    </div>
+                    
+                    <div>
+                        <label for="maintenance_message" class="block text-sm font-medium text-gray-300 mb-2">
+                            Maintenance Message
+                        </label>
+                        <textarea name="maintenance_message" id="maintenance_message" rows="4" 
+                                  class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                                  placeholder="Enter maintenance message displayed to users...">{{ maintenance_message }}</textarea>
+                    </div>
+                    
+                    <button type="submit" class="action-button w-full bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
+                        <i class="fas fa-save mr-2"></i>
+                        Update Maintenance Settings
+                    </button>
+                </form>
+            </div>
+
+            <!-- Logo Settings -->
+            <div class="setting-card bg-gray-800 rounded-lg p-6">
+                <h3 class="text-xl font-semibold text-white mb-4">
+                    <i class="fas fa-image text-purple-400 mr-2"></i>
+                    Logo Settings
+                </h3>
+                <form action="{{ url_for('admin.update_system_settings') }}" method="POST" class="space-y-4">
+                    <input type="hidden" name="action" value="update_logo">
+                    
+                    <div>
+                        <label for="logo_url" class="block text-sm font-medium text-gray-300 mb-2">
+                            Logo URL
+                        </label>
+                        <input type="url" name="logo_url" id="logo_url" 
+                               value="{{ site_logo_url }}"
+                               class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                               placeholder="https://example.com/logo.png">
+                    </div>
+                    
+                    <div>
+                        <label for="logo_alt" class="block text-sm font-medium text-gray-300 mb-2">
+                            Logo Alt Text
+                        </label>
+                        <input type="text" name="logo_alt" id="logo_alt" 
+                               value="{{ site_logo_alt }}"
+                               class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                               placeholder="AniFlix">
+                    </div>
+                    
+                    {% if site_logo_url %}
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Current Logo Preview</label>
+                        <img src="{{ site_logo_url }}" alt="{{ site_logo_alt }}" 
+                             class="h-12 w-auto rounded border border-gray-600">
+                    </div>
+                    {% endif %}
+                    
+                    <button type="submit" class="action-button w-full bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
+                        <i class="fas fa-save mr-2"></i>
+                        Update Logo Settings
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Site Information -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <!-- Site Info Settings -->
+            <div class="setting-card bg-gray-800 rounded-lg p-6">
+                <h3 class="text-xl font-semibold text-white mb-4">
+                    <i class="fas fa-info-circle text-blue-400 mr-2"></i>
+                    Site Information
+                </h3>
+                <form action="{{ url_for('admin.update_system_settings') }}" method="POST" class="space-y-4">
+                    <input type="hidden" name="action" value="update_site_info">
+                    
+                    <div>
+                        <label for="site_title" class="block text-sm font-medium text-gray-300 mb-2">
+                            Site Title
+                        </label>
+                        <input type="text" name="site_title" id="site_title" 
+                               value="{{ site_title }}"
+                               class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                               placeholder="AniFlix">
+                    </div>
+                    
+                    <div>
+                        <label for="site_description" class="block text-sm font-medium text-gray-300 mb-2">
+                            Site Description
+                        </label>
+                        <textarea name="site_description" id="site_description" rows="3" 
+                                  class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                  placeholder="Your premium anime and movie streaming platform...">{{ site_description }}</textarea>
+                    </div>
+                    
+                    <button type="submit" class="action-button w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
+                        <i class="fas fa-save mr-2"></i>
+                        Update Site Info
+                    </button>
+                </form>
+            </div>
+
             <!-- Database Information -->
             <div class="setting-card bg-gray-800 rounded-lg p-6">
                 <h3 class="text-xl font-semibold text-white mb-4">
-                    <i class="fas fa-database text-blue-400 mr-2"></i>
+                    <i class="fas fa-database text-green-400 mr-2"></i>
                     Database Information
                 </h3>
                 <div class="space-y-3">
@@ -104,38 +218,38 @@
                     </div>
                 </div>
             </div>
+        </div>
 
-            <!-- System Actions -->
-            <div class="setting-card bg-gray-800 rounded-lg p-6">
-                <h3 class="text-xl font-semibold text-white mb-4">
-                    <i class="fas fa-tools text-orange-400 mr-2"></i>
-                    System Actions
-                </h3>
-                <div class="space-y-4">
-                    <form action="{{ url_for('admin.update_system_settings') }}" method="POST" class="inline">
-                        <input type="hidden" name="action" value="cleanup_notifications">
-                        <button type="submit" class="action-button w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
-                            <i class="fas fa-broom mr-2"></i>
-                            Cleanup Old Notifications
-                        </button>
-                    </form>
-                    
-                    <form action="{{ url_for('admin.update_system_settings') }}" method="POST" class="inline">
-                        <input type="hidden" name="action" value="optimize_database">
-                        <button type="submit" class="action-button w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
-                            <i class="fas fa-tachometer-alt mr-2"></i>
-                            Optimize Database
-                        </button>
-                    </form>
-                    
-                    <form action="{{ url_for('admin.update_system_settings') }}" method="POST" class="inline">
-                        <input type="hidden" name="action" value="reset_demo_data">
-                        <button type="submit" class="action-button w-full bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
-                            <i class="fas fa-refresh mr-2"></i>
-                            Reset Demo Data
-                        </button>
-                    </form>
-                </div>
+        <!-- System Actions -->
+        <div class="setting-card bg-gray-800 rounded-lg p-6 mb-8">
+            <h3 class="text-xl font-semibold text-white mb-4">
+                <i class="fas fa-tools text-orange-400 mr-2"></i>
+                System Maintenance
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <form action="{{ url_for('admin.update_system_settings') }}" method="POST" class="inline">
+                    <input type="hidden" name="action" value="cleanup_notifications">
+                    <button type="submit" class="action-button w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
+                        <i class="fas fa-broom mr-2"></i>
+                        Cleanup Old Notifications
+                    </button>
+                </form>
+                
+                <form action="{{ url_for('admin.update_system_settings') }}" method="POST" class="inline">
+                    <input type="hidden" name="action" value="optimize_database">
+                    <button type="submit" class="action-button w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
+                        <i class="fas fa-tachometer-alt mr-2"></i>
+                        Optimize Database
+                    </button>
+                </form>
+                
+                <form action="{{ url_for('admin.update_system_settings') }}" method="POST" class="inline">
+                    <input type="hidden" name="action" value="reset_demo_data">
+                    <button type="submit" class="action-button w-full bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
+                        <i class="fas fa-refresh mr-2"></i>
+                        Reset Demo Data
+                    </button>
+                </form>
             </div>
         </div>
 

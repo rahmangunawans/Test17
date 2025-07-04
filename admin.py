@@ -701,6 +701,15 @@ def system_settings():
             'status': 'Connected'
         }
         
+        # Get current system settings
+        from models import SystemSettings
+        maintenance_enabled = SystemSettings.get_setting('maintenance_enabled', 'false') == 'true'
+        maintenance_message = SystemSettings.get_setting('maintenance_message', '')
+        site_logo_url = SystemSettings.get_setting('site_logo_url', '')
+        site_logo_alt = SystemSettings.get_setting('site_logo_alt', 'AniFlix')
+        site_title = SystemSettings.get_setting('site_title', 'AniFlix')
+        site_description = SystemSettings.get_setting('site_description', '')
+        
         return render_template('admin/system_settings.html',
                              total_users=total_users,
                              total_content=total_content,
@@ -710,7 +719,13 @@ def system_settings():
                              admin_users=admin_users,
                              recent_content=recent_content,
                              recent_users=recent_users,
-                             database_info=database_info)
+                             database_info=database_info,
+                             maintenance_enabled=maintenance_enabled,
+                             maintenance_message=maintenance_message,
+                             site_logo_url=site_logo_url,
+                             site_logo_alt=site_logo_alt,
+                             site_title=site_title,
+                             site_description=site_description)
     except Exception as e:
         flash(f'Error loading system settings: {str(e)}', 'error')
         return redirect(url_for('admin.admin_dashboard'))
@@ -741,6 +756,45 @@ def update_system_settings():
         elif action == 'optimize_database':
             # Database optimization placeholder
             flash('Database optimization completed.', 'success')
+            
+        elif action == 'update_maintenance':
+            # Update maintenance message settings
+            maintenance_enabled = request.form.get('maintenance_enabled') == 'on'
+            maintenance_message = request.form.get('maintenance_message', '').strip()
+            
+            from models import SystemSettings
+            SystemSettings.set_setting('maintenance_enabled', 'true' if maintenance_enabled else 'false', 
+                                     'boolean', 'Enable or disable maintenance mode')
+            SystemSettings.set_setting('maintenance_message', maintenance_message, 
+                                     'text', 'Message displayed during maintenance mode')
+            
+            flash('Maintenance settings updated successfully.', 'success')
+            
+        elif action == 'update_logo':
+            # Update logo settings
+            logo_url = request.form.get('logo_url', '').strip()
+            logo_alt = request.form.get('logo_alt', 'AniFlix').strip()
+            
+            from models import SystemSettings
+            SystemSettings.set_setting('site_logo_url', logo_url, 
+                                     'url', 'URL for the site logo')
+            SystemSettings.set_setting('site_logo_alt', logo_alt, 
+                                     'text', 'Alt text for the site logo')
+            
+            flash('Logo settings updated successfully.', 'success')
+            
+        elif action == 'update_site_info':
+            # Update site information
+            site_title = request.form.get('site_title', 'AniFlix').strip()
+            site_description = request.form.get('site_description', '').strip()
+            
+            from models import SystemSettings
+            SystemSettings.set_setting('site_title', site_title, 
+                                     'text', 'Site title displayed in browser')
+            SystemSettings.set_setting('site_description', site_description, 
+                                     'text', 'Site description for SEO')
+            
+            flash('Site information updated successfully.', 'success')
             
         else:
             flash('Unknown action requested.', 'error')
