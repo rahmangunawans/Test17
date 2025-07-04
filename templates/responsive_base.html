@@ -1173,6 +1173,93 @@
             } else {
                 console.log('Using text fallback: AniFlix');
             }
+            
+            // Listen for logo updates from System Settings via localStorage
+            function updateLogoFromStorage() {
+                const newLogoText = localStorage.getItem('currentLogoText');
+                const newLogoUrl = localStorage.getItem('currentLogoUrl');
+                const updateTime = localStorage.getItem('logoUpdateTime');
+                
+                if (newLogoText && updateTime) {
+                    const timeDiff = Date.now() - parseInt(updateTime);
+                    // Only apply if update was recent (within 5 seconds)
+                    if (timeDiff < 5000) {
+                        console.log('🔄 Received logo update from localStorage:', newLogoText);
+                        applyLogoUpdate(newLogoUrl, newLogoText);
+                    }
+                }
+            }
+            
+            // Function to apply logo update to current page
+            function applyLogoUpdate(url, text) {
+                const displayText = text || 'AniFlix';
+                console.log('🎯 Applying logo update on main page:', displayText);
+                
+                // Find all navigation logo elements and update them
+                const selectors = [
+                    'nav span.text-2xl',
+                    '.flex-shrink-0 span',
+                    '#main-nav-logo span',
+                    '#mobile-nav-logo',
+                    'nav a span',
+                    '.text-red-500'
+                ];
+                
+                let updated = 0;
+                selectors.forEach(selector => {
+                    const elements = document.querySelectorAll(selector);
+                    elements.forEach(element => {
+                        const currentText = element.textContent || '';
+                        // Only update if it looks like a logo (contains "Ani" or "Flix" or is short)
+                        if (currentText.includes('Ani') || currentText.includes('Flix') || currentText.length < 15) {
+                            let logoHtml;
+                            if (displayText.toLowerCase().includes('aniflix')) {
+                                const aniIndex = displayText.toLowerCase().indexOf('ani');
+                                if (aniIndex !== -1) {
+                                    const aniPart = displayText.substring(aniIndex, aniIndex + 3);
+                                    const flixPart = displayText.substring(aniIndex + 3);
+                                    logoHtml = `<span class="text-red-500">${aniPart}</span><span class="text-white">${flixPart}</span>`;
+                                } else {
+                                    logoHtml = `<span class="text-white">${displayText}</span>`;
+                                }
+                            } else {
+                                logoHtml = `<span class="text-white">${displayText}</span>`;
+                            }
+                            
+                            element.innerHTML = logoHtml;
+                            updated++;
+                            console.log('✅ Updated logo element:', selector);
+                        }
+                    });
+                });
+                
+                console.log(`🏁 Logo update complete: ${updated} elements updated to "${displayText}"`);
+            }
+            
+            // Listen for storage events
+            window.addEventListener('storage', function(e) {
+                if (e.key === 'currentLogoText') {
+                    console.log('📡 Received storage event for logo update');
+                    updateLogoFromStorage();
+                }
+            });
+            
+            // Listen for custom events
+            window.addEventListener('logoUpdate', function(e) {
+                console.log('📡 Received custom logo update event:', e.detail);
+                applyLogoUpdate(e.detail.url, e.detail.text);
+            });
+            
+            // Listen for messages from iframe/child windows
+            window.addEventListener('message', function(e) {
+                if (e.data && e.data.type === 'UPDATE_LOGO') {
+                    console.log('📡 Received logo update message:', e.data);
+                    applyLogoUpdate(e.data.logoUrl, e.data.logoText);
+                }
+            });
+            
+            // Check for existing logo update on page load
+            updateLogoFromStorage();
         });
     </script>
 

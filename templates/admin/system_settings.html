@@ -515,126 +515,117 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
     
-    // Simplified and robust function to update navigation logo in real-time
+    // Ultimate robust function to update navigation logo in real-time
     window.updateNavigationLogo = function(url, alt) {
-        console.log('🔧 Professor - Updating ALL logos - URL:', url, 'Alt:', alt);
-        
         const displayText = alt || 'AniFlix';
+        console.log('🔧 Professor ULTIMATE - Updating logo to:', displayText);
         
-        // Strategy 1: Update all possible navigation text elements directly
-        const navTextSelectors = [
-            '#main-nav-logo span',
+        // Strategy 1: Direct DOM manipulation - find and replace all navigation logos
+        function updateElement(element, newText) {
+            if (!element) return false;
+            
+            let logoHtml;
+            if (newText.toLowerCase().includes('aniflix')) {
+                const aniIndex = newText.toLowerCase().indexOf('ani');
+                if (aniIndex !== -1) {
+                    const aniPart = newText.substring(aniIndex, aniIndex + 3);
+                    const flixPart = newText.substring(aniIndex + 3);
+                    logoHtml = `<span class="text-red-500">${aniPart}</span><span class="text-white">${flixPart}</span>`;
+                } else {
+                    logoHtml = `<span class="text-white">${newText}</span>`;
+                }
+            } else {
+                logoHtml = `<span class="text-white">${newText}</span>`;
+            }
+            
+            element.innerHTML = logoHtml;
+            console.log('✅ Updated element:', element.tagName, element.className);
+            return true;
+        }
+        
+        // Find all possible logo elements and update them
+        const selectors = [
+            'nav span.text-2xl',
             '.flex-shrink-0 span',
-            'nav .text-2xl',
-            '#mobile-nav-logo'
+            '#main-nav-logo span',
+            '#mobile-nav-logo',
+            'nav a span',
+            '.text-red-500'
         ];
         
-        navTextSelectors.forEach(selector => {
+        let updated = 0;
+        selectors.forEach(selector => {
             const elements = document.querySelectorAll(selector);
             elements.forEach(element => {
-                if (element) {
-                    let logoHtml;
-                    if (displayText.toLowerCase().includes('aniflix')) {
-                        const aniIndex = displayText.toLowerCase().indexOf('ani');
-                        if (aniIndex !== -1) {
-                            const aniPart = displayText.substring(aniIndex, aniIndex + 3);
-                            const flixPart = displayText.substring(aniIndex + 3);
-                            logoHtml = `<span class="text-red-500">${aniPart}</span><span class="text-white">${flixPart}</span>`;
-                        } else {
-                            logoHtml = `<span class="text-white">${displayText}</span>`;
-                        }
-                    } else {
-                        logoHtml = `<span class="text-white">${displayText}</span>`;
+                const text = element.textContent || '';
+                // Only update if it looks like a logo (contains "Ani" or "Flix" or is short)
+                if (text.includes('Ani') || text.includes('Flix') || text.length < 15) {
+                    if (updateElement(element, displayText)) {
+                        updated++;
                     }
-                    
-                    element.innerHTML = logoHtml;
-                    console.log('✅ Updated element with selector:', selector);
                 }
             });
         });
         
-        // Strategy 2: Force update by finding and replacing any "AniFlix" text
-        const allElements = document.querySelectorAll('*');
-        allElements.forEach(element => {
-            if (element.children.length === 0) { // Only text nodes
-                const text = element.textContent;
-                if (text && (text.includes('AniFlix') || text.includes('Ani') || text.includes('Flix'))) {
-                    // Check if this is likely a logo element
-                    const isLogo = element.closest('nav') || 
-                                  element.closest('.flex-shrink-0') ||
-                                  element.classList.contains('text-2xl') ||
-                                  element.id === 'mobile-nav-logo';
-                    
-                    if (isLogo) {
-                        let logoHtml;
-                        if (displayText.toLowerCase().includes('aniflix')) {
-                            const aniIndex = displayText.toLowerCase().indexOf('ani');
-                            if (aniIndex !== -1) {
-                                const aniPart = displayText.substring(aniIndex, aniIndex + 3);
-                                const flixPart = displayText.substring(aniIndex + 3);
-                                logoHtml = `<span class="text-red-500">${aniPart}</span><span class="text-white">${flixPart}</span>`;
-                            } else {
-                                logoHtml = `<span class="text-white">${displayText}</span>`;
-                            }
-                        } else {
-                            logoHtml = `<span class="text-white">${displayText}</span>`;
-                        }
-                        
-                        element.innerHTML = logoHtml;
-                        console.log('🎯 Force updated logo element:', element);
-                    }
-                }
-            }
-        });
-        
-        // Strategy 3: Update based on parent container
-        const logoContainers = document.querySelectorAll('#main-nav-logo, .flex-shrink-0 a, #mobile-nav-logo');
-        logoContainers.forEach(container => {
-            const spans = container.querySelectorAll('span');
-            spans.forEach(span => {
-                let logoHtml;
-                if (displayText.toLowerCase().includes('aniflix')) {
-                    const aniIndex = displayText.toLowerCase().indexOf('ani');
-                    if (aniIndex !== -1) {
-                        const aniPart = displayText.substring(aniIndex, aniIndex + 3);
-                        const flixPart = displayText.substring(aniIndex + 3);
-                        logoHtml = `<span class="text-red-500">${aniPart}</span><span class="text-white">${flixPart}</span>`;
-                    } else {
-                        logoHtml = `<span class="text-white">${displayText}</span>`;
-                    }
-                } else {
-                    logoHtml = `<span class="text-white">${displayText}</span>`;
-                }
+        // Strategy 2: Search in parent window/iframe if this is in iframe
+        try {
+            if (window.parent && window.parent !== window) {
+                const parentSelectors = [
+                    'nav span.text-2xl',
+                    '.flex-shrink-0 span',
+                    '#main-nav-logo span',
+                    'nav a span'
+                ];
                 
-                span.innerHTML = logoHtml;
-                console.log('📦 Updated span in container:', container.id || container.className);
-            });
-        });
+                parentSelectors.forEach(selector => {
+                    const elements = window.parent.document.querySelectorAll(selector);
+                    elements.forEach(element => {
+                        const text = element.textContent || '';
+                        if (text.includes('Ani') || text.includes('Flix') || text.length < 15) {
+                            if (updateElement(element, displayText)) {
+                                updated++;
+                                console.log('✅ Updated parent window element');
+                            }
+                        }
+                    });
+                });
+            }
+        } catch (e) {
+            console.log('Cannot access parent window');
+        }
         
-        // Strategy 4: Brute force update - find all text content that matches logo patterns
-        setTimeout(() => {
-            const textNodes = [];
+        // Strategy 3: Force update using MutationObserver to track changes
+        if (updated === 0) {
+            console.log('🚨 No elements updated, using force method');
+            
+            // Find all text nodes that contain logo text
             const walker = document.createTreeWalker(
                 document.body,
                 NodeFilter.SHOW_TEXT,
-                null,
-                false
+                {
+                    acceptNode: function(node) {
+                        const text = node.textContent.trim();
+                        return (text.includes('AniFlix') || text.includes('Ani') || text.includes('Flix')) && 
+                               text.length < 20 ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+                    }
+                }
             );
+            
+            const textNodes = [];
             let node;
             while (node = walker.nextNode()) {
-                if (node.textContent.trim() && 
-                    (node.textContent.includes('AniFlix') || 
-                     node.textContent.includes('Ani') || 
-                     (node.textContent.includes('Flix') && node.textContent.length < 20))) {
-                    textNodes.push(node);
-                }
+                textNodes.push(node);
             }
             
             textNodes.forEach(textNode => {
                 const parent = textNode.parentNode;
-                if (parent && (parent.closest('nav') || parent.closest('.flex-shrink-0'))) {
-                    const span = document.createElement('span');
-                    span.className = parent.className || 'text-2xl font-bold text-red-500';
+                // Check if this is in navigation area
+                if (parent && (parent.closest('nav') || parent.closest('.flex-shrink-0') || parent.closest('header'))) {
+                    console.log('🎯 Found logo text node:', textNode.textContent, 'in parent:', parent.tagName);
+                    
+                    // Replace text node with new HTML
+                    const newSpan = document.createElement('span');
+                    newSpan.className = parent.className || 'text-2xl font-bold text-red-500';
                     
                     let logoHtml;
                     if (displayText.toLowerCase().includes('aniflix')) {
@@ -650,14 +641,81 @@ document.addEventListener('DOMContentLoaded', function() {
                         logoHtml = `<span class="text-white">${displayText}</span>`;
                     }
                     
-                    span.innerHTML = logoHtml;
-                    parent.replaceChild(span, textNode);
-                    console.log('🚀 Brute force updated text node:', textNode.textContent);
+                    newSpan.innerHTML = logoHtml;
+                    parent.replaceChild(newSpan, textNode);
+                    updated++;
+                    console.log('🚀 Force replaced text node with new logo');
                 }
             });
-        }, 100);
+        }
         
-        console.log('🏁 Professor - Logo update complete for:', displayText);
+        console.log(`🏁 Professor ULTIMATE - Updated ${updated} logo elements to: ${displayText}`);
+        
+        // Strategy 4: Post message to parent frame if we're in an iframe
+        try {
+            if (window.parent && window.parent !== window) {
+                window.parent.postMessage({
+                    type: 'UPDATE_LOGO',
+                    logoText: displayText,
+                    logoUrl: url
+                }, '*');
+                console.log('📡 Sent logo update message to parent frame');
+            }
+        } catch (e) {
+            console.log('Cannot send message to parent');
+        }
+        
+        // Strategy 5: Try to access top window
+        try {
+            if (window.top && window.top !== window) {
+                const topSelectors = [
+                    'nav span.text-2xl',
+                    '.flex-shrink-0 span',
+                    '#main-nav-logo span',
+                    'nav a span'
+                ];
+                
+                topSelectors.forEach(selector => {
+                    const elements = window.top.document.querySelectorAll(selector);
+                    elements.forEach(element => {
+                        const text = element.textContent || '';
+                        if (text.includes('Ani') || text.includes('Flix') || text.length < 15) {
+                            if (updateElement(element, displayText)) {
+                                updated++;
+                                console.log('✅ Updated top window element');
+                            }
+                        }
+                    });
+                });
+            }
+        } catch (e) {
+            console.log('Cannot access top window');
+        }
+        
+        // Strategy 6: Use localStorage to communicate across pages
+        try {
+            localStorage.setItem('currentLogoText', displayText);
+            localStorage.setItem('currentLogoUrl', url || '');
+            localStorage.setItem('logoUpdateTime', Date.now().toString());
+            console.log('💾 Saved logo update to localStorage');
+            
+            // Trigger storage event
+            window.dispatchEvent(new StorageEvent('storage', {
+                key: 'currentLogoText',
+                newValue: displayText,
+                oldValue: localStorage.getItem('currentLogoText')
+            }));
+        } catch (e) {
+            console.log('Cannot access localStorage');
+        }
+        
+        console.log(`🏁 Professor ULTIMATE - Updated ${updated} logo elements to: ${displayText}`);
+        
+        // Return result for debugging
+        return {
+            updated: updated,
+            text: displayText
+        };
     };
 
     // Legacy elements for compatibility
