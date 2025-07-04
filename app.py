@@ -95,8 +95,60 @@ with app.app_context():
     # Create sample content if database is empty (commented out for schema update)
     pass
 
-from flask import render_template, redirect, url_for
+from flask import render_template, redirect, url_for, abort
 from flask_login import current_user
+
+# Real-time System Settings Context Processor
+@app.context_processor
+def inject_system_settings():
+    """Inject system settings into all templates for real-time updates"""
+    try:
+        from models import SystemSettings
+        settings = {
+            'maintenance_enabled': SystemSettings.get_setting('maintenance_enabled', 'false') == 'true',
+            'maintenance_message': SystemSettings.get_setting('maintenance_message', ''),
+            'site_logo_url': SystemSettings.get_setting('site_logo_url', ''),
+            'site_logo_alt': SystemSettings.get_setting('site_logo_alt', 'AniFlix'),
+            'site_title': SystemSettings.get_setting('site_title', 'AniFlix'),
+            'site_description': SystemSettings.get_setting('site_description', '')
+        }
+        return {'system_settings': settings}
+    except:
+        return {'system_settings': {'maintenance_enabled': False}}
+
+# Real-time Maintenance Mode Middleware
+@app.before_request
+def check_maintenance_mode():
+    """Check maintenance mode on every request for real-time updates"""
+    try:
+        from models import SystemSettings
+        from flask import request
+        
+        # Skip maintenance check for admin and maintenance-related routes
+        admin_routes = ['admin.', 'auth.login', 'auth.logout', 'static']
+        maintenance_routes = ['/admin', '/login', '/logout', '/static']
+        
+        # Check if current route should bypass maintenance
+        if any(request.endpoint and request.endpoint.startswith(route) for route in admin_routes):
+            return
+        if any(request.path.startswith(route) for route in maintenance_routes):
+            return
+        
+        # Check if maintenance mode is enabled
+        maintenance_enabled = SystemSettings.get_setting('maintenance_enabled', 'false') == 'true'
+        
+        if maintenance_enabled:
+            # Check if user is admin
+            if current_user.is_authenticated and current_user.is_admin():
+                return  # Allow admin to access during maintenance
+            
+            # Show maintenance page for regular users
+            maintenance_message = SystemSettings.get_setting('maintenance_message', 
+                'AniFlix is currently under maintenance. Please check back later.')
+            return render_template('maintenance.html', 
+                                 maintenance_message=maintenance_message), 503
+    except:
+        pass  # Continue normally if there's any error
 
 @app.route('/')
 def index():

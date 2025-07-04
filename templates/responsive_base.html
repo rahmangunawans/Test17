@@ -4,7 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}AniFlix - Premium Anime & Movie Streaming{% endblock %}</title>
+    <title>{% block title %}{{ system_settings.site_title or 'AniFlix' }} - Premium Anime & Movie Streaming{% endblock %}</title>
+    <meta name="description" content="{{ system_settings.site_description or 'Your premium anime and movie streaming platform' }}">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/search.css') }}">
@@ -394,8 +395,16 @@
             <div class="flex items-center justify-between h-16">
                 <div class="flex items-center">
                     <div class="flex-shrink-0">
-                        <a href="{{ url_for('index') }}" class="text-2xl font-bold text-red-500">
-                            Ani<span class="text-white">Flix</span>
+                        <a href="{{ url_for('index') }}" class="flex items-center">
+                            {% if system_settings.site_logo_url %}
+                                <img src="{{ system_settings.site_logo_url }}" 
+                                     alt="{{ system_settings.site_logo_alt or 'AniFlix' }}" 
+                                     class="h-8 w-auto">
+                            {% else %}
+                                <span class="text-2xl font-bold text-red-500">
+                                    {{ system_settings.site_title or 'Ani' }}<span class="text-white">{{ 'Flix' if not system_settings.site_title or 'AniFlix' in system_settings.site_title else '' }}</span>
+                                </span>
+                            {% endif %}
                         </a>
                     </div>
                     <div class="hidden md:block">
@@ -660,7 +669,7 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
                 <div>
-                    <h3 class="text-white text-lg font-semibold mb-4">AniFlix</h3>
+                    <h3 class="text-white text-lg font-semibold mb-4">{{ system_settings.site_title or 'AniFlix' }}</h3>
                     <ul class="space-y-2">
                         <li><a href="#" class="text-gray-400 hover:text-white">About Us</a></li>
                         <li><a href="#" class="text-gray-400 hover:text-white">Careers</a></li>
@@ -711,7 +720,7 @@
             </div>
 
             <div class="border-t border-gray-800 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center">
-                <p class="text-gray-400 text-sm mb-4 md:mb-0">© 2023 AniFlix. All rights reserved.</p>
+                <p class="text-gray-400 text-sm mb-4 md:mb-0">© 2024 {{ system_settings.site_title or 'AniFlix' }}. All rights reserved.</p>
                 <div class="flex space-x-6">
                     <a href="#" class="text-gray-400 hover:text-white text-sm">Privacy</a>
                     <a href="#" class="text-gray-400 hover:text-white text-sm">Terms</a>
