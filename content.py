@@ -128,6 +128,13 @@ def watch_episode(episode_id):
         Content.content_type == 'movie'
     ).order_by(Content.rating.desc()).limit(5).all()
     
+    # Calculate progress percentage correctly
+    total_episodes = content.total_episodes if content.total_episodes and content.total_episodes > 0 else len(content.episodes)
+    if total_episodes > 0:
+        progress_percentage = min(100, round((episode.episode_number / total_episodes) * 100))
+    else:
+        progress_percentage = 0
+    
     return render_template('video_player.html', 
                          episode=episode, 
                          content=content,
@@ -136,7 +143,8 @@ def watch_episode(episode_id):
                          watch_history=watch_history,
                          similar_anime=similar_anime,
                          trending_anime=trending_anime,
-                         recommended_movies=recommended_movies)
+                         recommended_movies=recommended_movies,
+                         progress_percentage=progress_percentage)
 
 
 

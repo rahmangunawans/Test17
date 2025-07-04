@@ -278,12 +278,12 @@
                                 <h5 class="text-sm font-semibold text-slate-300 mb-3">Progress</h5>
                                 <div class="space-y-2">
                                     <div class="flex justify-between text-sm">
-                                        <span class="text-slate-400">Ep {{ episode.episode_number }} / {{ content.episodes|length }}</span>
-                                        <span class="text-slate-300">{{ "%.0f"|format((episode.episode_number / content.episodes|length) * 100) }}%</span>
+                                        <span class="text-slate-400">Ep {{ episode.episode_number }} / {{ content.total_episodes or content.episodes|length }}</span>
+                                        <span class="text-slate-300">{{ progress_percentage }}%</span>
                                     </div>
                                     <div class="w-full bg-slate-700 rounded-full h-2">
                                         <div class="bg-gradient-to-r from-red-500 to-purple-600 h-2 rounded-full transition-all duration-300" 
-                                             style="width: {{ (episode.episode_number / content.episodes|length) * 100 }}%"></div>
+                                             style="width: {{ progress_percentage }}%"></div>
                                     </div>
                                 </div>
                             </div>
