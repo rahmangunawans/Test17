@@ -485,12 +485,14 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Create text representation based on actual input
             if (displayText.toLowerCase().includes('aniflix')) {
-                // Split the text to preserve custom extensions like "AniFlixxx"
-                const parts = displayText.match(/^(ani)(flix.*?)$/i);
-                if (parts) {
-                    logoHtml = `<span class="text-red-500">${parts[1]}</span><span class="text-white">${parts[2]}</span>`;
+                // Find "ani" and everything after it to preserve custom text
+                const aniIndex = displayText.toLowerCase().indexOf('ani');
+                if (aniIndex !== -1) {
+                    const aniPart = displayText.substring(aniIndex, aniIndex + 3); // "Ani"
+                    const flixPart = displayText.substring(aniIndex + 3); // "Flixx" or "Flix" etc
+                    logoHtml = `<span class="text-red-500">${aniPart}</span><span class="text-white">${flixPart}</span>`;
                 } else {
-                    logoHtml = `<span class="text-red-500">Ani</span><span class="text-white">Flix</span>`;
+                    logoHtml = `<span class="text-white">${displayText}</span>`;
                 }
             } else {
                 logoHtml = `<span class="text-white">${displayText}</span>`;
