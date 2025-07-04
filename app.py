@@ -28,32 +28,32 @@ app.secret_key = os.environ.get("SESSION_SECRET") or "dev-secret-key-aniflix-202
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0  # Disable caching for development
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
-# Configure the database - use Supabase PostgreSQL with proper password
-supabase_password = os.environ.get("SUPABASE_PASSWORD")
-if supabase_password:
-    # Use Supabase with the correct password from environment
-    supabase_url = f"postgresql://postgres.heotmyzuxabzfobirhnm:{supabase_password}@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres"
-    app.config["SQLALCHEMY_DATABASE_URI"] = supabase_url
+# Configure the database - prioritize Replit's DATABASE_URL, then fallback to Supabase
+database_url = os.environ.get("DATABASE_URL")
+if database_url:
+    # Use Replit's PostgreSQL database (preferred for standard environment)
+    app.config["SQLALCHEMY_DATABASE_URI"] = database_url
     app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
         "pool_recycle": 300,
         "pool_pre_ping": True,
-        "pool_reset_on_return": "commit",
-        "connect_args": {
-            "sslmode": "require",
-            "connect_timeout": 30,
-        }
     }
-    logging.info(f"Using Supabase PostgreSQL database with URL: {supabase_url[:50]}...")
+    logging.info("Using Replit PostgreSQL database")
 else:
-    # Fallback to Replit's provided DATABASE_URL
-    database_url = os.environ.get("DATABASE_URL")
-    if database_url:
-        app.config["SQLALCHEMY_DATABASE_URI"] = database_url
+    # Fallback to Supabase PostgreSQL with proper password
+    supabase_password = os.environ.get("SUPABASE_PASSWORD")
+    if supabase_password:
+        supabase_url = f"postgresql://postgres.heotmyzuxabzfobirhnm:{supabase_password}@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres"
+        app.config["SQLALCHEMY_DATABASE_URI"] = supabase_url
         app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
             "pool_recycle": 300,
             "pool_pre_ping": True,
+            "pool_reset_on_return": "commit",
+            "connect_args": {
+                "sslmode": "require",
+                "connect_timeout": 30,
+            }
         }
-        logging.info("Using Replit PostgreSQL database as fallback")
+        logging.info(f"Using Supabase PostgreSQL database with URL: {supabase_url[:50]}...")
     else:
         raise Exception("No database configuration found!")
 
