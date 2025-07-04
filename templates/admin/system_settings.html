@@ -521,6 +521,8 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Find main navigation logo using specific ID
         const mainNavLogo = document.getElementById('main-nav-logo');
+        console.log('Professor Debug - Main nav logo element found:', !!mainNavLogo);
+        
         if (mainNavLogo) {
             let logoImg = document.getElementById('nav-logo-image');
             let logoText = document.getElementById('nav-logo-text');
@@ -528,7 +530,8 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('Professor Debug - Found elements:', {
                 mainNavLogo: !!mainNavLogo,
                 logoImg: !!logoImg,
-                logoText: !!logoText
+                logoText: !!logoText,
+                mainNavLogoHTML: mainNavLogo.innerHTML
             });
             
             if (url && url.trim() && url.length > 10) {
@@ -598,7 +601,63 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.log('Professor Debug - Text logo updated with:', displayText);
             }
         } else {
-            console.log('Professor Debug - Main nav logo element not found');
+            console.log('Professor Debug - Main nav logo element not found, trying fallback selectors');
+            
+            // Fallback: try to find any navigation logo elements
+            const fallbackSelectors = [
+                '.flex-shrink-0 a',
+                'nav a[href="/"]',
+                'nav a:first-child',
+                'nav .text-2xl',
+                '[data-debug="logo-image"]',
+                'nav img'
+            ];
+            
+            for (let selector of fallbackSelectors) {
+                const element = document.querySelector(selector);
+                if (element) {
+                    console.log('Professor Debug - Found element with selector:', selector);
+                    
+                    if (!url || !url.trim() || url.length <= 10) {
+                        // Update text content
+                        const displayText = alt || 'AniFlix';
+                        if (element.tagName === 'IMG') {
+                            // Replace image with text
+                            const textElement = document.createElement('span');
+                            textElement.className = 'text-2xl font-bold text-red-500';
+                            if (displayText.toLowerCase().includes('aniflix')) {
+                                const aniIndex = displayText.toLowerCase().indexOf('ani');
+                                if (aniIndex !== -1) {
+                                    const aniPart = displayText.substring(aniIndex, aniIndex + 3);
+                                    const flixPart = displayText.substring(aniIndex + 3);
+                                    textElement.innerHTML = `<span class="text-red-500">${aniPart}</span><span class="text-white">${flixPart}</span>`;
+                                } else {
+                                    textElement.innerHTML = `<span class="text-white">${displayText}</span>`;
+                                }
+                            } else {
+                                textElement.innerHTML = `<span class="text-white">${displayText}</span>`;
+                            }
+                            element.parentNode.replaceChild(textElement, element);
+                        } else {
+                            // Update text content
+                            if (displayText.toLowerCase().includes('aniflix')) {
+                                const aniIndex = displayText.toLowerCase().indexOf('ani');
+                                if (aniIndex !== -1) {
+                                    const aniPart = displayText.substring(aniIndex, aniIndex + 3);
+                                    const flixPart = displayText.substring(aniIndex + 3);
+                                    element.innerHTML = `<span class="text-red-500">${aniPart}</span><span class="text-white">${flixPart}</span>`;
+                                } else {
+                                    element.innerHTML = `<span class="text-white">${displayText}</span>`;
+                                }
+                            } else {
+                                element.innerHTML = `<span class="text-white">${displayText}</span>`;
+                            }
+                        }
+                        console.log('Professor Debug - Updated element with fallback selector');
+                    }
+                    break;
+                }
+            }
         }
         
         // Also update mobile navigation logo
