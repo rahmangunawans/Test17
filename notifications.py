@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify, render_template
 from flask_login import login_required, current_user
 from flask_socketio import SocketIO, emit, join_room, leave_room, disconnect
 from app import db
-from models import Notification, User
+from models import Notification, User, NotificationRead
 from datetime import datetime, timedelta
 import logging
 
@@ -46,26 +46,54 @@ def get_notifications():
             user_id=current_user.id
         ).order_by(Notification.created_at.desc()).limit(20).all()
         
+        # Get read notification IDs for current user
+        read_notification_ids = db.session.query(NotificationRead.notification_id).filter_by(
+            user_id=current_user.id
+        ).scalar_subquery()
+        
         # Get global notifications that user hasn't read yet
         global_notifications = Notification.query.filter_by(
             is_global=True,
             user_id=None
         ).filter(
-            ~Notification.id.in_(
-                db.session.query(Notification.id).filter(
-                    Notification.user_id == current_user.id,
-                    Notification.is_read == True
-                )
-            )
+            ~Notification.id.in_(read_notification_ids)
         ).order_by(Notification.created_at.desc()).limit(10).all()
         
+        # Combine and sort notifications
         all_notifications = user_notifications + global_notifications
         all_notifications.sort(key=lambda x: x.created_at, reverse=True)
         
+        # Build response with proper read status
+        notifications_data = []
+        unread_count = 0
+        
+        for notif in all_notifications[:20]:
+            notif_dict = notif.to_dict()
+            
+            # Check if this notification has been read by the current user
+            if notif.is_global:
+                # For global notifications, check the NotificationRead table
+                read_record = NotificationRead.query.filter_by(
+                    user_id=current_user.id,
+                    notification_id=notif.id
+                ).first()
+                notif_dict['is_read'] = read_record is not None
+                if read_record:
+                    notif_dict['read_at'] = read_record.read_at.isoformat()
+                else:
+                    notif_dict['read_at'] = None
+                    unread_count += 1
+            else:
+                # For user-specific notifications, use the original is_read field
+                if not notif.is_read:
+                    unread_count += 1
+                    
+            notifications_data.append(notif_dict)
+        
         return jsonify({
             'success': True,
-            'notifications': [notif.to_dict() for notif in all_notifications[:20]],
-            'unread_count': len([n for n in all_notifications if not n.is_read])
+            'notifications': notifications_data,
+            'unread_count': unread_count
         })
     except Exception as e:
         logging.error(f"Error fetching notifications: {e}")
@@ -84,10 +112,25 @@ def mark_notification_read(notification_id):
         if notification.user_id != current_user.id and not notification.is_global:
             return jsonify({'success': False, 'message': 'Access denied'})
         
-        notification.is_read = True
-        notification.read_at = datetime.utcnow()
-        db.session.commit()
+        if notification.is_global:
+            # For global notifications, create a read record
+            existing_read = NotificationRead.query.filter_by(
+                user_id=current_user.id,
+                notification_id=notification_id
+            ).first()
+            
+            if not existing_read:
+                read_record = NotificationRead(
+                    user_id=current_user.id,
+                    notification_id=notification_id
+                )
+                db.session.add(read_record)
+        else:
+            # For user-specific notifications, update the original record
+            notification.is_read = True
+            notification.read_at = datetime.utcnow()
         
+        db.session.commit()
         return jsonify({'success': True})
     except Exception as e:
         logging.error(f"Error marking notification as read: {e}")
@@ -111,16 +154,25 @@ def mark_all_notifications_read():
             notif.is_read = True
             notif.read_at = current_time
         
-        # Mark global notifications as read for this user by creating user-specific read records
-        # For now, just update global notifications directly (simplified approach)
+        # Get all global notifications that user hasn't read yet
+        read_notification_ids = db.session.query(NotificationRead.notification_id).filter_by(
+            user_id=current_user.id
+        ).scalar_subquery()
+        
         global_notifications = Notification.query.filter_by(
             is_global=True,
-            is_read=False
+            user_id=None
+        ).filter(
+            ~Notification.id.in_(read_notification_ids)
         ).all()
         
+        # Mark global notifications as read for this user
         for notif in global_notifications:
-            notif.is_read = True
-            notif.read_at = current_time
+            read_record = NotificationRead(
+                user_id=current_user.id,
+                notification_id=notif.id
+            )
+            db.session.add(read_record)
         
         db.session.commit()
         logging.info(f"Marked {len(user_notifications)} user notifications and {len(global_notifications)} global notifications as read for user {current_user.id}")
@@ -143,11 +195,24 @@ def delete_notification(notification_id):
         if notification.user_id != current_user.id and not notification.is_global:
             return jsonify({'success': False, 'message': 'Access denied'})
         
-        # For global notifications, we could create a separate table for user-specific deletions
-        # For now, we'll just delete it completely (simplified approach)
-        db.session.delete(notification)
-        db.session.commit()
+        if notification.is_global:
+            # For global notifications, just mark as read so they don't show up again
+            existing_read = NotificationRead.query.filter_by(
+                user_id=current_user.id,
+                notification_id=notification_id
+            ).first()
+            
+            if not existing_read:
+                read_record = NotificationRead(
+                    user_id=current_user.id,
+                    notification_id=notification_id
+                )
+                db.session.add(read_record)
+        else:
+            # For user-specific notifications, delete completely
+            db.session.delete(notification)
         
+        db.session.commit()
         logging.info(f"Notification {notification_id} deleted by user {current_user.id}")
         return jsonify({'success': True})
     except Exception as e:
@@ -165,14 +230,27 @@ def delete_all_notifications():
         for notif in user_notifications:
             db.session.delete(notif)
         
-        # For global notifications, in a real app we'd create user-specific deletion records
-        # For now, we'll delete all global notifications (simplified approach)
-        global_notifications = Notification.query.filter_by(is_global=True).all()
+        # For global notifications, mark them as read so they don't show up again
+        read_notification_ids = db.session.query(NotificationRead.notification_id).filter_by(
+            user_id=current_user.id
+        ).scalar_subquery()
+        
+        global_notifications = Notification.query.filter_by(
+            is_global=True,
+            user_id=None
+        ).filter(
+            ~Notification.id.in_(read_notification_ids)
+        ).all()
+        
         for notif in global_notifications:
-            db.session.delete(notif)
+            read_record = NotificationRead(
+                user_id=current_user.id,
+                notification_id=notif.id
+            )
+            db.session.add(read_record)
         
         db.session.commit()
-        logging.info(f"All notifications deleted by user {current_user.id}")
+        logging.info(f"All notifications deleted for user {current_user.id}")
         return jsonify({'success': True})
     except Exception as e:
         logging.error(f"Error deleting all notifications: {e}")
