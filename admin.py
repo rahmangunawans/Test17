@@ -83,6 +83,10 @@ def admin_content():
 def add_content():
     if request.method == 'POST':
         try:
+            # Handle optional fields
+            total_episodes = request.form.get('total_episodes')
+            total_episodes = int(total_episodes) if total_episodes and total_episodes.strip() else None
+            
             content = Content(
                 title=request.form['title'],
                 description=request.form['description'],
@@ -92,6 +96,9 @@ def add_content():
                 content_type=request.form['content_type'],
                 thumbnail_url=request.form['thumbnail_url'],
                 trailer_url=request.form['trailer_url'],
+                studio=request.form.get('studio', ''),
+                total_episodes=total_episodes,
+                status=request.form.get('status', 'unknown'),
                 is_featured=bool(request.form.get('is_featured'))
             )
             db.session.add(content)
@@ -116,6 +123,10 @@ def edit_content(content_id):
     
     if request.method == 'POST':
         try:
+            # Handle optional fields
+            total_episodes = request.form.get('total_episodes')
+            total_episodes = int(total_episodes) if total_episodes and total_episodes.strip() else None
+            
             content.title = request.form['title']
             content.description = request.form['description']
             content.genre = request.form['genre']
@@ -124,6 +135,9 @@ def edit_content(content_id):
             content.content_type = request.form['content_type']
             content.thumbnail_url = request.form['thumbnail_url']
             content.trailer_url = request.form['trailer_url']
+            content.studio = request.form.get('studio', '')
+            content.total_episodes = total_episodes
+            content.status = request.form.get('status', 'unknown')
             content.is_featured = bool(request.form.get('is_featured'))
             
             db.session.commit()

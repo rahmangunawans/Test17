@@ -65,10 +65,12 @@
                     <thead class="bg-gray-700 sticky top-0 z-10">
                         <tr>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Content</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Studio</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Genre</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Rating</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Type</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Episodes</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Status</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Actions</th>
                         </tr>
                     </thead>
@@ -87,6 +89,9 @@
                                         <div class="text-sm text-gray-400">{{ item.year or 'N/A' }}</div>
                                     </div>
                                 </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="text-white text-sm">{{ item.studio or '-' }}</span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 {% if item.genre %}
@@ -111,7 +116,21 @@
                                 </span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-white">
-                                {{ item.episodes|length if item.episodes else 0 }}
+                                <div class="text-sm">
+                                    <div>{{ item.episodes|length if item.episodes else 0 }} episodes</div>
+                                    {% if item.total_episodes %}
+                                    <div class="text-gray-400 text-xs">Total: {{ item.total_episodes }}</div>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                {% if item.status == 'completed' %}
+                                    <span class="px-2 py-1 text-xs rounded-full bg-green-600 text-green-200">Completed</span>
+                                {% elif item.status == 'ongoing' %}
+                                    <span class="px-2 py-1 text-xs rounded-full bg-blue-600 text-blue-200">Ongoing</span>
+                                {% else %}
+                                    <span class="px-2 py-1 text-xs rounded-full bg-gray-600 text-gray-300">Unknown</span>
+                                {% endif %}
                             </td>
                             <td class="px-3 sm:px-6 py-4 whitespace-nowrap text-sm">
                                 <div class="flex space-x-1 sm:space-x-2">

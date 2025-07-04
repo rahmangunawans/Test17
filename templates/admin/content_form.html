@@ -64,6 +64,35 @@
                     </div>
                 </div>
                 
+                <!-- New fields: Studio, Total Episodes, Status -->
+                <div class="grid md:grid-cols-3 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Studio</label>
+                        <input type="text" name="studio" 
+                               value="{{ content.studio if content else '' }}"
+                               class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-red-500"
+                               placeholder="e.g. Studio Ghibli, Toei Animation">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Total Episodes</label>
+                        <input type="number" name="total_episodes" min="1"
+                               value="{{ content.total_episodes if content else '' }}"
+                               class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-red-500"
+                               placeholder="Leave empty if unknown">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Status</label>
+                        <select name="status" 
+                                class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-red-500">
+                            <option value="unknown" {{ 'selected' if content and content.status == 'unknown' else '' }}>Unknown</option>
+                            <option value="ongoing" {{ 'selected' if content and content.status == 'ongoing' else '' }}>Ongoing</option>
+                            <option value="completed" {{ 'selected' if content and content.status == 'completed' else '' }}>Completed</option>
+                        </select>
+                    </div>
+                </div>
+                
                 <div>
                     <label class="block text-sm font-medium text-gray-300 mb-2">Thumbnail URL</label>
                     <input type="url" name="thumbnail_url" 

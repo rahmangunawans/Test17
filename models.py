@@ -52,6 +52,9 @@ class Content(db.Model):
     content_type = db.Column(db.String(20), default='anime')  # anime, movie
     thumbnail_url = db.Column(db.String(500))
     trailer_url = db.Column(db.String(500))
+    total_episodes = db.Column(db.Integer)  # Total number of episodes
+    studio = db.Column(db.String(200))  # Animation studio
+    status = db.Column(db.String(20), default='unknown')  # complete, ongoing, unknown
     is_featured = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
