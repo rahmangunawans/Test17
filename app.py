@@ -125,8 +125,8 @@ def check_maintenance_mode():
         from flask import request
         
         # Skip maintenance check for admin and maintenance-related routes
-        admin_routes = ['admin.', 'auth.login', 'auth.logout', 'static']
-        maintenance_routes = ['/admin', '/login', '/logout', '/static']
+        admin_routes = ['admin.', 'auth.login', 'auth.logout', 'static', 'notifications.']
+        maintenance_routes = ['/admin', '/login', '/logout', '/static', '/notifications']
         
         # Check if current route should bypass maintenance
         if any(request.endpoint and request.endpoint.startswith(route) for route in admin_routes):
@@ -134,13 +134,24 @@ def check_maintenance_mode():
         if any(request.path.startswith(route) for route in maintenance_routes):
             return
         
+        # Check for admin bypass parameter
+        admin_bypass = request.args.get('admin_bypass') == 'true'
+        if admin_bypass and current_user.is_authenticated and hasattr(current_user, 'is_admin') and current_user.is_admin():
+            return  # Allow admin bypass with URL parameter
+        
         # Check if maintenance mode is enabled
         maintenance_enabled = SystemSettings.get_setting('maintenance_enabled', 'false') == 'true'
         
         if maintenance_enabled:
-            # Check if user is admin
-            if current_user.is_authenticated and current_user.is_admin():
+            # Check if user is admin first (most important check)
+            if current_user.is_authenticated and hasattr(current_user, 'is_admin') and current_user.is_admin():
                 return  # Allow admin to access during maintenance
+            
+            # Also check by email pattern for extra safety
+            if current_user.is_authenticated and current_user.email:
+                admin_patterns = ['@admin.aniflix.com', 'admin@', 'admin']
+                if any(pattern in current_user.email.lower() for pattern in admin_patterns):
+                    return  # Allow admin access
             
             # Show maintenance page for regular users
             maintenance_message = SystemSettings.get_setting('maintenance_message', 
