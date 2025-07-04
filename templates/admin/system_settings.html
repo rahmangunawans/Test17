@@ -427,23 +427,25 @@ document.addEventListener('DOMContentLoaded', function() {
             const alt = logoAlt ? logoAlt.value.trim() : 'Logo';
             
             if (url) {
-                // Show image preview
+                // Show loading state
                 previewContainer.innerHTML = `
-                    <img src="${url}" alt="${alt}" 
-                         id="logo-preview-image" 
-                         class="h-12 w-auto rounded" 
-                         style="max-width: 200px; display: none;">
                     <div id="logo-loading" class="text-gray-400">
                         <i class="fas fa-spinner fa-spin mr-2"></i>Loading...
                     </div>
                 `;
                 
-                const img = document.getElementById('logo-preview-image');
-                const loading = document.getElementById('logo-loading');
-                
+                // Create new image to test loading
+                const img = new Image();
                 img.onload = function() {
-                    loading.style.display = 'none';
-                    img.style.display = 'block';
+                    previewContainer.innerHTML = `
+                        <img src="${url}" alt="${alt}" 
+                             id="logo-preview-image" 
+                             class="h-12 w-auto rounded" 
+                             style="max-width: 200px;">
+                    `;
+                    
+                    // Also update navigation logo in real-time
+                    updateNavigationLogo(url, alt);
                 };
                 
                 img.onerror = function() {
@@ -454,23 +456,99 @@ document.addEventListener('DOMContentLoaded', function() {
                         </div>
                     `;
                 };
+                
+                img.src = url;
             } else {
                 // Show text fallback
                 previewContainer.innerHTML = `
-                    <span class="text-2xl font-bold">
+                    <span id="logo-preview-text" class="text-2xl font-bold">
                         <span class="text-red-500">Ani</span><span class="text-white">Flix</span>
                     </span>
                 `;
+                
+                // Update navigation to text logo
+                updateNavigationLogo('', alt);
             }
         }
         
-        logoUrl.addEventListener('input', updateLogoPreview);
+        // Real-time logo preview
+        logoUrl.addEventListener('input', function() {
+            clearTimeout(window.logoUpdateTimeout);
+            window.logoUpdateTimeout = setTimeout(updateLogoPreview, 500);
+        });
+        
         if (logoAlt) {
-            logoAlt.addEventListener('input', updateLogoPreview);
+            logoAlt.addEventListener('input', function() {
+                clearTimeout(window.logoUpdateTimeout);
+                window.logoUpdateTimeout = setTimeout(updateLogoPreview, 500);
+            });
         }
         
         // Make updateLogoPreview accessible globally
         window.updateLogoPreview = updateLogoPreview;
+    }
+    
+    // Site title real-time preview
+    const siteTitle = document.getElementById('site_title');
+    const siteDescription = document.getElementById('site_description');
+    
+    if (siteTitle) {
+        siteTitle.addEventListener('input', function() {
+            clearTimeout(window.titleUpdateTimeout);
+            window.titleUpdateTimeout = setTimeout(function() {
+                updateNavigationTitle(siteTitle.value);
+            }, 500);
+        });
+    }
+    
+    if (siteDescription) {
+        siteDescription.addEventListener('input', function() {
+            // Show live character count or other feedback
+            const length = siteDescription.value.length;
+            let feedback = siteDescription.parentElement.querySelector('.char-count');
+            if (!feedback) {
+                feedback = document.createElement('div');
+                feedback.className = 'char-count text-xs text-gray-400 mt-1';
+                siteDescription.parentElement.appendChild(feedback);
+            }
+            feedback.textContent = `${length} characters`;
+        });
+    }
+    
+    // Function to update navigation logo in real-time
+    function updateNavigationLogo(url, alt) {
+        const navLogo = document.querySelector('.navbar-brand');
+        const footerLogo = document.querySelector('.footer-logo');
+        
+        if (navLogo) {
+            if (url) {
+                navLogo.innerHTML = `<img src="${url}" alt="${alt}" class="h-8 w-auto">`;
+            } else {
+                navLogo.innerHTML = `<span class="text-2xl font-bold"><span class="text-red-500">Ani</span><span class="text-white">Flix</span></span>`;
+            }
+        }
+        
+        if (footerLogo) {
+            if (url) {
+                footerLogo.innerHTML = `<img src="${url}" alt="${alt}" class="h-6 w-auto">`;
+            } else {
+                footerLogo.innerHTML = `<span class="text-xl font-bold"><span class="text-red-500">Ani</span><span class="text-white">Flix</span></span>`;
+            }
+        }
+    }
+    
+    // Function to update navigation title in real-time
+    function updateNavigationTitle(title) {
+        if (!title) title = 'AniFlix';
+        
+        // Update page title
+        document.title = title + ' - Admin System Settings';
+        
+        // Update any title displays in navigation
+        const titleElements = document.querySelectorAll('.site-title');
+        titleElements.forEach(element => {
+            element.textContent = title;
+        });
     }
 });
 
