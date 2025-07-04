@@ -37,6 +37,11 @@ def login():
             logging.info(f"Password verification result: {password_valid}")
             
             if password_valid:
+                # Update last login time
+                from datetime import datetime
+                user.last_login = datetime.utcnow()
+                db.session.commit()
+                
                 login_user(user)
                 logging.info(f"User {user.email} logged in successfully")
                 
@@ -65,10 +70,17 @@ def register():
     email = data.get('email')
     password = data.get('password')
     
-    if not all([username, email, password]):
+    if not username or not email or not password:
         if request.is_json:
             return jsonify({'success': False, 'message': 'All fields are required'})
         flash('All fields are required', 'error')
+        return render_template('auth.html')
+    
+    # Ensure password is string and not empty
+    if not isinstance(password, str) or not password.strip():
+        if request.is_json:
+            return jsonify({'success': False, 'message': 'Valid password is required'})
+        flash('Valid password is required', 'error')
         return render_template('auth.html')
     
     # Check if user already exists
@@ -85,13 +97,12 @@ def register():
         return redirect('/')
     
     # Create new user
-    password_hash = generate_password_hash(password)
-    new_user = User(
-        username=username,
-        email=email,
-        password_hash=password_hash,
-        subscription_type='free'
-    )
+    password_hash = generate_password_hash(str(password))
+    new_user = User()
+    new_user.username = username
+    new_user.email = email
+    new_user.password_hash = password_hash
+    new_user.subscription_type = 'free'
     
     try:
         db.session.add(new_user)

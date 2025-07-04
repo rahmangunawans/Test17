@@ -84,7 +84,7 @@
                     
                     <div class="flex justify-between items-center py-3 profile-stat">
                         <span class="text-gray-300">Last Login</span>
-                        <span class="text-white font-medium">{{ current_user.last_login.strftime('%d %b %Y') if current_user.last_login else 'Unknown' }}</span>
+                        <span class="text-white font-medium">{{ current_user.last_login.strftime('%d %b %Y, %H:%M') if current_user.last_login else 'Now (First Login)' }}</span>
                     </div>
                 </div>
             </div>
