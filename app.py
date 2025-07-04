@@ -128,10 +128,15 @@ def check_maintenance_mode():
         admin_routes = ['admin.', 'auth.login', 'auth.logout', 'static', 'notifications.']
         maintenance_routes = ['/admin', '/login', '/logout', '/static', '/notifications']
         
+        # Secret admin bypass URL for security
+        secret_admin_paths = ['/emergency-admin-access', '/maintenance-override']
+        
         # Check if current route should bypass maintenance
         if any(request.endpoint and request.endpoint.startswith(route) for route in admin_routes):
             return
         if any(request.path.startswith(route) for route in maintenance_routes):
+            return
+        if any(request.path.startswith(route) for route in secret_admin_paths):
             return
         
         # Check for admin bypass parameter

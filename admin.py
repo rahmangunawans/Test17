@@ -8,6 +8,19 @@ import logging
 
 admin_bp = Blueprint('admin', __name__)
 
+# Emergency admin access route (hidden for security)
+@admin_bp.route('/emergency-admin-access')
+def emergency_admin_access():
+    """Hidden emergency access route for admins during maintenance"""
+    from flask import redirect, url_for
+    return redirect(url_for('auth.login'))
+
+@admin_bp.route('/maintenance-override')
+def maintenance_override():
+    """Alternative emergency route for admin access"""
+    from flask import redirect, url_for
+    return redirect(url_for('admin.system_settings'))
+
 def admin_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):

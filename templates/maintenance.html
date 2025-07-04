@@ -128,26 +128,7 @@
                     Refresh Page
                 </button>
                 
-                <!-- Admin Login Button -->
-                <div class="mt-4">
-                    <a href="{{ url_for('auth.login') }}" 
-                       class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition-all duration-300 text-sm mr-3">
-                        <i class="fas fa-user-shield mr-2"></i>
-                        Admin Login
-                    </a>
-                    
-                    <!-- System Settings Direct Access -->
-                    <a href="/admin/system-settings" 
-                       class="inline-block bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-6 rounded-lg transition-all duration-300 text-sm">
-                        <i class="fas fa-cog mr-2"></i>
-                        System Settings
-                    </a>
-                </div>
-                
-                <!-- Admin Instructions -->
-                <div class="mt-4 text-gray-400 text-xs">
-                    <p><i class="fas fa-info-circle mr-1"></i> Admins can access System Settings to disable maintenance mode</p>
-                </div>
+
             </div>
             
             <!-- Contact Info -->
@@ -157,6 +138,9 @@
                     <i class="fas fa-envelope mr-2"></i>
                     Thank you for your patience!
                 </p>
+                
+                <!-- Hidden admin hint - only visible in page source -->
+                <!-- System administrators: Check documentation for emergency access procedures -->
             </div>
             
             <!-- Footer -->
