@@ -651,6 +651,20 @@ document.addEventListener('DOMContentLoaded', function() {
         
         console.log(`🏁 Professor ULTIMATE - Updated ${updated} logo elements to: ${displayText}`);
         
+        // Strategy 4: IMMEDIATE Debug - Show what elements we actually found
+        console.log('🔍 DEBUGGING - All navigation elements found:');
+        document.querySelectorAll('nav *').forEach((el, index) => {
+            console.log(`Nav element ${index}:`, el.tagName, el.className, el.textContent?.slice(0, 20));
+        });
+        
+        console.log('🔍 DEBUGGING - All elements with "Ani" or "Flix":');
+        document.querySelectorAll('*').forEach((el, index) => {
+            const text = el.textContent || '';
+            if (text.includes('Ani') || text.includes('Flix')) {
+                console.log(`Text element ${index}:`, el.tagName, el.className, text.slice(0, 50));
+            }
+        });
+        
         // Strategy 4: Post message to parent frame if we're in an iframe
         try {
             if (window.parent && window.parent !== window) {
@@ -699,14 +713,64 @@ document.addEventListener('DOMContentLoaded', function() {
             localStorage.setItem('logoUpdateTime', Date.now().toString());
             console.log('💾 Saved logo update to localStorage');
             
-            // Trigger storage event
+            // Trigger storage event for other tabs
             window.dispatchEvent(new StorageEvent('storage', {
                 key: 'currentLogoText',
                 newValue: displayText,
                 oldValue: localStorage.getItem('currentLogoText')
             }));
+            
+            // Strategy 7: FORCE update via direct manipulation of all possible elements
+            console.log('🚨 FORCE UPDATE - Finding ALL possible logo elements');
+            
+            // Get all elements and check each one individually
+            const allElements = Array.from(document.querySelectorAll('*'));
+            let forceUpdated = 0;
+            
+            allElements.forEach((element, index) => {
+                const text = element.textContent || '';
+                const innerHTML = element.innerHTML || '';
+                
+                // Check if this element contains logo text and is likely a logo
+                if ((text === 'AniFlix' || text.includes('AniFlix') || 
+                     innerHTML.includes('AniFlix') || innerHTML.includes('Ani') || 
+                     innerHTML.includes('Flix')) && text.length < 50) {
+                    
+                    // Check if it's in navigation or header area
+                    const inNav = element.closest('nav') || element.closest('header') || 
+                                 element.closest('.flex-shrink-0') || element.id === 'mobile-nav-logo';
+                    
+                    if (inNav || element.classList.contains('text-2xl') || 
+                        element.classList.contains('text-red-500')) {
+                        
+                        console.log(`🎯 FORCE updating element ${index}:`, element.tagName, element.className, text);
+                        
+                        // Apply force update
+                        let logoHtml;
+                        if (displayText.toLowerCase().includes('aniflix')) {
+                            const aniIndex = displayText.toLowerCase().indexOf('ani');
+                            if (aniIndex !== -1) {
+                                const aniPart = displayText.substring(aniIndex, aniIndex + 3);
+                                const flixPart = displayText.substring(aniIndex + 3);
+                                logoHtml = `<span class="text-red-500">${aniPart}</span><span class="text-white">${flixPart}</span>`;
+                            } else {
+                                logoHtml = `<span class="text-white">${displayText}</span>`;
+                            }
+                        } else {
+                            logoHtml = `<span class="text-white">${displayText}</span>`;
+                        }
+                        
+                        element.innerHTML = logoHtml;
+                        forceUpdated++;
+                        console.log('✅ FORCE updated successfully');
+                    }
+                }
+            });
+            
+            console.log(`🚀 FORCE UPDATE complete: ${forceUpdated} elements updated`);
+            
         } catch (e) {
-            console.log('Cannot access localStorage');
+            console.log('Cannot access localStorage:', e);
         }
         
         console.log(`🏁 Professor ULTIMATE - Updated ${updated} logo elements to: ${displayText}`);
