@@ -578,37 +578,11 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Function to update navigation logo in real-time
+    // Function to update navigation logo in real-time (disabled for now to prevent issues)
     function updateNavigationLogo(url, alt) {
-        console.log('Updating navigation logo:', { url, alt });
-        
-        // Find all logo elements in navigation and footer
-        const logoSelectors = [
-            '.navbar-brand',
-            '.footer-logo', 
-            'a[href="/"]',
-            '.logo-text',
-            '.site-logo'
-        ];
-        
-        logoSelectors.forEach(selector => {
-            const elements = document.querySelectorAll(selector);
-            elements.forEach(element => {
-                if (element) {
-                    console.log('Found logo element:', selector);
-                    if (url) {
-                        element.innerHTML = `<img src="${url}" alt="${alt}" class="h-8 w-auto max-w-[200px]">`;
-                    } else {
-                        element.innerHTML = `<span class="text-2xl font-bold"><span class="text-red-500">Ani</span><span class="text-white">Flix</span></span>`;
-                    }
-                }
-            });
-        });
-        
-        // Also update page title
-        if (alt && alt !== 'Logo') {
-            document.title = alt + ' - Admin System Settings';
-        }
+        console.log('Navigation logo update skipped to prevent UI issues');
+        // Note: This function is disabled to prevent navigation corruption
+        // Only the preview container is updated for real-time feedback
     }
     
     // Function to update navigation title in real-time
