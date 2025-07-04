@@ -369,6 +369,16 @@
 document.addEventListener('DOMContentLoaded', function() {
     console.log('System Settings page loaded - initializing real-time features');
     
+    // Debug: Check if elements exist
+    const logoUrlDebug = document.getElementById('logo_url');
+    const logoAltDebug = document.getElementById('logo_alt');
+    const previewDebug = document.getElementById('logo-preview-container');
+    console.log('Debug elements found:', {
+        logoUrl: !!logoUrlDebug,
+        logoAlt: !!logoAltDebug, 
+        preview: !!previewDebug
+    });
+    
     // Show real-time status indicators
     updateSystemStatus();
     
@@ -424,6 +434,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const previewContainer = document.getElementById('logo-preview-container');
     
     if (logoUrl && previewContainer) {
+        console.log('Logo elements found - setting up real-time functionality');
         function updateLogoPreview() {
             const url = logoUrl.value.trim();
             const alt = logoAlt ? logoAlt.value.trim() : 'Logo';
@@ -481,16 +492,24 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         // Real-time logo preview with immediate feedback
-        logoUrl.addEventListener('input', function() {
-            console.log('Logo URL input detected:', logoUrl.value);
+        logoUrl.addEventListener('input', function(e) {
+            console.log('Logo URL input detected:', e.target.value);
             clearTimeout(window.logoUpdateTimeout);
-            window.logoUpdateTimeout = setTimeout(updateLogoPreview, 300);
+            window.logoUpdateTimeout = setTimeout(updateLogoPreview, 200);
         });
         
-        logoUrl.addEventListener('keyup', function() {
-            console.log('Logo URL keyup detected:', logoUrl.value);
+        logoUrl.addEventListener('keyup', function(e) {
+            console.log('Logo URL keyup detected:', e.target.value);
             clearTimeout(window.logoUpdateTimeout);
-            window.logoUpdateTimeout = setTimeout(updateLogoPreview, 300);
+            window.logoUpdateTimeout = setTimeout(updateLogoPreview, 200);
+        });
+        
+        logoUrl.addEventListener('paste', function(e) {
+            console.log('Logo URL paste detected');
+            setTimeout(function() {
+                console.log('After paste value:', logoUrl.value);
+                updateLogoPreview();
+            }, 50);
         });
         
         if (logoAlt) {
