@@ -85,6 +85,19 @@ app.register_blueprint(subscription_bp, url_prefix='/subscription')
 app.register_blueprint(admin_bp, url_prefix='/admin')
 app.register_blueprint(notifications_bp, url_prefix='/api')
 
+# Emergency admin access routes (must be after blueprints)
+@app.route('/emergency-admin-access')
+def emergency_admin_access():
+    """Emergency admin access during maintenance"""
+    from flask import redirect, url_for
+    return redirect(url_for('auth.login'))
+
+@app.route('/maintenance-override')
+def maintenance_override():
+    """Direct maintenance override for admins"""
+    from flask import redirect, url_for
+    return redirect(url_for('admin.system_settings'))
+
 # Socket.IO disabled for stability - using fast polling instead
 
 with app.app_context():
