@@ -441,11 +441,12 @@ document.addEventListener('DOMContentLoaded', function() {
             
             console.log('Updating logo preview:', { url, alt });
             
-            if (url) {
+            if (url && url.length > 10) { // Only try to load if URL looks valid
                 // Show loading state
                 previewContainer.innerHTML = `
-                    <div id="logo-loading" class="text-gray-400">
-                        <i class="fas fa-spinner fa-spin mr-2"></i>Loading...
+                    <div id="logo-loading" class="text-gray-400 text-center">
+                        <i class="fas fa-spinner fa-spin mr-2"></i>
+                        <div class="text-xs mt-1">Loading logo...</div>
                     </div>
                 `;
                 
@@ -456,13 +457,19 @@ document.addEventListener('DOMContentLoaded', function() {
                     previewContainer.innerHTML = `
                         <img src="${url}" alt="${alt}" 
                              id="logo-preview-image" 
-                             class="h-12 w-auto rounded" 
-                             style="max-width: 200px;">
+                             class="h-12 w-auto rounded shadow-lg" 
+                             style="max-width: 200px; transition: all 0.3s ease;">
                     `;
                     console.log('Preview container updated with image');
                     
-                    // Also update navigation logo in real-time
-                    updateNavigationLogo(url, alt);
+                    // Add success feedback
+                    setTimeout(function() {
+                        const imgElement = document.getElementById('logo-preview-image');
+                        if (imgElement) {
+                            imgElement.style.transform = 'scale(1.05)';
+                            setTimeout(() => imgElement.style.transform = 'scale(1)', 200);
+                        }
+                    }, 100);
                 };
                 
                 img.onerror = function() {
@@ -471,24 +478,22 @@ document.addEventListener('DOMContentLoaded', function() {
                         <div class="text-red-400 text-center">
                             <i class="fas fa-exclamation-triangle mr-2"></i>
                             <div class="text-sm">URL logo tidak valid</div>
+                            <div class="text-xs mt-1">Periksa URL dan coba lagi</div>
                         </div>
                     `;
-                    // Still try to update navigation
-                    updateNavigationLogo('', alt);
                 };
                 
                 img.src = url;
             } else {
-                console.log('No logo URL provided, showing text fallback');
-                // Show text fallback
+                console.log('No valid logo URL provided, showing text fallback');
+                // Show text fallback with alt text
+                const displayText = alt && alt !== 'Logo' ? alt : 'AniFlix';
                 previewContainer.innerHTML = `
-                    <span id="logo-preview-text" class="text-2xl font-bold">
+                    <span id="logo-preview-text" class="text-2xl font-bold transition-all duration-300">
                         <span class="text-red-500">Ani</span><span class="text-white">Flix</span>
                     </span>
+                    <div class="text-xs text-gray-400 mt-1">Text logo: ${displayText}</div>
                 `;
-                
-                // Update navigation to text logo
-                updateNavigationLogo('', alt);
             }
         }
         
@@ -521,8 +526,10 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
         
-        // Initialize preview on page load
-        console.log('Initializing logo preview...');
+        // Initialize preview on page load with current database values
+        console.log('Initializing logo preview with database values...');
+        console.log('Current logo URL from server:', logoUrl.value);
+        console.log('Current alt text from server:', logoAlt ? logoAlt.value : 'N/A');
         updateLogoPreview();
         
         // Add debug button for testing
