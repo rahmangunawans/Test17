@@ -12,14 +12,14 @@ admin_bp = Blueprint('admin', __name__)
 @admin_bp.route('/emergency-admin-access')
 def emergency_admin_access():
     """Hidden emergency access route for admins during maintenance"""
-    from flask import redirect, url_for
-    return redirect(url_for('auth.login'))
+    from flask import render_template
+    return render_template('admin/emergency_login.html')
 
 @admin_bp.route('/maintenance-override')
 def maintenance_override():
     """Alternative emergency route for admin access"""
-    from flask import redirect, url_for
-    return redirect(url_for('admin.system_settings'))
+    from flask import render_template
+    return render_template('admin/emergency_login.html')
 
 def admin_required(f):
     @wraps(f)
