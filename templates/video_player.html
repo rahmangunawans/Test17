@@ -3,10 +3,11 @@
 {% block title %}{{ episode.title }} - {{ content.title }} - AniFlix{% endblock %}
 
 {% block head %}
-<link href="https://vjs.zencdn.net/8.6.1/video-js.css" rel="stylesheet">
-<script src="https://vjs.zencdn.net/8.6.1/video.min.js"></script>
+<!-- Video.js CSS and JS -->
+<link href="https://vjs.zencdn.net/8.8.0/video-js.css" rel="stylesheet">
 <!-- WebTorrent for torrent streaming -->
 <script src="https://cdn.jsdelivr.net/npm/webtorrent@latest/webtorrent.min.js"></script>
+<script src="https://vjs.zencdn.net/8.8.0/video.min.js"></script>
 <style>
 .video-js {
     width: 100% !important;
@@ -622,20 +623,28 @@
 <!-- JavaScript -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    if (typeof videojs === 'undefined') {
-        console.error('Video.js library not loaded');
-        return;
+    // Wait for libraries to load
+    function checkLibraries() {
+        if (typeof videojs !== 'undefined' && typeof WebTorrent !== 'undefined') {
+            console.log('All libraries loaded successfully');
+            
+            const videoData = {
+                episodeId: {{ episode.id }},
+                canWatchFull: {{ 'true' if can_watch_full else 'false' }},
+                maxWatchTime: {{ max_watch_time if max_watch_time else 'null' }},
+                isVip: {{ 'true' if current_user.is_vip() else 'false' }},
+                watchTime: {{ watch_history.watch_time if watch_history else 0 }}
+            };
+            
+            initializeVideoPlayer(videoData);
+            initializeApp();
+        } else {
+            console.log('Waiting for libraries to load...');
+            setTimeout(checkLibraries, 100);
+        }
     }
     
-    const videoData = {
-        episodeId: {{ episode.id }},
-        canWatchFull: {{ 'true' if can_watch_full else 'false' }},
-        maxWatchTime: {{ max_watch_time if max_watch_time else 'null' }},
-        isVip: {{ 'true' if current_user.is_vip() else 'false' }},
-        watchTime: {{ watch_history.watch_time if watch_history else 0 }}
-    };
-    
-    initializeVideoPlayer(videoData);
+    checkLibraries();
 });
 
 let player;
@@ -867,76 +876,135 @@ function startTorrentStreaming() {
         return;
     }
     
+    console.log('Starting torrent streaming for:', currentTorrentUrl);
+    
     if (!initializeWebTorrent()) {
         return;
     }
     
     // Update UI
     updateTorrentStatus('Connecting to peers...', 'text-yellow-400');
-    document.getElementById('start-torrent-btn').disabled = true;
+    const startBtn = document.getElementById('start-torrent-btn');
+    if (startBtn) startBtn.disabled = true;
     
-    // Add torrent
-    client.add(currentTorrentUrl, function (torrent) {
-        currentTorrent = torrent;
-        console.log('Torrent added:', torrent.name);
-        
-        // Hide default message and show video container
-        document.getElementById('torrent-default-message').classList.add('hidden');
-        document.getElementById('torrent-video-container').classList.remove('hidden');
-        document.getElementById('torrent-actions').classList.remove('hidden');
-        
-        updateTorrentStatus('Finding video files...', 'text-blue-400');
-        
-        // Find the largest video file (usually the main video)
-        const videoFile = torrent.files.find(file => {
-            const ext = file.name.toLowerCase().split('.').pop();
-            return ['mp4', 'mkv', 'avi', 'webm', 'mov'].includes(ext);
-        }) || torrent.files.sort((a, b) => b.length - a.length)[0];
-        
-        if (videoFile) {
-            console.log('Video file found:', videoFile.name);
-            updateTorrentStatus('Streaming: ' + videoFile.name, 'text-green-400');
+    try {
+        // Add torrent with error handling
+        client.add(currentTorrentUrl, {
+            // Enable debug mode
+            announce: [
+                'wss://tracker.btorrent.xyz',
+                'wss://tracker.openwebtorrent.com',
+                'wss://tracker.webtorrent.dev'
+            ]
+        }, function (torrent) {
+            currentTorrent = torrent;
+            console.log('Torrent added successfully:', torrent.name);
+            console.log('Files in torrent:', torrent.files.map(f => f.name));
             
-            // Stream to video element
-            const videoElement = document.getElementById('torrent-video-player');
-            videoFile.renderTo(videoElement, {
-                autoplay: false,
-                controls: true
+            // Hide default message and show video container
+            const defaultMsg = document.getElementById('torrent-default-message');
+            const videoContainer = document.getElementById('torrent-video-container');
+            const actions = document.getElementById('torrent-actions');
+            
+            if (defaultMsg) defaultMsg.classList.add('hidden');
+            if (videoContainer) videoContainer.classList.remove('hidden');
+            if (actions) actions.classList.remove('hidden');
+            
+            updateTorrentStatus('Finding video files...', 'text-blue-400');
+            
+            // Find video files with better detection
+            const videoFiles = torrent.files.filter(file => {
+                const ext = file.name.toLowerCase().split('.').pop();
+                return ['mp4', 'mkv', 'avi', 'webm', 'mov', 'flv', 'm4v'].includes(ext);
             });
             
-            // Update progress
-            torrent.on('download', function () {
-                const progress = Math.round(torrent.progress * 100);
-                const downloaded = formatBytes(torrent.downloaded);
-                const total = formatBytes(torrent.length);
-                const speed = formatBytes(torrent.downloadSpeed) + '/s';
-                const peers = torrent.numPeers;
+            console.log('Video files found:', videoFiles.map(f => f.name));
+            
+            // Get the largest video file
+            const videoFile = videoFiles.length > 0 
+                ? videoFiles.sort((a, b) => b.length - a.length)[0]
+                : torrent.files.sort((a, b) => b.length - a.length)[0];
+            
+            if (videoFile) {
+                console.log('Selected video file:', videoFile.name, 'Size:', formatBytes(videoFile.length));
+                updateTorrentStatus('Preparing stream: ' + videoFile.name, 'text-green-400');
                 
-                document.getElementById('torrent-progress').style.width = progress + '%';
-                document.getElementById('torrent-downloaded').textContent = `Downloaded: ${progress}% (${downloaded}/${total})`;
-                document.getElementById('torrent-speed').textContent = `Speed: ${speed}`;
-                document.getElementById('torrent-peers').textContent = `Peers: ${peers}`;
-            });
-            
-            // Handle completion
-            torrent.on('done', function () {
-                updateTorrentStatus('Download complete!', 'text-green-400');
-                showNotification('Torrent download completed!', 'success');
-            });
-            
-        } else {
-            updateTorrentStatus('No video files found in torrent', 'text-red-400');
-            showNotification('No video files found in this torrent', 'error');
-        }
-    });
-    
-    // Handle errors
-    client.on('error', function (err) {
-        console.error('WebTorrent error:', err);
-        updateTorrentStatus('Error: ' + err.message, 'text-red-400');
-        showNotification('Torrent error: ' + err.message, 'error');
-        document.getElementById('start-torrent-btn').disabled = false;
-    });
+                // Get video element
+                const videoElement = document.getElementById('torrent-video-player');
+                if (videoElement) {
+                    // Clear any existing content
+                    videoElement.src = '';
+                    videoElement.load();
+                    
+                    // Create blob URL for streaming
+                    videoFile.getBlobURL(function(err, url) {
+                        if (err) {
+                            console.error('Error getting blob URL:', err);
+                            updateTorrentStatus('Error creating stream: ' + err.message, 'text-red-400');
+                            return;
+                        }
+                        
+                        console.log('Blob URL created:', url);
+                        videoElement.src = url;
+                        updateTorrentStatus('Streaming: ' + videoFile.name, 'text-green-400');
+                        showNotification('Video streaming started!', 'success');
+                    });
+                }
+                
+                // Update progress regularly
+                const updateProgress = () => {
+                    if (currentTorrent) {
+                        const progress = Math.round(torrent.progress * 100);
+                        const downloaded = formatBytes(torrent.downloaded);
+                        const total = formatBytes(torrent.length);
+                        const speed = formatBytes(torrent.downloadSpeed) + '/s';
+                        const peers = torrent.numPeers;
+                        
+                        const progressBar = document.getElementById('torrent-progress');
+                        const downloadedSpan = document.getElementById('torrent-downloaded');
+                        const speedSpan = document.getElementById('torrent-speed');
+                        const peersSpan = document.getElementById('torrent-peers');
+                        
+                        if (progressBar) progressBar.style.width = progress + '%';
+                        if (downloadedSpan) downloadedSpan.textContent = `Downloaded: ${progress}% (${downloaded}/${total})`;
+                        if (speedSpan) speedSpan.textContent = `Speed: ${speed}`;
+                        if (peersSpan) peersSpan.textContent = `Peers: ${peers}`;
+                        
+                        if (progress < 100) {
+                            setTimeout(updateProgress, 1000);
+                        }
+                    }
+                };
+                
+                updateProgress();
+                
+                // Handle completion
+                torrent.on('done', function () {
+                    updateTorrentStatus('Download complete!', 'text-green-400');
+                    showNotification('Torrent download completed!', 'success');
+                });
+                
+            } else {
+                updateTorrentStatus('No video files found in torrent', 'text-red-400');
+                showNotification('No video files found in this torrent', 'error');
+                console.log('Available files:', torrent.files.map(f => f.name));
+            }
+        });
+        
+        // Handle client errors
+        client.on('error', function (err) {
+            console.error('WebTorrent client error:', err);
+            updateTorrentStatus('Client error: ' + err.message, 'text-red-400');
+            showNotification('WebTorrent error: ' + err.message, 'error');
+            if (startBtn) startBtn.disabled = false;
+        });
+        
+    } catch (error) {
+        console.error('Error starting torrent:', error);
+        updateTorrentStatus('Error: ' + error.message, 'text-red-400');
+        showNotification('Failed to start torrent: ' + error.message, 'error');
+        if (startBtn) startBtn.disabled = false;
+    }
 }
 
 function stopTorrentStreaming() {
@@ -977,7 +1045,7 @@ function formatBytes(bytes) {
 }
 
 // Initialize default server on page load
-document.addEventListener('DOMContentLoaded', function() {
+function initializeApp() {
     // Initialize WebTorrent
     initializeWebTorrent();
     
@@ -991,7 +1059,7 @@ document.addEventListener('DOMContentLoaded', function() {
     {% elif episode.server_torrent_url %}
         switchServer('torrent', '{{ episode.server_torrent_url }}');
     {% endif %}
-});
+}
 
 // Cleanup when page is unloaded
 window.addEventListener('beforeunload', function() {
