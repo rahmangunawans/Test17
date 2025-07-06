@@ -69,8 +69,14 @@ class Episode(db.Model):
     title = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text)
     duration = db.Column(db.Integer)  # Duration in minutes
-    video_url = db.Column(db.String(500))
+    video_url = db.Column(db.String(500))  # Legacy field for compatibility
     thumbnail_url = db.Column(db.String(500))  # Episode thumbnail
+    
+    # Multiple streaming servers
+    server_m3u8_url = db.Column(db.String(500))  # M3U8 streaming URL
+    server_embed_url = db.Column(db.String(500))  # Embed iframe URL
+    server_torrent_url = db.Column(db.String(500))  # Torrent/magnet URL
+    
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     # Relationships

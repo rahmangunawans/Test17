@@ -45,12 +45,65 @@
                            class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-red-500">
                 </div>
                 
-                <div>
-                    <label class="block text-sm font-medium text-gray-300 mb-2">Video URL</label>
-                    <input type="url" name="video_url" 
-                           value="{{ episode.video_url if episode else '' }}"
-                           class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-red-500"
-                           placeholder="https://example.com/video.mp4">
+                <!-- Streaming Servers Section -->
+                <div class="col-span-full">
+                    <h3 class="text-lg font-medium text-white mb-4 border-b border-gray-600 pb-2">
+                        <i class="fas fa-server mr-2 text-red-500"></i>
+                        Streaming Servers
+                    </h3>
+                    <div class="grid gap-4">
+                        <!-- Server 1: M3U8 URL -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">
+                                <i class="fas fa-play-circle mr-1 text-green-500"></i>
+                                Server 1 - M3U8 URL
+                            </label>
+                            <input type="url" name="server_m3u8_url" 
+                                   value="{{ episode.server_m3u8_url if episode else '' }}"
+                                   class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-red-500"
+                                   placeholder="https://example.com/video.m3u8">
+                            <p class="text-xs text-gray-400 mt-1">HLS streaming format (.m3u8)</p>
+                        </div>
+                        
+                        <!-- Server 2: Embed URL -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">
+                                <i class="fas fa-code mr-1 text-blue-500"></i>
+                                Server 2 - Embed URL
+                            </label>
+                            <input type="url" name="server_embed_url" 
+                                   value="{{ episode.server_embed_url if episode else '' }}"
+                                   class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-red-500"
+                                   placeholder="https://embed.example.com/video/123">
+                            <p class="text-xs text-gray-400 mt-1">Embed iframe URL for external player</p>
+                        </div>
+                        
+                        <!-- Server 3: Torrent/Magnet URL -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">
+                                <i class="fas fa-magnet mr-1 text-purple-500"></i>
+                                Server 3 - Torrent/Magnet URL
+                            </label>
+                            <input type="text" name="server_torrent_url" 
+                                   value="{{ episode.server_torrent_url if episode else '' }}"
+                                   class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-red-500"
+                                   placeholder="magnet:?xt=urn:btih:... or https://torrent.example.com/file.torrent">
+                            <p class="text-xs text-gray-400 mt-1">Magnet link or torrent file URL</p>
+                        </div>
+                        
+                        <!-- Legacy Video URL (for backwards compatibility) -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">
+                                <i class="fas fa-video mr-1 text-yellow-500"></i>
+                                Legacy Video URL (Optional)
+                            </label>
+                            <input type="url" name="video_url" 
+                                   value="{{ episode.video_url if episode else '' }}"
+                                   class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-red-500"
+                                   placeholder="https://example.com/video.mp4">
+                            <p class="text-xs text-gray-400 mt-1">Direct video file (fallback)</p>
+                        </div>
+                    </div>
                 </div>
                 
                 <div>

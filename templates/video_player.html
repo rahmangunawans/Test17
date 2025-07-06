@@ -106,23 +106,102 @@
             <!-- Main Video Section -->
             <div class="xl:col-span-3 space-y-6">
                 
+                <!-- Server Selection -->
+                <div class="glass-card rounded-2xl p-4 mb-4">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-lg font-semibold text-white flex items-center">
+                            <i class="fas fa-server mr-2 text-red-500"></i>
+                            Select Server
+                        </h3>
+                        <div class="text-sm text-slate-400">
+                            Choose your preferred streaming source
+                        </div>
+                    </div>
+                    
+                    <div class="flex flex-wrap gap-3">
+                        {% if episode.server_m3u8_url %}
+                        <button onclick="switchServer('m3u8', '{{ episode.server_m3u8_url }}')" 
+                                id="server-m3u8"
+                                class="server-btn flex items-center px-4 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white font-medium transition-all duration-200">
+                            <i class="fas fa-play-circle mr-2"></i>
+                            Server 1 (M3U8)
+                        </button>
+                        {% endif %}
+                        
+                        {% if episode.server_embed_url %}
+                        <button onclick="switchServer('embed', '{{ episode.server_embed_url }}')" 
+                                id="server-embed"
+                                class="server-btn flex items-center px-4 py-2 rounded-lg bg-slate-600 hover:bg-slate-700 text-white font-medium transition-all duration-200">
+                            <i class="fas fa-code mr-2"></i>
+                            Server 2 (Embed)
+                        </button>
+                        {% endif %}
+                        
+                        {% if episode.server_torrent_url %}
+                        <button onclick="switchServer('torrent', '{{ episode.server_torrent_url }}')" 
+                                id="server-torrent"
+                                class="server-btn flex items-center px-4 py-2 rounded-lg bg-slate-600 hover:bg-slate-700 text-white font-medium transition-all duration-200">
+                            <i class="fas fa-magnet mr-2"></i>
+                            Server 3 (Torrent)
+                        </button>
+                        {% endif %}
+                        
+                        {% if episode.video_url %}
+                        <button onclick="switchServer('direct', '{{ episode.video_url }}')" 
+                                id="server-direct"
+                                class="server-btn flex items-center px-4 py-2 rounded-lg bg-slate-600 hover:bg-slate-700 text-white font-medium transition-all duration-200">
+                            <i class="fas fa-video mr-2"></i>
+                            Direct Video
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+
                 <!-- Video Player -->
                 <div class="relative rounded-2xl overflow-hidden bg-gradient-to-br from-slate-800 to-slate-900 shadow-2xl">
                     <div class="aspect-video relative">
                         <div id="video-container" class="w-full h-full">
+                            <!-- Video.js Player (for M3U8 and direct video) -->
                             <video
                                 id="video-player"
-                                class="video-js vjs-default-skin w-full h-full"
+                                class="video-js vjs-default-skin w-full h-full hidden"
                                 controls
                                 preload="auto"
                                 poster="{{ content.thumbnail_url }}"
                                 data-setup="{}">
-                                <source src="{{ episode.video_url }}" type="video/mp4">
                                 <p class="vjs-no-js text-white p-8">
                                     To view this video please enable JavaScript, and consider upgrading to a web browser that
                                     <a href="https://videojs.com/html5-video-support/" target="_blank" class="text-red-400">supports HTML5 video</a>.
                                 </p>
                             </video>
+                            
+                            <!-- Embed Player (for embed URLs) -->
+                            <div id="embed-container" class="w-full h-full hidden">
+                                <iframe id="embed-player" 
+                                        class="w-full h-full rounded-2xl"
+                                        frameborder="0" 
+                                        allowfullscreen>
+                                </iframe>
+                            </div>
+                            
+                            <!-- Torrent/Magnet Player -->
+                            <div id="torrent-container" class="w-full h-full hidden flex items-center justify-center bg-slate-800">
+                                <div class="text-center text-white p-8">
+                                    <div class="mb-6">
+                                        <i class="fas fa-magnet text-6xl text-purple-500 mb-4"></i>
+                                        <h3 class="text-2xl font-bold mb-2">Torrent/Magnet Link</h3>
+                                        <p class="text-slate-400 mb-6">Copy the magnet link below to use with your preferred torrent client</p>
+                                    </div>
+                                    <div class="bg-slate-900 rounded-lg p-4 mb-4">
+                                        <code id="torrent-link" class="text-sm text-green-400 break-all"></code>
+                                    </div>
+                                    <button onclick="copyTorrentLink()" 
+                                            class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg font-medium transition-all duration-200">
+                                        <i class="fas fa-copy mr-2"></i>
+                                        Copy Link
+                                    </button>
+                                </div>
+                            </div>
                         </div>
 
                         <!-- Time Limit Overlay for Free Users -->
@@ -581,6 +660,136 @@ function rateAnime(animeId) {
         showNotification('Please enter a valid rating between 1 and 10', 'error');
     }
 }
+
+// Server switching functionality
+let currentServer = null;
+let currentServerUrl = null;
+
+function switchServer(serverType, serverUrl) {
+    if (!serverUrl) {
+        showNotification('Server URL not available', 'error');
+        return;
+    }
+    
+    currentServer = serverType;
+    currentServerUrl = serverUrl;
+    
+    // Update button states
+    document.querySelectorAll('.server-btn').forEach(btn => {
+        btn.classList.remove('bg-green-600', 'hover:bg-green-700');
+        btn.classList.add('bg-slate-600', 'hover:bg-slate-700');
+    });
+    
+    const activeBtn = document.getElementById(`server-${serverType}`);
+    if (activeBtn) {
+        activeBtn.classList.remove('bg-slate-600', 'hover:bg-slate-700');
+        activeBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+    }
+    
+    // Hide all containers
+    document.getElementById('video-player').classList.add('hidden');
+    document.getElementById('embed-container').classList.add('hidden');
+    document.getElementById('torrent-container').classList.add('hidden');
+    
+    // Dispose of existing Video.js player if it exists
+    if (player && typeof player.dispose === 'function') {
+        player.dispose();
+        player = null;
+    }
+    
+    switch (serverType) {
+        case 'm3u8':
+            showVideoPlayer(serverUrl, 'application/x-mpegURL');
+            showNotification('Switched to M3U8 Server', 'success');
+            break;
+            
+        case 'direct':
+            showVideoPlayer(serverUrl, 'video/mp4');
+            showNotification('Switched to Direct Video Server', 'success');
+            break;
+            
+        case 'embed':
+            showEmbedPlayer(serverUrl);
+            showNotification('Switched to Embed Server', 'success');
+            break;
+            
+        case 'torrent':
+            showTorrentPlayer(serverUrl);
+            showNotification('Switched to Torrent/Magnet Server', 'success');
+            break;
+    }
+}
+
+function showVideoPlayer(url, type) {
+    const videoElement = document.getElementById('video-player');
+    videoElement.classList.remove('hidden');
+    
+    // Create new Video.js player
+    player = videojs('video-player', {
+        fluid: true,
+        responsive: true,
+        playbackRates: [0.5, 1, 1.25, 1.5, 2],
+        controls: true,
+        preload: 'metadata',
+        sources: [{
+            src: url,
+            type: type
+        }]
+    });
+    
+    // Set up player events
+    if (episodeData) {
+        setupPlayerEvents(player, episodeData);
+    }
+}
+
+function showEmbedPlayer(url) {
+    const embedContainer = document.getElementById('embed-container');
+    const embedPlayer = document.getElementById('embed-player');
+    
+    embedPlayer.src = url;
+    embedContainer.classList.remove('hidden');
+}
+
+function showTorrentPlayer(url) {
+    const torrentContainer = document.getElementById('torrent-container');
+    const torrentLink = document.getElementById('torrent-link');
+    
+    torrentLink.textContent = url;
+    torrentContainer.classList.remove('hidden');
+}
+
+function copyTorrentLink() {
+    const torrentLink = document.getElementById('torrent-link');
+    const text = torrentLink.textContent;
+    
+    navigator.clipboard.writeText(text).then(() => {
+        showNotification('Torrent link copied to clipboard!', 'success');
+    }).catch(() => {
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        showNotification('Torrent link copied to clipboard!', 'success');
+    });
+}
+
+// Initialize default server on page load
+document.addEventListener('DOMContentLoaded', function() {
+    // Find the first available server and switch to it
+    {% if episode.server_m3u8_url %}
+        switchServer('m3u8', '{{ episode.server_m3u8_url }}');
+    {% elif episode.video_url %}
+        switchServer('direct', '{{ episode.video_url }}');
+    {% elif episode.server_embed_url %}
+        switchServer('embed', '{{ episode.server_embed_url }}');
+    {% elif episode.server_torrent_url %}
+        switchServer('torrent', '{{ episode.server_torrent_url }}');
+    {% endif %}
+});
 
 function showNotification(message, type = 'info') {
     const notification = document.createElement('div');

@@ -216,9 +216,12 @@ def add_episode(content_id):
                 episode_number=int(request.form['episode_number']),
                 title=request.form['title'],
                 duration=int(request.form['duration']),
-                video_url=request.form['video_url'],
+                video_url=request.form.get('video_url', ''),
                 thumbnail_url=request.form.get('thumbnail_url', ''),
-                description=request.form.get('description', '')
+                description=request.form.get('description', ''),
+                server_m3u8_url=request.form.get('server_m3u8_url', ''),
+                server_embed_url=request.form.get('server_embed_url', ''),
+                server_torrent_url=request.form.get('server_torrent_url', '')
             )
             db.session.add(episode)
             db.session.commit()
@@ -245,9 +248,12 @@ def edit_episode(episode_id):
             episode.episode_number = int(request.form['episode_number'])
             episode.title = request.form['title']
             episode.duration = int(request.form['duration'])
-            episode.video_url = request.form['video_url']
+            episode.video_url = request.form.get('video_url', '')
             episode.thumbnail_url = request.form.get('thumbnail_url', '')
             episode.description = request.form.get('description', '')
+            episode.server_m3u8_url = request.form.get('server_m3u8_url', '')
+            episode.server_embed_url = request.form.get('server_embed_url', '')
+            episode.server_torrent_url = request.form.get('server_torrent_url', '')
             
             db.session.commit()
             flash(f'Episode {episode.episode_number} updated successfully!', 'success')

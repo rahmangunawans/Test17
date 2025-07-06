@@ -158,6 +158,8 @@ AniFlix is a premium anime and movie streaming platform built with Flask. The ap
 - July 06, 2025. Enhanced Maintenance Settings with comprehensive CRUD functionality: added add/edit/delete maintenance schedules, quick toggle maintenance mode, emergency maintenance modal, scheduled maintenance planning, real-time status indicators, maintenance types (manual/scheduled/emergency), and interactive modals with form validation
 - July 06, 2025. Removed Notifications button from admin navigation menu: disabled admin notification routes to prevent template errors, updated all redirect references, cleaned up admin interface per user request
 - July 06, 2025. Enhanced notification system with professional styling: implemented gradient backgrounds, improved animations with cubic-bezier easing, added backdrop blur effects, enhanced shadow and hover effects, created consistent notification styling across all pages with better positioning and visual feedback
+- July 06, 2025. Successfully migrated from Replit Agent to standard Replit environment: completed migration checklist, verified all packages and database connectivity, confirmed full application functionality
+- July 06, 2025. Implemented multi-server streaming system: added 3 streaming options (M3U8, Embed, Torrent/Magnet) to watch pages, created server selection interface with real-time switching, enhanced admin episode management with streaming server fields, updated database schema with new columns for server URLs, integrated Video.js for M3U8 and direct video playback, embed iframe support for external players, torrent/magnet link display with copy functionality
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
