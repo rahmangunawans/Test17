@@ -921,20 +921,39 @@ function startTorrentStreaming() {
             // Get video element
             const videoElement = document.getElementById('torrent-video-player');
             
-            // Stream the video file directly to the video element
-            videoFile.streamTo(videoElement, {
-                autoplay: true,
-                muted: false
+            // Create blob URL for streaming
+            videoFile.getBlobURL((err, url) => {
+                if (err) {
+                    console.error('Error getting blob URL:', err);
+                    updateTorrentStatus('Error preparing video', 'text-red-400');
+                    showNotification('Error preparing video: ' + err.message, 'error');
+                    return;
+                }
+                
+                console.log('Video blob URL created:', url);
+                
+                // Set video source
+                videoElement.src = url;
+                videoElement.setAttribute('controls', 'true');
+                videoElement.setAttribute('preload', 'metadata');
+                videoElement.style.width = '100%';
+                videoElement.style.height = '100%';
+                
+                // Auto play when ready
+                videoElement.addEventListener('canplay', () => {
+                    updateTorrentStatus('Video ready to play', 'text-green-400');
+                    showNotification('Video is ready to stream!', 'success');
+                });
+                
+                videoElement.addEventListener('error', (e) => {
+                    console.error('Video playback error:', e);
+                    updateTorrentStatus('Video playback error', 'text-red-400');
+                    showNotification('Video playback error', 'error');
+                });
+                
+                // Load the video
+                videoElement.load();
             });
-            
-            // Add video attributes
-            videoElement.setAttribute('controls', 'true');
-            videoElement.setAttribute('preload', 'metadata');
-            videoElement.style.width = '100%';
-            videoElement.style.height = '100%';
-            
-            updateTorrentStatus('Video ready to play', 'text-green-400');
-            showNotification('Video is ready to stream!', 'success');
             
             // Update progress display
             const progressBar = document.getElementById('torrent-progress');
@@ -942,9 +961,9 @@ function startTorrentStreaming() {
             const speedSpan = document.getElementById('torrent-speed');
             const peersSpan = document.getElementById('torrent-peers');
             
-            if (progressBar) progressBar.style.width = '100%';
-            if (downloadedSpan) downloadedSpan.textContent = 'Ready to stream';
-            if (speedSpan) speedSpan.textContent = 'Speed: Connected';
+            if (progressBar) progressBar.style.width = '50%';
+            if (downloadedSpan) downloadedSpan.textContent = 'Preparing stream...';
+            if (speedSpan) speedSpan.textContent = 'Speed: Connecting...';
             if (peersSpan) peersSpan.textContent = `Peers: ${torrent.numPeers}`;
             
         } else {
