@@ -5,6 +5,8 @@
 {% block head %}
 <link href="https://vjs.zencdn.net/8.6.1/video-js.css" rel="stylesheet">
 <script src="https://vjs.zencdn.net/8.6.1/video.min.js"></script>
+<!-- WebTorrent for torrent streaming -->
+<script src="https://cdn.jsdelivr.net/npm/webtorrent@latest/webtorrent.min.js"></script>
 <style>
 .video-js {
     width: 100% !important;
@@ -185,21 +187,72 @@
                             </div>
                             
                             <!-- Torrent/Magnet Player -->
-                            <div id="torrent-container" class="w-full h-full hidden flex items-center justify-center bg-slate-800">
-                                <div class="text-center text-white p-8">
-                                    <div class="mb-6">
-                                        <i class="fas fa-magnet text-6xl text-purple-500 mb-4"></i>
-                                        <h3 class="text-2xl font-bold mb-2">Torrent/Magnet Link</h3>
-                                        <p class="text-slate-400 mb-6">Copy the magnet link below to use with your preferred torrent client</p>
+                            <div id="torrent-container" class="w-full h-full hidden">
+                                <div class="h-full flex flex-col">
+                                    <!-- Torrent Status -->
+                                    <div id="torrent-status" class="bg-slate-800/50 rounded-xl p-4 border border-slate-600/30 mb-4">
+                                        <div class="flex items-center justify-between mb-2">
+                                            <span class="text-slate-400 text-sm">Status:</span>
+                                            <span id="torrent-status-text" class="text-yellow-400 text-sm">Ready to stream</span>
+                                        </div>
+                                        <div class="w-full bg-slate-700 rounded-full h-2 mb-2">
+                                            <div id="torrent-progress" class="bg-purple-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                                        </div>
+                                        <div class="flex justify-between text-xs text-slate-500">
+                                            <span id="torrent-speed">Speed: 0 KB/s</span>
+                                            <span id="torrent-peers">Peers: 0</span>
+                                            <span id="torrent-downloaded">Downloaded: 0%</span>
+                                        </div>
                                     </div>
-                                    <div class="bg-slate-900 rounded-lg p-4 mb-4">
-                                        <code id="torrent-link" class="text-sm text-green-400 break-all"></code>
+
+                                    <!-- Video Player for Torrent -->
+                                    <div id="torrent-video-container" class="flex-1 hidden">
+                                        <div class="w-full h-full bg-black rounded-xl overflow-hidden">
+                                            <video id="torrent-video-player" class="w-full h-full" controls preload="metadata">
+                                                Your browser does not support the video tag.
+                                            </video>
+                                        </div>
                                     </div>
-                                    <button onclick="copyTorrentLink()" 
-                                            class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg font-medium transition-all duration-200">
-                                        <i class="fas fa-copy mr-2"></i>
-                                        Copy Link
-                                    </button>
+
+                                    <!-- Default Message -->
+                                    <div id="torrent-default-message" class="flex-1 flex items-center justify-center bg-slate-800 rounded-xl">
+                                        <div class="text-center text-white p-8">
+                                            <i class="fas fa-magnet text-6xl text-purple-500 mb-4"></i>
+                                            <h3 class="text-2xl font-bold mb-2">Torrent/Magnet Streaming</h3>
+                                            <p class="text-slate-400 mb-6">Click "Start Streaming" to begin WebTorrent playback</p>
+                                            <div class="flex gap-3 justify-center">
+                                                <button id="start-torrent-btn" onclick="startTorrentStreaming()" 
+                                                        class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg font-medium transition-all duration-200 flex items-center">
+                                                    <i class="fas fa-play mr-2"></i>
+                                                    Start Streaming
+                                                </button>
+                                                <button onclick="copyTorrentLink()" 
+                                                        class="bg-slate-600 hover:bg-slate-700 text-white px-6 py-2 rounded-lg font-medium transition-all duration-200 flex items-center">
+                                                    <i class="fas fa-copy mr-2"></i>
+                                                    Copy Link
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Torrent Actions (when streaming) -->
+                                    <div id="torrent-actions" class="hidden mt-4 flex gap-3">
+                                        <button id="stop-torrent-btn" onclick="stopTorrentStreaming()" 
+                                                class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm transition-colors duration-200 flex items-center">
+                                            <i class="fas fa-stop mr-2"></i>
+                                            Stop Streaming
+                                        </button>
+                                        <button onclick="copyTorrentLink()" 
+                                                class="bg-slate-600 hover:bg-slate-700 text-white px-4 py-2 rounded-lg text-sm transition-colors duration-200 flex items-center">
+                                            <i class="fas fa-copy mr-2"></i>
+                                            Copy Link
+                                        </button>
+                                    </div>
+
+                                    <!-- Hidden torrent link for copying -->
+                                    <div class="hidden">
+                                        <code id="torrent-link"><!-- Torrent link will be inserted here --></code>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -664,6 +717,11 @@ function rateAnime(animeId) {
 // Server switching functionality
 let currentServer = null;
 let currentServerUrl = null;
+let currentTorrentUrl = null;
+
+// WebTorrent functionality
+let client = null;
+let currentTorrent = null;
 
 function switchServer(serverType, serverUrl) {
     if (!serverUrl) {
@@ -695,6 +753,11 @@ function switchServer(serverType, serverUrl) {
     if (player && typeof player.dispose === 'function') {
         player.dispose();
         player = null;
+    }
+    
+    // Stop torrent streaming if switching away from torrent server
+    if (currentServer === 'torrent' && serverType !== 'torrent') {
+        stopTorrentStreaming();
     }
     
     switch (serverType) {
@@ -756,7 +819,13 @@ function showTorrentPlayer(url) {
     const torrentLink = document.getElementById('torrent-link');
     
     torrentLink.textContent = url;
+    currentTorrentUrl = url;
     torrentContainer.classList.remove('hidden');
+    
+    // Show default message and hide video container
+    document.getElementById('torrent-default-message').classList.remove('hidden');
+    document.getElementById('torrent-video-container').classList.add('hidden');
+    document.getElementById('torrent-actions').classList.add('hidden');
 }
 
 function copyTorrentLink() {
@@ -777,8 +846,141 @@ function copyTorrentLink() {
     });
 }
 
+// WebTorrent streaming functions
+function initializeWebTorrent() {
+    if (typeof WebTorrent === 'undefined') {
+        console.error('WebTorrent library not loaded');
+        showNotification('WebTorrent not available', 'error');
+        return false;
+    }
+    
+    if (!client) {
+        client = new WebTorrent();
+        console.log('WebTorrent client initialized');
+    }
+    return true;
+}
+
+function startTorrentStreaming() {
+    if (!currentTorrentUrl) {
+        showNotification('No torrent URL available', 'error');
+        return;
+    }
+    
+    if (!initializeWebTorrent()) {
+        return;
+    }
+    
+    // Update UI
+    updateTorrentStatus('Connecting to peers...', 'text-yellow-400');
+    document.getElementById('start-torrent-btn').disabled = true;
+    
+    // Add torrent
+    client.add(currentTorrentUrl, function (torrent) {
+        currentTorrent = torrent;
+        console.log('Torrent added:', torrent.name);
+        
+        // Hide default message and show video container
+        document.getElementById('torrent-default-message').classList.add('hidden');
+        document.getElementById('torrent-video-container').classList.remove('hidden');
+        document.getElementById('torrent-actions').classList.remove('hidden');
+        
+        updateTorrentStatus('Finding video files...', 'text-blue-400');
+        
+        // Find the largest video file (usually the main video)
+        const videoFile = torrent.files.find(file => {
+            const ext = file.name.toLowerCase().split('.').pop();
+            return ['mp4', 'mkv', 'avi', 'webm', 'mov'].includes(ext);
+        }) || torrent.files.sort((a, b) => b.length - a.length)[0];
+        
+        if (videoFile) {
+            console.log('Video file found:', videoFile.name);
+            updateTorrentStatus('Streaming: ' + videoFile.name, 'text-green-400');
+            
+            // Stream to video element
+            const videoElement = document.getElementById('torrent-video-player');
+            videoFile.renderTo(videoElement, {
+                autoplay: false,
+                controls: true
+            });
+            
+            // Update progress
+            torrent.on('download', function () {
+                const progress = Math.round(torrent.progress * 100);
+                const downloaded = formatBytes(torrent.downloaded);
+                const total = formatBytes(torrent.length);
+                const speed = formatBytes(torrent.downloadSpeed) + '/s';
+                const peers = torrent.numPeers;
+                
+                document.getElementById('torrent-progress').style.width = progress + '%';
+                document.getElementById('torrent-downloaded').textContent = `Downloaded: ${progress}% (${downloaded}/${total})`;
+                document.getElementById('torrent-speed').textContent = `Speed: ${speed}`;
+                document.getElementById('torrent-peers').textContent = `Peers: ${peers}`;
+            });
+            
+            // Handle completion
+            torrent.on('done', function () {
+                updateTorrentStatus('Download complete!', 'text-green-400');
+                showNotification('Torrent download completed!', 'success');
+            });
+            
+        } else {
+            updateTorrentStatus('No video files found in torrent', 'text-red-400');
+            showNotification('No video files found in this torrent', 'error');
+        }
+    });
+    
+    // Handle errors
+    client.on('error', function (err) {
+        console.error('WebTorrent error:', err);
+        updateTorrentStatus('Error: ' + err.message, 'text-red-400');
+        showNotification('Torrent error: ' + err.message, 'error');
+        document.getElementById('start-torrent-btn').disabled = false;
+    });
+}
+
+function stopTorrentStreaming() {
+    if (currentTorrent) {
+        currentTorrent.destroy();
+        currentTorrent = null;
+        console.log('Torrent stopped');
+    }
+    
+    // Reset UI
+    document.getElementById('torrent-default-message').classList.remove('hidden');
+    document.getElementById('torrent-video-container').classList.add('hidden');
+    document.getElementById('torrent-actions').classList.add('hidden');
+    document.getElementById('start-torrent-btn').disabled = false;
+    
+    // Reset progress
+    document.getElementById('torrent-progress').style.width = '0%';
+    document.getElementById('torrent-downloaded').textContent = 'Downloaded: 0%';
+    document.getElementById('torrent-speed').textContent = 'Speed: 0 KB/s';
+    document.getElementById('torrent-peers').textContent = 'Peers: 0';
+    
+    updateTorrentStatus('Ready to stream', 'text-yellow-400');
+    showNotification('Torrent streaming stopped', 'info');
+}
+
+function updateTorrentStatus(status, colorClass) {
+    const statusElement = document.getElementById('torrent-status-text');
+    statusElement.textContent = status;
+    statusElement.className = colorClass + ' text-sm';
+}
+
+function formatBytes(bytes) {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+}
+
 // Initialize default server on page load
 document.addEventListener('DOMContentLoaded', function() {
+    // Initialize WebTorrent
+    initializeWebTorrent();
+    
     // Find the first available server and switch to it
     {% if episode.server_m3u8_url %}
         switchServer('m3u8', '{{ episode.server_m3u8_url }}');
@@ -789,6 +991,16 @@ document.addEventListener('DOMContentLoaded', function() {
     {% elif episode.server_torrent_url %}
         switchServer('torrent', '{{ episode.server_torrent_url }}');
     {% endif %}
+});
+
+// Cleanup when page is unloaded
+window.addEventListener('beforeunload', function() {
+    if (currentTorrent) {
+        currentTorrent.destroy();
+    }
+    if (client) {
+        client.destroy();
+    }
 });
 
 function showNotification(message, type = 'info') {
