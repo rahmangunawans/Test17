@@ -163,6 +163,7 @@ AniFlix is a premium anime and movie streaming platform built with Flask. The ap
 - July 06, 2025. Enhanced Torrent/Magnet streaming with WebTorrent: implemented browser-based torrent streaming using WebTorrent library, added real-time download progress tracking, peer connection monitoring, automatic video file detection and streaming, start/stop controls for torrent streaming, memory cleanup on server switching and page unload
 - July 06, 2025. Fixed WebTorrent streaming implementation: simplified torrent streaming using appendTo method for direct video element attachment, improved error handling and progress tracking, enhanced torrent file detection to find largest file for streaming, updated UI with proper status feedback and control management
 - July 06, 2025. Successfully migrated from Replit Agent to standard Replit environment: verified all packages are installed correctly, ensured database connectivity to Supabase PostgreSQL, confirmed all application features work properly, improved WebTorrent streaming implementation using getBlobURL method for proper video streaming with error handling and progress monitoring
+- July 06, 2025. Attempted multiple torrent streaming implementations: tried WebTorrent client library, Webtor.io SDK, and iframe embedding - all faced technical challenges. User reports streaming still not working despite iframe loading successfully. Need to implement a working torrent streaming solution that actually plays video content
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
