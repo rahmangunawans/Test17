@@ -785,6 +785,18 @@ def update_system_settings():
             
             flash('Maintenance settings updated successfully.', 'success')
             
+        elif action == 'toggle_maintenance':
+            # Quick toggle maintenance mode
+            from models import SystemSettings
+            current_maintenance = SystemSettings.get_setting('maintenance_enabled', 'false') == 'true'
+            new_status = not current_maintenance
+            
+            SystemSettings.set_setting('maintenance_enabled', 'true' if new_status else 'false',
+                                     'boolean', 'Enable or disable maintenance mode')
+            
+            status_text = 'enabled' if new_status else 'disabled'
+            flash(f'Maintenance mode {status_text} successfully.', 'success')
+            
         elif action == 'update_logo':
             # Update logo settings
             logo_url = request.form.get('logo_url', '').strip()
