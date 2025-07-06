@@ -370,20 +370,53 @@
             transform: translateX(5px);
         }
         
-        /* Notification styles */
+        /* Enhanced Professional Notification Styles */
         .notification-toast {
-            animation: slideInRight 0.3s ease forwards;
+            animation: slideInRightProfessional 0.5s cubic-bezier(0.23, 1, 0.320, 1) forwards;
+            backdrop-filter: blur(16px);
+            box-shadow: 
+                0 20px 25px -5px rgba(0, 0, 0, 0.1),
+                0 10px 10px -5px rgba(0, 0, 0, 0.04),
+                0 0 0 1px rgba(255, 255, 255, 0.05),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
         }
         
-        @keyframes slideInRight {
-            from {
-                transform: translateX(100%);
+        .notification-toast:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 
+                0 25px 50px -12px rgba(0, 0, 0, 0.25),
+                0 0 0 1px rgba(255, 255, 255, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.15);
+        }
+        
+        @keyframes slideInRightProfessional {
+            0% {
+                transform: translateX(100%) scale(0.9);
                 opacity: 0;
             }
-            to {
-                transform: translateX(0);
+            50% {
+                transform: translateX(-5%) scale(1.02);
+                opacity: 0.8;
+            }
+            100% {
+                transform: translateX(0) scale(1);
                 opacity: 1;
             }
+        }
+        
+        @keyframes slideOutRightProfessional {
+            0% {
+                transform: translateX(0) scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: translateX(100%) scale(0.9);
+                opacity: 0;
+            }
+        }
+        
+        .notification-removing {
+            animation: slideOutRightProfessional 0.5s ease-in-out forwards;
         }
         
         /* Logo debug styles */

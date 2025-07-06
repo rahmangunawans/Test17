@@ -688,26 +688,61 @@ function hideLoading(element) {
 
 function showNotification(message, type = 'info') {
     const notification = document.createElement('div');
-    notification.className = `fixed top-20 right-4 z-50 p-4 rounded-lg shadow-lg max-w-sm alert-${type}`;
+    
+    // More professional styling with better colors and positioning
+    const bgColor = {
+        'success': 'bg-gradient-to-r from-green-500 to-green-600',
+        'error': 'bg-gradient-to-r from-red-500 to-red-600',
+        'warning': 'bg-gradient-to-r from-yellow-500 to-yellow-600',
+        'info': 'bg-gradient-to-r from-blue-500 to-blue-600'
+    }[type] || 'bg-gradient-to-r from-blue-500 to-blue-600';
+    
+    const icon = {
+        'success': 'fa-check-circle',
+        'error': 'fa-exclamation-circle',
+        'warning': 'fa-exclamation-triangle',
+        'info': 'fa-info-circle'
+    }[type] || 'fa-info-circle';
+    
+    notification.className = `notification-toast fixed top-6 right-6 z-[9999] ${bgColor} text-white px-6 py-4 rounded-xl max-w-md transform translate-x-full transition-all duration-500 ease-out border border-white/20`;
+    
     notification.innerHTML = `
-        <div class="flex items-center">
-            <div class="text-white">
-                ${message}
+        <div class="flex items-start space-x-3">
+            <div class="flex-shrink-0 mt-0.5">
+                <i class="fas ${icon} text-lg"></i>
             </div>
-            <button class="ml-4 text-white hover:text-gray-300" onclick="this.parentElement.parentElement.remove()">
-                <i class="fas fa-times"></i>
+            <div class="flex-1 min-w-0">
+                <p class="text-sm font-medium leading-5">${message}</p>
+            </div>
+            <button class="flex-shrink-0 ml-4 text-white/80 hover:text-white transition-colors duration-200" onclick="removeNotification(this.closest('div').closest('div'))">
+                <i class="fas fa-times text-sm"></i>
             </button>
         </div>
     `;
     
     document.body.appendChild(notification);
     
+    // Animate in
+    setTimeout(() => {
+        notification.classList.remove('translate-x-full');
+        notification.classList.add('translate-x-0');
+    }, 100);
+    
     // Auto remove after 5 seconds
     setTimeout(() => {
-        if (notification.parentNode) {
-            notification.remove();
-        }
+        removeNotification(notification);
     }, 5000);
+}
+
+function removeNotification(notification) {
+    if (notification && notification.parentNode) {
+        notification.classList.add('notification-removing');
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.remove();
+            }
+        }, 500);
+    }
 }
 
 // Export functions for use in other scripts

@@ -391,35 +391,61 @@ function removeFromHistory(episodeId) {
 
 function showNotification(message, type = 'info') {
     const notification = document.createElement('div');
-    notification.className = `fixed top-4 right-4 z-50 px-6 py-4 rounded-lg text-white font-medium transform translate-x-full transition-transform duration-300 ${
-        type === 'success' ? 'bg-green-600' : 
-        type === 'error' ? 'bg-red-600' : 
-        type === 'warning' ? 'bg-yellow-600' : 'bg-blue-600'
-    }`;
+    
+    // Match the professional styling from app.js
+    const bgColor = {
+        'success': 'bg-gradient-to-r from-green-500 to-green-600',
+        'error': 'bg-gradient-to-r from-red-500 to-red-600',
+        'warning': 'bg-gradient-to-r from-yellow-500 to-yellow-600',
+        'info': 'bg-gradient-to-r from-blue-500 to-blue-600'
+    }[type] || 'bg-gradient-to-r from-blue-500 to-blue-600';
+    
+    const icon = {
+        'success': 'fa-check-circle',
+        'error': 'fa-exclamation-circle',
+        'warning': 'fa-exclamation-triangle',
+        'info': 'fa-info-circle'
+    }[type] || 'fa-info-circle';
+    
+    notification.className = `notification-toast fixed top-6 right-6 z-[9999] ${bgColor} text-white px-6 py-4 rounded-xl max-w-md transform translate-x-full transition-all duration-500 ease-out border border-white/20`;
     
     notification.innerHTML = `
-        <div class="flex items-center">
-            <i class="fas ${
-                type === 'success' ? 'fa-check-circle' : 
-                type === 'error' ? 'fa-exclamation-circle' : 
-                type === 'warning' ? 'fa-exclamation-triangle' : 'fa-info-circle'
-            } mr-2"></i>
-            <span>${message}</span>
+        <div class="flex items-start space-x-3">
+            <div class="flex-shrink-0 mt-0.5">
+                <i class="fas ${icon} text-lg"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+                <p class="text-sm font-medium leading-5">${message}</p>
+            </div>
+            <button class="flex-shrink-0 ml-4 text-white/80 hover:text-white transition-colors duration-200" onclick="removeDashboardNotification(this.closest('div').closest('div'))">
+                <i class="fas fa-times text-sm"></i>
+            </button>
         </div>
     `;
     
     document.body.appendChild(notification);
     
+    // Animate in
     setTimeout(() => {
         notification.classList.remove('translate-x-full');
+        notification.classList.add('translate-x-0');
     }, 100);
     
+    // Auto remove after 5 seconds
     setTimeout(() => {
-        notification.classList.add('translate-x-full');
+        removeDashboardNotification(notification);
+    }, 5000);
+}
+
+function removeDashboardNotification(notification) {
+    if (notification && notification.parentNode) {
+        notification.classList.add('notification-removing');
         setTimeout(() => {
-            document.body.removeChild(notification);
-        }, 300);
-    }, 3000);
+            if (notification.parentNode) {
+                notification.remove();
+            }
+        }, 500);
+    }
 }
 
 // Admin functions
