@@ -864,8 +864,27 @@ function initializeWebTorrent() {
     }
     
     if (!client) {
-        client = new WebTorrent();
-        console.log('WebTorrent client initialized');
+        try {
+            client = new WebTorrent({
+                tracker: {
+                    announce: [
+                        'wss://tracker.btorrent.xyz',
+                        'wss://tracker.openwebtorrent.com',
+                        'wss://tracker.webtorrent.dev'
+                    ]
+                }
+            });
+            
+            client.on('error', function(err) {
+                console.error('WebTorrent client error:', err);
+            });
+            
+            console.log('WebTorrent client initialized successfully');
+        } catch (error) {
+            console.error('Failed to initialize WebTorrent:', error);
+            showNotification('Failed to initialize WebTorrent', 'error');
+            return false;
+        }
     }
     return true;
 }
@@ -888,18 +907,13 @@ function startTorrentStreaming() {
     if (startBtn) startBtn.disabled = true;
     
     try {
-        // Add torrent with error handling
-        client.add(currentTorrentUrl, {
-            // Enable debug mode
-            announce: [
-                'wss://tracker.btorrent.xyz',
-                'wss://tracker.openwebtorrent.com',
-                'wss://tracker.webtorrent.dev'
-            ]
-        }, function (torrent) {
-            currentTorrent = torrent;
-            console.log('Torrent added successfully:', torrent.name);
-            console.log('Files in torrent:', torrent.files.map(f => f.name));
+        // Add torrent
+        currentTorrent = client.add(currentTorrentUrl);
+        
+        // Handle torrent ready
+        currentTorrent.on('ready', function () {
+            console.log('Torrent ready:', currentTorrent.name);
+            console.log('Files in torrent:', currentTorrent.files.map(f => f.name));
             
             // Hide default message and show video container
             const defaultMsg = document.getElementById('torrent-default-message');
@@ -912,90 +926,70 @@ function startTorrentStreaming() {
             
             updateTorrentStatus('Finding video files...', 'text-blue-400');
             
-            // Find video files with better detection
-            const videoFiles = torrent.files.filter(file => {
-                const ext = file.name.toLowerCase().split('.').pop();
-                return ['mp4', 'mkv', 'avi', 'webm', 'mov', 'flv', 'm4v'].includes(ext);
-            });
-            
-            console.log('Video files found:', videoFiles.map(f => f.name));
-            
-            // Get the largest video file
-            const videoFile = videoFiles.length > 0 
-                ? videoFiles.sort((a, b) => b.length - a.length)[0]
-                : torrent.files.sort((a, b) => b.length - a.length)[0];
+            // Find the largest file (should be the video)
+            const videoFile = currentTorrent.files.reduce((a, b) => a.length > b.length ? a : b);
             
             if (videoFile) {
-                console.log('Selected video file:', videoFile.name, 'Size:', formatBytes(videoFile.length));
-                updateTorrentStatus('Preparing stream: ' + videoFile.name, 'text-green-400');
+                console.log('Video file found:', videoFile.name, 'Size:', formatBytes(videoFile.length));
+                updateTorrentStatus('Starting stream: ' + videoFile.name, 'text-green-400');
                 
                 // Get video element
                 const videoElement = document.getElementById('torrent-video-player');
                 if (videoElement) {
-                    // Clear any existing content
-                    videoElement.src = '';
-                    videoElement.load();
-                    
-                    // Create blob URL for streaming
-                    videoFile.getBlobURL(function(err, url) {
+                    // Use appendTo method for direct streaming
+                    videoFile.appendTo(videoElement, function (err) {
                         if (err) {
-                            console.error('Error getting blob URL:', err);
-                            updateTorrentStatus('Error creating stream: ' + err.message, 'text-red-400');
+                            console.error('Error streaming video:', err);
+                            updateTorrentStatus('Error: ' + err.message, 'text-red-400');
+                            showNotification('Streaming error: ' + err.message, 'error');
                             return;
                         }
                         
-                        console.log('Blob URL created:', url);
-                        videoElement.src = url;
+                        console.log('Video streaming started successfully');
                         updateTorrentStatus('Streaming: ' + videoFile.name, 'text-green-400');
                         showNotification('Video streaming started!', 'success');
+                        
+                        // Show controls
+                        videoElement.controls = true;
+                        videoElement.autoplay = false;
                     });
                 }
-                
-                // Update progress regularly
-                const updateProgress = () => {
-                    if (currentTorrent) {
-                        const progress = Math.round(torrent.progress * 100);
-                        const downloaded = formatBytes(torrent.downloaded);
-                        const total = formatBytes(torrent.length);
-                        const speed = formatBytes(torrent.downloadSpeed) + '/s';
-                        const peers = torrent.numPeers;
-                        
-                        const progressBar = document.getElementById('torrent-progress');
-                        const downloadedSpan = document.getElementById('torrent-downloaded');
-                        const speedSpan = document.getElementById('torrent-speed');
-                        const peersSpan = document.getElementById('torrent-peers');
-                        
-                        if (progressBar) progressBar.style.width = progress + '%';
-                        if (downloadedSpan) downloadedSpan.textContent = `Downloaded: ${progress}% (${downloaded}/${total})`;
-                        if (speedSpan) speedSpan.textContent = `Speed: ${speed}`;
-                        if (peersSpan) peersSpan.textContent = `Peers: ${peers}`;
-                        
-                        if (progress < 100) {
-                            setTimeout(updateProgress, 1000);
-                        }
-                    }
-                };
-                
-                updateProgress();
-                
-                // Handle completion
-                torrent.on('done', function () {
-                    updateTorrentStatus('Download complete!', 'text-green-400');
-                    showNotification('Torrent download completed!', 'success');
-                });
-                
             } else {
-                updateTorrentStatus('No video files found in torrent', 'text-red-400');
-                showNotification('No video files found in this torrent', 'error');
-                console.log('Available files:', torrent.files.map(f => f.name));
+                updateTorrentStatus('No files found in torrent', 'text-red-400');
+                showNotification('No files found in this torrent', 'error');
             }
         });
         
-        // Handle client errors
-        client.on('error', function (err) {
-            console.error('WebTorrent client error:', err);
-            updateTorrentStatus('Client error: ' + err.message, 'text-red-400');
-            showNotification('WebTorrent error: ' + err.message, 'error');
+        // Update progress
+        currentTorrent.on('download', function () {
+            const progress = Math.round(currentTorrent.progress * 100);
+            const downloaded = formatBytes(currentTorrent.downloaded);
+            const total = formatBytes(currentTorrent.length);
+            const speed = formatBytes(currentTorrent.downloadSpeed) + '/s';
+            const peers = currentTorrent.numPeers;
+            
+            const progressBar = document.getElementById('torrent-progress');
+            const downloadedSpan = document.getElementById('torrent-downloaded');
+            const speedSpan = document.getElementById('torrent-speed');
+            const peersSpan = document.getElementById('torrent-peers');
+            
+            if (progressBar) progressBar.style.width = progress + '%';
+            if (downloadedSpan) downloadedSpan.textContent = `Downloaded: ${progress}% (${downloaded}/${total})`;
+            if (speedSpan) speedSpan.textContent = `Speed: ${speed}`;
+            if (peersSpan) peersSpan.textContent = `Peers: ${peers}`;
+        });
+        
+        // Handle completion
+        currentTorrent.on('done', function () {
+            updateTorrentStatus('Download complete!', 'text-green-400');
+            showNotification('Torrent download completed!', 'success');
+        });
+        
+        // Handle errors
+        currentTorrent.on('error', function (err) {
+            console.error('Torrent error:', err);
+            updateTorrentStatus('Error: ' + err.message, 'text-red-400');
+            showNotification('Torrent error: ' + err.message, 'error');
             if (startBtn) startBtn.disabled = false;
         });
         
