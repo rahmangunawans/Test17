@@ -588,27 +588,16 @@ def toggle_vip(user_id):
     
     return redirect(url_for('admin.admin_users'))
 
-@admin_bp.route('/notifications')
-@admin_required
-def admin_notifications():
-    """Admin notification management page"""
-    # Get recent notifications
-    recent_notifications = Notification.query.order_by(Notification.created_at.desc()).limit(20).all()
-    
-    # Get notification statistics
-    total_notifications = Notification.query.count()
-    unread_notifications = Notification.query.filter_by(is_read=False).count()
-    global_notifications = Notification.query.filter_by(is_global=True).count()
-    
-    return render_template('admin/notifications.html',
-                         recent_notifications=recent_notifications,
-                         total_notifications=total_notifications,
-                         unread_notifications=unread_notifications,
-                         global_notifications=global_notifications)
+# @admin_bp.route('/notifications')
+# @admin_required
+# def admin_notifications():
+#     """Admin notification management page - DISABLED"""
+#     # Route disabled as per user request
+#     return redirect(url_for('admin.admin_dashboard'))
 
-@admin_bp.route('/notifications/send', methods=['GET', 'POST'])
-@admin_required
-def send_notification():
+# @admin_bp.route('/notifications/send', methods=['GET', 'POST'])
+# @admin_required
+def send_notification_disabled():
     """Send notification to users"""
     if request.method == 'POST':
         try:
@@ -653,15 +642,15 @@ def send_notification():
             logging.error(f"Error sending notification: {e}")
             flash('Failed to send notification.', 'error')
             
-        return redirect(url_for('admin.admin_notifications'))
+        return redirect(url_for('admin.admin_dashboard'))
     
     # GET request - show form
     users = User.query.order_by(User.username).all()
     return render_template('admin/send_notification.html', users=users)
 
-@admin_bp.route('/notifications/test')
-@admin_required
-def test_notification():
+# @admin_bp.route('/notifications/test')
+# @admin_required
+def test_notification_disabled():
     """Send a test notification"""
     try:
         # Send test notification to current admin
@@ -682,7 +671,7 @@ def test_notification():
         logging.error(f"Error sending test notification: {e}")
         flash('Failed to send test notification.', 'error')
         
-    return redirect(url_for('admin.admin_notifications'))
+    return redirect(url_for('admin.admin_dashboard'))
 
 @admin_bp.route('/system-settings')
 @admin_required
