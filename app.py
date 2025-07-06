@@ -9,6 +9,9 @@ from sqlalchemy.orm import DeclarativeBase
 from werkzeug.middleware.proxy_fix import ProxyFix
 from dotenv import load_dotenv
 
+# Import torrent streaming
+from torrent_streaming import TorrentStreamer, create_torrent_routes
+
 # Load environment variables
 load_dotenv()
 
@@ -451,3 +454,10 @@ def edit_profile():
             return render_template('edit_profile.html', error='Failed to update profile')
     
     return render_template('edit_profile.html')
+
+# Initialize torrent streaming routes
+try:
+    create_torrent_routes(app)
+    logging.info("Torrent streaming routes initialized successfully")
+except Exception as e:
+    logging.error(f"Failed to initialize torrent routes: {e}")

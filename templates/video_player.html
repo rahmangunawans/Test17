@@ -909,10 +909,10 @@ async function startTorrentStreaming() {
         return;
     }
     
-    console.log('Starting torrent streaming for:', currentTorrentUrl);
+    console.log('Starting Python torrent streaming for:', currentTorrentUrl);
     
     // Update UI
-    updateTorrentStatus('Initializing torrent player...', 'text-yellow-400');
+    updateTorrentStatus('Creating streaming session...', 'text-yellow-400');
     const startBtn = document.getElementById('start-torrent-btn');
     if (startBtn) startBtn.disabled = true;
     
@@ -931,105 +931,139 @@ async function startTorrentStreaming() {
     // Clear previous content
     videoPlayerElement.innerHTML = '';
     
-    // Try multiple approaches in order
-    await tryDirectWebtor();
+    try {
+        // Create streaming session via Python API
+        updateTorrentStatus('Connecting to Python streaming service...', 'text-yellow-400');
+        
+        const response = await fetch('/torrent/create-session', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                'magnet': currentTorrentUrl
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const sessionData = await response.json();
+        
+        if (!sessionData.success) {
+            throw new Error(sessionData.error || 'Failed to create streaming session');
+        }
+        
+        console.log('Streaming session created:', sessionData.session_id);
+        
+        // Get streaming URLs
+        const streamingUrls = sessionData.session_info.streaming_urls;
+        
+        // Create streaming interface
+        createStreamingInterface(sessionData.session_id, streamingUrls);
+        
+        updateTorrentStatus('Streaming ready', 'text-green-400');
+        showNotification('Python torrent streaming ready! Choose your preferred service.', 'success');
+        updateProgressIndicators('Ready', '100%', 'Active', 'Python API');
+        
+    } catch (error) {
+        console.error('Error creating torrent session:', error);
+        updateTorrentStatus('Session creation failed', 'text-red-400');
+        showNotification('Failed to create streaming session. Using fallback options.', 'error');
+        showFallbackInterface();
+    }
     
-    async function tryDirectWebtor() {
-        try {
-            updateTorrentStatus('Connecting to Webtor.io...', 'text-yellow-400');
-            
-            // Use direct iframe approach - more reliable
-            const embedUrl = createWebtorEmbedUrl();
-            
-            videoPlayerElement.innerHTML = `
-                <div class="w-full h-full relative bg-black rounded-xl overflow-hidden">
-                    <iframe 
-                        id="webtor-iframe"
-                        src="${embedUrl}"
-                        class="w-full h-full border-0"
-                        allow="autoplay; encrypted-media; fullscreen; clipboard-write; accelerometer; gyroscope; picture-in-picture; web-share"
-                        allowfullscreen
-                        referrerpolicy="no-referrer-when-downgrade"
-                        sandbox="allow-scripts allow-same-origin allow-popups allow-forms allow-presentation allow-downloads allow-top-navigation"
-                        style="min-height: 500px; border-radius: 12px;">
-                    </iframe>
-                    
-                    <!-- Loading overlay -->
-                    <div id="webtor-loading" class="absolute inset-0 bg-black bg-opacity-75 flex items-center justify-center rounded-xl">
-                        <div class="text-center text-white">
-                            <div class="animate-spin w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full mx-auto mb-4"></div>
-                            <div class="text-lg font-semibold">Loading Torrent Player...</div>
-                            <div class="text-sm text-gray-300 mt-2">Please wait while we prepare your video</div>
+    function createStreamingInterface(sessionId, streamingUrls) {
+        videoPlayerElement.innerHTML = `
+            <div class="w-full h-full bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 rounded-xl overflow-hidden" style="min-height: 500px;">
+                
+                <!-- Header -->
+                <div class="bg-black bg-opacity-50 p-4 text-white">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h3 class="text-lg font-bold">AniFlix Python Torrent Streaming</h3>
+                            <p class="text-sm text-gray-300">Session: ${sessionId.substring(0, 8)}...</p>
                         </div>
-                    </div>
-                    
-                    <!-- Status overlay -->
-                    <div class="absolute top-4 right-4 bg-black bg-opacity-75 text-white px-3 py-1 rounded-lg text-sm">
-                        <span class="text-green-400">● </span>Webtor.io
-                    </div>
-                    
-                    <!-- Controls overlay -->
-                    <div class="absolute bottom-4 left-4 right-4 bg-black bg-opacity-75 text-white p-3 rounded-lg">
-                        <div class="flex justify-between items-center text-sm">
-                            <span>Torrent Streaming Service</span>
-                            <div class="flex space-x-2">
-                                <button onclick="refreshTorrentPlayer()" 
-                                        class="bg-green-600 hover:bg-green-700 px-3 py-1 rounded text-xs transition-colors">
-                                    🔄 Refresh
-                                </button>
-                                <button onclick="openAlternativeTorrent()" 
-                                        class="bg-purple-600 hover:bg-purple-700 px-3 py-1 rounded text-xs transition-colors">
-                                    🌐 Alternative
-                                </button>
-                                <button onclick="copyTorrentLink()" 
-                                        class="bg-gray-600 hover:bg-gray-700 px-3 py-1 rounded text-xs transition-colors">
-                                    📋 Copy
-                                </button>
-                            </div>
+                        <div class="text-green-400 text-sm">
+                            <span class="text-green-400">● </span>Active
                         </div>
                     </div>
                 </div>
-            `;
-            
-            // Handle iframe loading
-            const iframe = document.getElementById('webtor-iframe');
-            const loadingOverlay = document.getElementById('webtor-loading');
-            
-            // Remove loading after a delay
-            setTimeout(() => {
-                if (loadingOverlay) {
-                    loadingOverlay.style.opacity = '0';
-                    setTimeout(() => {
-                        if (loadingOverlay && loadingOverlay.parentNode) {
-                            loadingOverlay.parentNode.removeChild(loadingOverlay);
-                        }
-                    }, 500);
-                }
-                updateTorrentStatus('Player loaded', 'text-green-400');
-                showNotification('Torrent player loaded! Click play to start streaming.', 'success');
-                updateProgressIndicators('Ready', '90%', 'Connected', 'Webtor.io');
-            }, 5000);
-            
-            // Update progress indicators immediately
-            updateProgressIndicators('Loading', '50%', 'Connecting', 'Webtor.io');
-            
-        } catch (error) {
-            console.error('Error loading Webtor.io player:', error);
-            showFallbackInterface();
-        }
-    }
-    
-    function createWebtorEmbedUrl() {
-        const baseUrl = 'https://webtor.io/embed';
-        const params = new URLSearchParams({
-            magnet: currentTorrentUrl,
-            poster: '{{ episode.thumbnail_url or content.thumbnail_url }}',
-            title: '{{ episode.title }}',
-            autoplay: 'false',
-            controls: 'true'
-        });
-        
-        return `${baseUrl}?${params.toString()}`;
+                
+                <!-- Main Content -->
+                <div class="p-6 text-center text-white">
+                    <div class="text-6xl mb-4">🚀</div>
+                    <h4 class="text-xl font-bold mb-4">Choose Your Streaming Service</h4>
+                    <p class="text-gray-300 mb-6">Select your preferred torrent streaming platform:</p>
+                    
+                    <!-- Streaming Options -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-4xl mx-auto">
+                        
+                        <!-- WebTor.io Option -->
+                        <div class="bg-black bg-opacity-30 p-4 rounded-lg border border-purple-500">
+                            <div class="text-purple-400 text-2xl mb-2">🌐</div>
+                            <h5 class="font-semibold mb-2">WebTor.io</h5>
+                            <p class="text-sm text-gray-400 mb-4">Professional streaming with controls</p>
+                            <button onclick="streamWithService('${sessionId}', 'webtor', '${streamingUrls.webtor}')" 
+                                    class="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded transition-colors">
+                                Stream Now
+                            </button>
+                        </div>
+                        
+                        <!-- Instant.io Option -->
+                        <div class="bg-black bg-opacity-30 p-4 rounded-lg border border-blue-500">
+                            <div class="text-blue-400 text-2xl mb-2">⚡</div>
+                            <h5 class="font-semibold mb-2">Instant.io</h5>
+                            <p class="text-sm text-gray-400 mb-4">Fast P2P streaming</p>
+                            <button onclick="streamWithService('${sessionId}', 'instant', '${streamingUrls.instant}')" 
+                                    class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded transition-colors">
+                                Stream Now
+                            </button>
+                        </div>
+                        
+                        <!-- BTorrent Option -->
+                        <div class="bg-black bg-opacity-30 p-4 rounded-lg border border-green-500">
+                            <div class="text-green-400 text-2xl mb-2">🔥</div>
+                            <h5 class="font-semibold mb-2">BTorrent</h5>
+                            <p class="text-sm text-gray-400 mb-4">Web-based torrent player</p>
+                            <button onclick="streamWithService('${sessionId}', 'btorrent', '${streamingUrls.btorrent}')" 
+                                    class="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded transition-colors">
+                                Stream Now
+                            </button>
+                        </div>
+                        
+                        <!-- Proxy Stream Option -->
+                        <div class="bg-black bg-opacity-30 p-4 rounded-lg border border-yellow-500">
+                            <div class="text-yellow-400 text-2xl mb-2">🎬</div>
+                            <h5 class="font-semibold mb-2">AniFlix Proxy</h5>
+                            <p class="text-sm text-gray-400 mb-4">Stream through our proxy</p>
+                            <button onclick="streamWithProxy('${sessionId}')" 
+                                    class="w-full bg-yellow-600 hover:bg-yellow-700 text-white py-2 px-4 rounded transition-colors">
+                                Stream Here
+                            </button>
+                        </div>
+                        
+                    </div>
+                    
+                    <!-- Additional Options -->
+                    <div class="mt-6 space-y-2">
+                        <button onclick="copyTorrentLink()" 
+                                class="bg-gray-600 hover:bg-gray-700 text-white py-2 px-6 rounded transition-colors">
+                            📋 Copy Magnet Link
+                        </button>
+                        <button onclick="refreshTorrentSession('${sessionId}')" 
+                                class="bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-6 rounded transition-colors ml-2">
+                            🔄 Refresh Session
+                        </button>
+                    </div>
+                    
+                    <p class="text-xs text-gray-400 mt-4">
+                        Powered by AniFlix Python Torrent Streaming Engine
+                    </p>
+                </div>
+            </div>
+        `;
     }
     
     function updateProgressIndicators(status, progress, speed, service) {
@@ -1046,42 +1080,36 @@ async function startTorrentStreaming() {
     
     function showFallbackInterface() {
         console.log('Showing fallback interface');
-        updateTorrentStatus('Alternative options available', 'text-blue-400');
+        updateTorrentStatus('Fallback options available', 'text-blue-400');
         
         videoPlayerElement.innerHTML = `
-            <div class="w-full h-full bg-gradient-to-br from-purple-900 to-blue-900 rounded-xl flex items-center justify-center p-8" style="min-height: 500px;">
+            <div class="w-full h-full bg-gradient-to-br from-red-900 to-orange-900 rounded-xl flex items-center justify-center p-8" style="min-height: 500px;">
                 <div class="text-center text-white max-w-md">
-                    <div class="text-6xl mb-4">🎬</div>
-                    <h3 class="text-xl font-bold mb-4">Choose Streaming Method</h3>
-                    <p class="mb-6 text-gray-300">Select your preferred torrent streaming service:</p>
+                    <div class="text-6xl mb-4">⚠️</div>
+                    <h3 class="text-xl font-bold mb-4">Fallback Streaming</h3>
+                    <p class="mb-6 text-gray-300">Python streaming unavailable. Using external services:</p>
                     
                     <div class="space-y-3">
                         <button onclick="openWebtorIo()" 
                                 class="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 px-6 rounded-lg transition-colors font-semibold">
-                            🌐 WebTor.io - Direct Stream
+                            🌐 WebTor.io
                         </button>
                         <button onclick="openInstantIo()" 
                                 class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-lg transition-colors font-semibold">
-                            ⚡ Instant.io - Fast Stream
+                            ⚡ Instant.io
                         </button>
                         <button onclick="openBTorrent()" 
                                 class="w-full bg-green-600 hover:bg-green-700 text-white py-3 px-6 rounded-lg transition-colors font-semibold">
-                            🔥 BTorrent - Web Player
+                            🔥 BTorrent
                         </button>
                         <button onclick="copyTorrentLink()" 
                                 class="w-full bg-gray-600 hover:bg-gray-700 text-white py-3 px-6 rounded-lg transition-colors font-semibold">
                             📋 Copy Magnet Link
                         </button>
                     </div>
-                    
-                    <p class="text-xs text-gray-400 mt-4">
-                        All services open in new tabs for better compatibility
-                    </p>
                 </div>
             </div>
         `;
-        
-        showNotification('Alternative streaming options loaded', 'info');
     }
     
     // Re-enable button
@@ -1116,6 +1144,145 @@ function openBTorrent() {
     window.open(`https://btorrent.xyz/#${encodeURIComponent(currentTorrentUrl)}`, '_blank');
     showNotification('Opening BTorrent...', 'success');
 }
+
+// New Python API streaming functions
+function streamWithService(sessionId, service, streamingUrl) {
+    console.log(`Streaming with ${service}:`, streamingUrl);
+    
+    // Open in new tab
+    window.open(streamingUrl, '_blank');
+    showNotification(`Opening ${service} in new tab...`, 'success');
+    
+    // Update status
+    updateTorrentStatus(`Streaming via ${service}`, 'text-green-400');
+    updateProgressIndicators('Streaming', '100%', 'Active', service);
+}
+
+function streamWithProxy(sessionId) {
+    console.log('Streaming with AniFlix proxy:', sessionId);
+    
+    // Open proxy stream in new tab
+    const proxyUrl = `/torrent/proxy/${sessionId}/webtor`;
+    window.open(proxyUrl, '_blank');
+    showNotification('Opening AniFlix proxy stream...', 'success');
+    
+    // Update status
+    updateTorrentStatus('Streaming via AniFlix proxy', 'text-green-400');
+    updateProgressIndicators('Streaming', '100%', 'Active', 'AniFlix Proxy');
+}
+
+async function refreshTorrentSession(sessionId) {
+    console.log('Refreshing torrent session:', sessionId);
+    
+    try {
+        updateTorrentStatus('Refreshing session...', 'text-yellow-400');
+        
+        const response = await fetch(`/torrent/session/${sessionId}`);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const sessionInfo = await response.json();
+        console.log('Session refreshed:', sessionInfo);
+        
+        if (sessionInfo.error) {
+            throw new Error(sessionInfo.error);
+        }
+        
+        updateTorrentStatus('Session refreshed', 'text-green-400');
+        showNotification('Session refreshed successfully!', 'success');
+        
+        // Update progress indicators
+        updateProgressIndicators(
+            'Refreshed', 
+            '100%', 
+            'Active', 
+            `Age: ${sessionInfo.age_minutes}min`
+        );
+        
+    } catch (error) {
+        console.error('Error refreshing session:', error);
+        updateTorrentStatus('Refresh failed', 'text-red-400');
+        showNotification('Failed to refresh session', 'error');
+    }
+}
+
+async function cleanupOldSessions() {
+    console.log('Cleaning up old torrent sessions...');
+    
+    try {
+        const response = await fetch('/torrent/cleanup', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                'max_age_hours': 1
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        console.log('Cleanup result:', result);
+        
+        if (result.success) {
+            showNotification(`Cleaned up ${result.cleaned_sessions} old sessions`, 'info');
+        }
+        
+    } catch (error) {
+        console.error('Error cleaning up sessions:', error);
+    }
+}
+
+// Auto cleanup old sessions every 10 minutes
+setInterval(cleanupOldSessions, 10 * 60 * 1000);
+
+// Test Python torrent API
+async function testPythonTorrentAPI() {
+    console.log('Testing Python torrent API...');
+    
+    try {
+        const testMagnet = "magnet:?xt=urn:btih:TIVVXAOK3HWTVYJJJB3EXPEMAWEIUSGC";
+        
+        const response = await fetch('/torrent/create-session', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                'magnet': testMagnet
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        console.log('API Test Result:', result);
+        
+        if (result.success) {
+            console.log('✅ Python Torrent API is working correctly!');
+            return true;
+        } else {
+            console.log('❌ Python Torrent API test failed:', result.error);
+            return false;
+        }
+        
+    } catch (error) {
+        console.error('❌ Python Torrent API test error:', error);
+        return false;
+    }
+}
+
+// Run API test when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    // Test API after a short delay
+    setTimeout(testPythonTorrentAPI, 2000);
+});
 
 // External player functions
 function openWebtorIo() {
