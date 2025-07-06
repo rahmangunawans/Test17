@@ -6,6 +6,8 @@
 <!-- Video.js CSS and JS -->
 <link href="https://vjs.zencdn.net/8.8.0/video-js.css" rel="stylesheet">
 <script src="https://vjs.zencdn.net/8.8.0/video.min.js"></script>
+<!-- WebTorrent for torrent streaming -->
+<script src="https://cdn.jsdelivr.net/npm/webtorrent@latest/webtorrent.min.js"></script>
 <style>
 .video-js {
     width: 100% !important;
@@ -852,7 +854,9 @@ function copyTorrentLink() {
     });
 }
 
-// Torrent streaming functions
+// WebTorrent client and torrent streaming functions
+let webTorrentClient = null;
+let currentTorrent = null;
 
 function startTorrentStreaming() {
     if (!currentTorrentUrl) {
@@ -863,7 +867,7 @@ function startTorrentStreaming() {
     console.log('Starting torrent streaming for:', currentTorrentUrl);
     
     // Update UI
-    updateTorrentStatus('Initializing stream...', 'text-yellow-400');
+    updateTorrentStatus('Initializing WebTorrent client...', 'text-yellow-400');
     const startBtn = document.getElementById('start-torrent-btn');
     if (startBtn) startBtn.disabled = true;
     
@@ -876,72 +880,115 @@ function startTorrentStreaming() {
     if (videoContainer) videoContainer.classList.remove('hidden');
     if (actions) actions.classList.remove('hidden');
     
-    // Create embedded torrent streaming using established services
-    const videoPlayer = document.getElementById('torrent-video-player');
+    // Initialize WebTorrent client
+    if (!webTorrentClient) {
+        webTorrentClient = new WebTorrent();
+        
+        webTorrentClient.on('error', (err) => {
+            console.error('WebTorrent error:', err);
+            updateTorrentStatus('Error: ' + err.message, 'text-red-400');
+            showNotification('WebTorrent error: ' + err.message, 'error');
+        });
+    }
     
-    // Use Instant.io embedded player for direct streaming
-    const instantUrl = `https://instant.io/#${encodeURIComponent(currentTorrentUrl)}`;
+    // Remove existing torrents
+    if (currentTorrent) {
+        currentTorrent.destroy();
+        currentTorrent = null;
+    }
     
-    // Create embedded streaming iframe
-    videoPlayer.innerHTML = `
-        <div class="w-full h-full bg-black rounded-xl overflow-hidden relative">
-            <iframe 
-                src="${instantUrl}" 
-                class="w-full h-full border-0"
-                allow="autoplay; encrypted-media; fullscreen; clipboard-write"
-                allowfullscreen
-                sandbox="allow-scripts allow-same-origin allow-popups allow-forms">
-            </iframe>
+    updateTorrentStatus('Connecting to peers...', 'text-yellow-400');
+    
+    // Add torrent
+    webTorrentClient.add(currentTorrentUrl, (torrent) => {
+        currentTorrent = torrent;
+        
+        console.log('Torrent added:', torrent.name);
+        updateTorrentStatus('Finding video files...', 'text-yellow-400');
+        
+        // Find the largest video file
+        const videoFile = torrent.files.find(file => {
+            const ext = file.name.split('.').pop().toLowerCase();
+            return ['mp4', 'avi', 'mkv', 'mov', 'wmv', 'flv', 'webm', 'm4v'].includes(ext);
+        }) || torrent.files.reduce((prev, current) => {
+            return (prev.length > current.length) ? prev : current;
+        });
+        
+        if (videoFile) {
+            console.log('Video file found:', videoFile.name);
+            updateTorrentStatus('Preparing video stream...', 'text-yellow-400');
             
-            <div class="absolute top-4 right-4 bg-black bg-opacity-75 text-white px-3 py-1 rounded-lg text-sm">
-                <span class="text-green-400">● </span>Torrent Stream
-            </div>
+            // Get video element
+            const videoElement = document.getElementById('torrent-video-player');
             
-            <div class="absolute bottom-4 left-4 right-4 bg-black bg-opacity-75 text-white p-3 rounded-lg">
-                <div class="flex justify-between items-center text-sm">
-                    <span>Streaming via Instant.io</span>
-                    <div class="flex space-x-2">
-                        <button onclick="openAlternativeStream()" 
-                                class="bg-purple-600 hover:bg-purple-700 px-3 py-1 rounded text-xs">
-                            Try Another Service
-                        </button>
-                        <button onclick="copyTorrentLink()" 
-                                class="bg-gray-600 hover:bg-gray-700 px-3 py-1 rounded text-xs">
-                            Copy Link
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    updateTorrentStatus('Streaming via WebTorrent.io', 'text-green-400');
-    showNotification('Torrent streaming started via WebTorrent.io', 'success');
-    
-    // Simulate progress for UI
-    let progress = 0;
-    const updateInterval = setInterval(() => {
-        progress += Math.random() * 10;
-        if (progress > 100) progress = 100;
-        
-        const progressBar = document.getElementById('torrent-progress');
-        const downloadedSpan = document.getElementById('torrent-downloaded');
-        const speedSpan = document.getElementById('torrent-speed');
-        const peersSpan = document.getElementById('torrent-peers');
-        
-        if (progressBar) progressBar.style.width = progress + '%';
-        if (downloadedSpan) downloadedSpan.textContent = `Buffering: ${Math.round(progress)}%`;
-        if (speedSpan) speedSpan.textContent = 'Speed: Connecting...';
-        if (peersSpan) peersSpan.textContent = 'Peers: Finding...';
-        
-        if (progress >= 100) {
-            clearInterval(updateInterval);
-            updateTorrentStatus('Ready to play', 'text-green-400');
+            // Stream the video file directly to the video element
+            videoFile.streamTo(videoElement, {
+                autoplay: true,
+                muted: false
+            });
+            
+            // Add video attributes
+            videoElement.setAttribute('controls', 'true');
+            videoElement.setAttribute('preload', 'metadata');
+            videoElement.style.width = '100%';
+            videoElement.style.height = '100%';
+            
+            updateTorrentStatus('Video ready to play', 'text-green-400');
+            showNotification('Video is ready to stream!', 'success');
+            
+            // Update progress display
+            const progressBar = document.getElementById('torrent-progress');
+            const downloadedSpan = document.getElementById('torrent-downloaded');
+            const speedSpan = document.getElementById('torrent-speed');
+            const peersSpan = document.getElementById('torrent-peers');
+            
+            if (progressBar) progressBar.style.width = '100%';
             if (downloadedSpan) downloadedSpan.textContent = 'Ready to stream';
             if (speedSpan) speedSpan.textContent = 'Speed: Connected';
-            if (peersSpan) peersSpan.textContent = 'Peers: Connected';
+            if (peersSpan) peersSpan.textContent = `Peers: ${torrent.numPeers}`;
+            
+        } else {
+            updateTorrentStatus('No video files found', 'text-red-400');
+            showNotification('No video files found in torrent', 'error');
         }
-    }, 1000);
+        
+        // Set up progress monitoring
+        const progressInterval = setInterval(() => {
+            if (!currentTorrent) {
+                clearInterval(progressInterval);
+                return;
+            }
+            
+            const progress = Math.round(currentTorrent.progress * 100);
+            const downloadSpeed = (currentTorrent.downloadSpeed / 1024 / 1024).toFixed(1);
+            const numPeers = currentTorrent.numPeers;
+            
+            const progressBar = document.getElementById('torrent-progress');
+            const downloadedSpan = document.getElementById('torrent-downloaded');
+            const speedSpan = document.getElementById('torrent-speed');
+            const peersSpan = document.getElementById('torrent-peers');
+            
+            if (progressBar) progressBar.style.width = progress + '%';
+            if (downloadedSpan) downloadedSpan.textContent = `Downloaded: ${progress}%`;
+            if (speedSpan) speedSpan.textContent = `Speed: ${downloadSpeed} MB/s`;
+            if (peersSpan) peersSpan.textContent = `Peers: ${numPeers}`;
+            
+            if (progress >= 100) {
+                clearInterval(progressInterval);
+                updateTorrentStatus('Download complete', 'text-green-400');
+            }
+        }, 1000);
+    });
+    
+    // Handle torrent errors
+    webTorrentClient.on('error', (err) => {
+        console.error('Torrent error:', err);
+        updateTorrentStatus('Error: ' + err.message, 'text-red-400');
+        showNotification('Torrent error: ' + err.message, 'error');
+        
+        // Re-enable start button
+        if (startBtn) startBtn.disabled = false;
+    });
 }
 
 function openInWebTorrent() {
@@ -954,61 +1001,6 @@ function openInWebTorrent() {
     const webtorrentUrl = `https://webtorrent.io/free-torrents?magnet=${encodeURIComponent(currentTorrentUrl)}`;
     window.open(webtorrentUrl, '_blank');
     showNotification('Opening in WebTorrent.io...', 'success');
-}
-
-function stopTorrentStreaming() {
-    // Show default message and hide video container
-    const defaultMsg = document.getElementById('torrent-default-message');
-    const videoContainer = document.getElementById('torrent-video-container');
-    const actions = document.getElementById('torrent-actions');
-    
-    if (defaultMsg) defaultMsg.classList.remove('hidden');
-    if (videoContainer) videoContainer.classList.add('hidden');
-    if (actions) actions.classList.add('hidden');
-    
-    // Reset UI
-    updateTorrentStatus('Ready to stream', 'text-green-400');
-    const startBtn = document.getElementById('start-torrent-btn');
-    if (startBtn) startBtn.disabled = false;
-    
-    // Clear video player
-    const videoElement = document.getElementById('torrent-video-player');
-    if (videoElement) {
-        videoElement.innerHTML = '';
-    }
-    
-    showNotification('Torrent streaming stopped', 'info');
-}
-
-function updateTorrentStatus(message, colorClass) {
-    const statusElement = document.getElementById('torrent-status');
-    if (statusElement) {
-        statusElement.textContent = message;
-        statusElement.className = `text-sm font-medium ${colorClass}`;
-    }
-}
-
-function openStreamingService(url) {
-    window.open(url, '_blank');
-    showNotification('Opening streaming service...', 'success');
-}
-
-function openAlternativeStream() {
-    if (!currentTorrentUrl) {
-        showNotification('No torrent URL available', 'error');
-        return;
-    }
-    
-    const alternatives = [
-        `https://webtorrent.io/free-torrents?magnet=${encodeURIComponent(currentTorrentUrl)}`,
-        `https://btorrent.xyz/#${encodeURIComponent(currentTorrentUrl)}`,
-        `https://webtor.io/create?magnet=${encodeURIComponent(currentTorrentUrl)}`
-    ];
-    
-    // Try opening different alternative services
-    const randomService = alternatives[Math.floor(Math.random() * alternatives.length)];
-    window.open(randomService, '_blank');
-    showNotification('Opening alternative streaming service...', 'success');
 }
 
 function stopTorrentStreaming() {
@@ -1032,6 +1024,24 @@ function stopTorrentStreaming() {
     
     updateTorrentStatus('Ready to stream', 'text-yellow-400');
     showNotification('Torrent streaming stopped', 'info');
+}
+
+function openAlternativeStream() {
+    if (!currentTorrentUrl) {
+        showNotification('No torrent URL available', 'error');
+        return;
+    }
+    
+    const alternatives = [
+        `https://webtorrent.io/free-torrents?magnet=${encodeURIComponent(currentTorrentUrl)}`,
+        `https://btorrent.xyz/#${encodeURIComponent(currentTorrentUrl)}`,
+        `https://webtor.io/create?magnet=${encodeURIComponent(currentTorrentUrl)}`
+    ];
+    
+    // Try opening different alternative services
+    const randomService = alternatives[Math.floor(Math.random() * alternatives.length)];
+    window.open(randomService, '_blank');
+    showNotification('Opening alternative streaming service...', 'success');
 }
 
 function updateTorrentStatus(status, colorClass) {
