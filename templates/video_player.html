@@ -7,22 +7,19 @@
 <link href="https://vjs.zencdn.net/8.8.0/video-js.css" rel="stylesheet">
 <script src="https://vjs.zencdn.net/8.8.0/video.min.js" onload="console.log('Video.js loaded successfully')" onerror="console.error('Video.js failed to load')"></script>
 
-<!-- WebTorrent for torrent streaming with fallback -->
+<!-- Webtor.io Embed SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@webtor/embed-sdk-js@latest/dist/index.min.js"></script>
 <script>
-// Load WebTorrent with error handling
-(function() {
-    const script = document.createElement('script');
-    script.src = 'https://cdn.jsdelivr.net/npm/webtorrent@2.4.0/webtorrent.min.js';
-    script.onload = function() {
-        console.log('WebTorrent loaded successfully');
-        window.webTorrentLoaded = true;
-    };
-    script.onerror = function() {
-        console.error('WebTorrent failed to load');
-        window.webTorrentLoaded = false;
-    };
-    document.head.appendChild(script);
-})();
+// Initialize webtor.io when loaded
+window.addEventListener('load', function() {
+    if (typeof window.webtor !== 'undefined') {
+        console.log('Webtor.io SDK loaded successfully');
+        window.webtorLoaded = true;
+    } else {
+        console.error('Webtor.io SDK failed to load');
+        window.webtorLoaded = false;
+    }
+});
 </script>
 <style>
 .video-js {
@@ -901,12 +898,12 @@ function startTorrentStreaming() {
     
     console.log('Starting torrent streaming for:', currentTorrentUrl);
     
-    // Always try external player first for better compatibility
-    updateTorrentStatus('Opening external torrent player...', 'text-yellow-400');
+    // Update UI
+    updateTorrentStatus('Initializing Webtor.io player...', 'text-yellow-400');
     const startBtn = document.getElementById('start-torrent-btn');
     if (startBtn) startBtn.disabled = true;
     
-    // Hide default message and show video container with embedded player
+    // Hide default message and show video container
     const defaultMsg = document.getElementById('torrent-default-message');
     const videoContainer = document.getElementById('torrent-video-container');
     const actions = document.getElementById('torrent-actions');
@@ -915,58 +912,154 @@ function startTorrentStreaming() {
     if (videoContainer) videoContainer.classList.remove('hidden');
     if (actions) actions.classList.remove('hidden');
     
-    // Create an embedded streaming solution
+    // Get video player element
     const videoPlayerElement = document.getElementById('torrent-video-player');
     
-    // Use WebTor.io embedded player for direct streaming
-    const embedUrl = `https://webtor.io/embed/${encodeURIComponent(currentTorrentUrl)}`;
+    // Clear previous content
+    videoPlayerElement.innerHTML = '';
     
-    videoPlayerElement.innerHTML = `
-        <div class="w-full h-full bg-black rounded-xl overflow-hidden relative">
-            <iframe 
-                src="${embedUrl}" 
-                class="w-full h-full border-0"
-                allow="autoplay; encrypted-media; fullscreen; clipboard-write"
-                allowfullscreen
-                sandbox="allow-scripts allow-same-origin allow-popups allow-forms allow-presentation"
-                style="border-radius: 12px;">
-            </iframe>
+    // Check if Webtor.io SDK is available
+    if (typeof window.webtor === 'undefined') {
+        console.error('Webtor.io SDK not loaded');
+        updateTorrentStatus('Loading Webtor.io SDK...', 'text-yellow-400');
+        
+        // Try to load SDK dynamically
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/@webtor/embed-sdk-js@latest/dist/index.min.js';
+        script.onload = function() {
+            console.log('Webtor.io SDK loaded dynamically');
+            initializeWebtorPlayer();
+        };
+        script.onerror = function() {
+            console.error('Failed to load Webtor.io SDK');
+            fallbackToIframe();
+        };
+        document.head.appendChild(script);
+    } else {
+        initializeWebtorPlayer();
+    }
+    
+    function initializeWebtorPlayer() {
+        try {
+            updateTorrentStatus('Connecting to torrent...', 'text-yellow-400');
             
-            <div class="absolute top-4 right-4 bg-black bg-opacity-75 text-white px-3 py-1 rounded-lg text-sm">
-                <span class="text-green-400">● </span>Torrent Stream
-            </div>
+            // Initialize Webtor.io player
+            const player = new window.webtor.Player(videoPlayerElement, {
+                magnet: currentTorrentUrl,
+                height: '100%',
+                width: '100%',
+                poster: '{{ episode.thumbnail_url or content.thumbnail_url }}',
+                controls: true,
+                autoplay: false,
+                title: '{{ episode.title }}',
+                subtitle: '{{ content.title }}',
+                lang: 'en',
+                userAgent: 'AniFlix/1.0',
+                features: {
+                    p2pProgress: true,
+                    continue: true,
+                    settings: true,
+                    fullscreen: true,
+                    playpause: true,
+                    currentTime: true,
+                    duration: true,
+                    volume: true,
+                    chromecast: true,
+                    browse: true
+                },
+                theme: {
+                    primary: '#8B5CF6',
+                    secondary: '#6366F1'
+                }
+            });
             
-            <div class="absolute bottom-4 left-4 right-4 bg-black bg-opacity-75 text-white p-3 rounded-lg">
-                <div class="flex justify-between items-center text-sm">
-                    <span>Streaming via WebTor.io</span>
-                    <div class="flex space-x-2">
-                        <button onclick="tryAlternativePlayer()" 
-                                class="bg-purple-600 hover:bg-purple-700 px-3 py-1 rounded text-xs transition-colors">
-                            Try Another Service
-                        </button>
-                        <button onclick="copyTorrentLink()" 
-                                class="bg-gray-600 hover:bg-gray-700 px-3 py-1 rounded text-xs transition-colors">
-                            Copy Link
-                        </button>
+            // Handle player events
+            player.on('ready', function() {
+                console.log('Webtor.io player ready');
+                updateTorrentStatus('Player ready', 'text-green-400');
+                showNotification('Torrent player loaded successfully!', 'success');
+                
+                // Update progress indicators
+                const progressBar = document.getElementById('torrent-progress');
+                const downloadedSpan = document.getElementById('torrent-downloaded');
+                const speedSpan = document.getElementById('torrent-speed');
+                const peersSpan = document.getElementById('torrent-peers');
+                
+                if (progressBar) progressBar.style.width = '100%';
+                if (downloadedSpan) downloadedSpan.textContent = 'Ready to stream';
+                if (speedSpan) speedSpan.textContent = 'Speed: Ready';
+                if (peersSpan) peersSpan.textContent = 'Service: Webtor.io';
+            });
+            
+            player.on('error', function(error) {
+                console.error('Webtor.io player error:', error);
+                updateTorrentStatus('Player error', 'text-red-400');
+                showNotification('Player error. Trying fallback method...', 'error');
+                fallbackToIframe();
+            });
+            
+            player.on('progress', function(progress) {
+                const progressPercent = Math.round(progress * 100);
+                const progressBar = document.getElementById('torrent-progress');
+                if (progressBar) progressBar.style.width = progressPercent + '%';
+                
+                const downloadedSpan = document.getElementById('torrent-downloaded');
+                if (downloadedSpan) downloadedSpan.textContent = `Downloaded: ${progressPercent}%`;
+            });
+            
+            // Store player reference for cleanup
+            window.currentWebtorPlayer = player;
+            
+        } catch (error) {
+            console.error('Error initializing Webtor.io player:', error);
+            updateTorrentStatus('Initialization failed', 'text-red-400');
+            fallbackToIframe();
+        }
+    }
+    
+    function fallbackToIframe() {
+        console.log('Using iframe fallback');
+        updateTorrentStatus('Using iframe player...', 'text-yellow-400');
+        
+        // Use iframe as fallback
+        const iframeUrl = `https://webtor.io/embed/${encodeURIComponent(currentTorrentUrl)}?poster=${encodeURIComponent('{{ episode.thumbnail_url or content.thumbnail_url }}')}`;
+        
+        videoPlayerElement.innerHTML = `
+            <div class="w-full h-full bg-black rounded-xl overflow-hidden relative">
+                <iframe 
+                    src="${iframeUrl}" 
+                    class="w-full h-full border-0"
+                    allow="autoplay; encrypted-media; fullscreen; clipboard-write"
+                    allowfullscreen
+                    sandbox="allow-scripts allow-same-origin allow-popups allow-forms allow-presentation"
+                    style="border-radius: 12px;">
+                </iframe>
+                
+                <div class="absolute top-4 right-4 bg-black bg-opacity-75 text-white px-3 py-1 rounded-lg text-sm">
+                    <span class="text-green-400">● </span>Torrent Stream
+                </div>
+                
+                <div class="absolute bottom-4 left-4 right-4 bg-black bg-opacity-75 text-white p-3 rounded-lg">
+                    <div class="flex justify-between items-center text-sm">
+                        <span>Streaming via Webtor.io</span>
+                        <div class="flex space-x-2">
+                            <button onclick="tryAlternativePlayer()" 
+                                    class="bg-purple-600 hover:bg-purple-700 px-3 py-1 rounded text-xs transition-colors">
+                                Try Alternative
+                            </button>
+                            <button onclick="copyTorrentLink()" 
+                                    class="bg-gray-600 hover:bg-gray-700 px-3 py-1 rounded text-xs transition-colors">
+                                Copy Link
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-    `;
-    
-    updateTorrentStatus('Streaming via WebTor.io', 'text-green-400');
-    showNotification('Torrent streaming started! If it doesn\'t load, try alternative services.', 'success');
-    
-    // Update progress indicators
-    const progressBar = document.getElementById('torrent-progress');
-    const downloadedSpan = document.getElementById('torrent-downloaded');
-    const speedSpan = document.getElementById('torrent-speed');
-    const peersSpan = document.getElementById('torrent-peers');
-    
-    if (progressBar) progressBar.style.width = '90%';
-    if (downloadedSpan) downloadedSpan.textContent = 'Streaming via WebTor.io';
-    if (speedSpan) speedSpan.textContent = 'Speed: Connected';
-    if (peersSpan) peersSpan.textContent = 'Service: WebTor.io';
+        `;
+        
+        updateTorrentStatus('Streaming via iframe', 'text-green-400');
+        showNotification('Torrent streaming started via iframe player!', 'success');
+    }
     
     // Re-enable button after a delay
     setTimeout(() => {
@@ -1050,10 +1143,35 @@ function openInWebTorrent() {
 }
 
 function stopTorrentStreaming() {
+    console.log('Stopping torrent streaming...');
+    
+    // Clean up Webtor.io player
+    if (window.currentWebtorPlayer) {
+        try {
+            window.currentWebtorPlayer.destroy();
+            console.log('Webtor.io player destroyed');
+        } catch (error) {
+            console.error('Error destroying Webtor.io player:', error);
+        }
+        window.currentWebtorPlayer = null;
+    }
+    
+    // Clean up WebTorrent client (legacy)
     if (currentTorrent) {
         currentTorrent.destroy();
         currentTorrent = null;
         console.log('Torrent stopped');
+    }
+    
+    if (webTorrentClient) {
+        webTorrentClient.destroy();
+        webTorrentClient = null;
+    }
+    
+    // Clear video player
+    const videoPlayerElement = document.getElementById('torrent-video-player');
+    if (videoPlayerElement) {
+        videoPlayerElement.innerHTML = '';
     }
     
     // Reset UI
