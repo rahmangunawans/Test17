@@ -876,46 +876,40 @@ function startTorrentStreaming() {
     if (videoContainer) videoContainer.classList.remove('hidden');
     if (actions) actions.classList.remove('hidden');
     
-    // Create iframe for torrent streaming using multiple options
+    // Create embedded torrent streaming using established services
     const videoPlayer = document.getElementById('torrent-video-player');
     
-    // Try multiple streaming services for better compatibility
-    const streamingOptions = [
-        {
-            name: 'Instant.io',
-            url: `https://instant.io/#${encodeURIComponent(currentTorrentUrl)}`
-        },
-        {
-            name: 'WebTorrent Desktop',
-            url: `https://webtorrent.io/desktop?magnet=${encodeURIComponent(currentTorrentUrl)}`
-        },
-        {
-            name: 'Bitport.io',
-            url: `https://bitport.io/welcome?magnet=${encodeURIComponent(currentTorrentUrl)}`
-        }
-    ];
+    // Use Instant.io embedded player for direct streaming
+    const instantUrl = `https://instant.io/#${encodeURIComponent(currentTorrentUrl)}`;
     
-    // Create iframe with fallback options
+    // Create embedded streaming iframe
     videoPlayer.innerHTML = `
-        <div class="w-full h-full bg-gray-900 rounded-xl overflow-hidden">
-            <div class="p-6 text-center">
-                <h3 class="text-xl font-bold text-white mb-4">Online Torrent Streaming</h3>
-                <p class="text-gray-300 mb-6">Choose a streaming service to watch this torrent:</p>
-                <div class="space-y-3">
-                    ${streamingOptions.map(option => `
-                        <button onclick="openStreamingService('${option.url}')" 
-                                class="w-full bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg font-medium transition-all duration-200 flex items-center justify-center">
-                            <i class="fas fa-external-link-alt mr-2"></i>
-                            Open in ${option.name}
+        <div class="w-full h-full bg-black rounded-xl overflow-hidden relative">
+            <iframe 
+                src="${instantUrl}" 
+                class="w-full h-full border-0"
+                allow="autoplay; encrypted-media; fullscreen; clipboard-write"
+                allowfullscreen
+                sandbox="allow-scripts allow-same-origin allow-popups allow-forms">
+            </iframe>
+            
+            <div class="absolute top-4 right-4 bg-black bg-opacity-75 text-white px-3 py-1 rounded-lg text-sm">
+                <span class="text-green-400">● </span>Torrent Stream
+            </div>
+            
+            <div class="absolute bottom-4 left-4 right-4 bg-black bg-opacity-75 text-white p-3 rounded-lg">
+                <div class="flex justify-between items-center text-sm">
+                    <span>Streaming via Instant.io</span>
+                    <div class="flex space-x-2">
+                        <button onclick="openAlternativeStream()" 
+                                class="bg-purple-600 hover:bg-purple-700 px-3 py-1 rounded text-xs">
+                            Try Another Service
                         </button>
-                    `).join('')}
-                </div>
-                <div class="mt-6 pt-6 border-t border-gray-700">
-                    <button onclick="copyTorrentLink()" 
-                            class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg font-medium transition-all duration-200 flex items-center mx-auto">
-                        <i class="fas fa-copy mr-2"></i>
-                        Copy Magnet Link
-                    </button>
+                        <button onclick="copyTorrentLink()" 
+                                class="bg-gray-600 hover:bg-gray-700 px-3 py-1 rounded text-xs">
+                            Copy Link
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -997,6 +991,24 @@ function updateTorrentStatus(message, colorClass) {
 function openStreamingService(url) {
     window.open(url, '_blank');
     showNotification('Opening streaming service...', 'success');
+}
+
+function openAlternativeStream() {
+    if (!currentTorrentUrl) {
+        showNotification('No torrent URL available', 'error');
+        return;
+    }
+    
+    const alternatives = [
+        `https://webtorrent.io/free-torrents?magnet=${encodeURIComponent(currentTorrentUrl)}`,
+        `https://btorrent.xyz/#${encodeURIComponent(currentTorrentUrl)}`,
+        `https://webtor.io/create?magnet=${encodeURIComponent(currentTorrentUrl)}`
+    ];
+    
+    // Try opening different alternative services
+    const randomService = alternatives[Math.floor(Math.random() * alternatives.length)];
+    window.open(randomService, '_blank');
+    showNotification('Opening alternative streaming service...', 'success');
 }
 
 function stopTorrentStreaming() {
