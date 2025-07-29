@@ -577,36 +577,33 @@
 
 
 
-                    <!-- Mobile Navigation - Bottom Bar Style -->
-                    <div class="md:hidden flex items-center justify-between w-full">
-                        <!-- Mobile Menu Toggle - untuk membuka menu lengkap -->
-                        <button id="mobile-menu-toggle" class="p-3 text-gray-300 hover:text-white transition-colors">
-                            <i class="fas fa-bars text-xl"></i>
+                    <!-- Mobile Navigation - Menu icon setelah Genre -->
+                    <div class="md:hidden flex items-center justify-around w-full">
+                        <a href="{{ url_for('index') }}" class="{% if request.endpoint == 'index' %}text-red-500{% else %}text-gray-400{% endif %} flex flex-col items-center py-1 transition-colors">
+                            <i class="fas fa-home text-lg"></i>
+                            <span class="text-xs mt-1">Home</span>
+                        </a>
+                        <a href="{{ url_for('content.anime_list') }}" class="{% if request.endpoint == 'content.anime_list' %}text-red-500{% else %}text-gray-400{% endif %} flex flex-col items-center py-1 transition-colors">
+                            <i class="fas fa-play-circle text-lg"></i>
+                            <span class="text-xs mt-1">Anime</span>
+                        </a>
+                        <a href="{{ url_for('content.anime_list') }}" class="text-gray-400 flex flex-col items-center py-1 transition-colors">
+                            <i class="fas fa-dragon text-lg"></i>
+                            <span class="text-xs mt-1">Donghua</span>
+                        </a>
+                        <a href="{{ url_for('content.movies_list') }}" class="{% if request.endpoint == 'content.movies_list' %}text-red-500{% else %}text-gray-400{% endif %} flex flex-col items-center py-1 transition-colors">
+                            <i class="fas fa-film text-lg"></i>
+                            <span class="text-xs mt-1">Movies</span>
+                        </a>
+                        <a href="{{ url_for('content.genres') }}" class="{% if request.endpoint == 'content.genres' %}text-red-500{% else %}text-gray-400{% endif %} flex flex-col items-center py-1 transition-colors">
+                            <i class="fas fa-tags text-lg"></i>
+                            <span class="text-xs mt-1">Genre</span>
+                        </a>
+                        <!-- Menu icon setelah Genre -->
+                        <button id="mobile-menu-toggle" class="flex flex-col items-center py-1 text-gray-400 hover:text-white transition-colors">
+                            <i class="fas fa-bars text-lg"></i>
+                            <span class="text-xs mt-1">Menu</span>
                         </button>
-                        
-                        <!-- Quick Nav Icons -->
-                        <div class="flex items-center space-x-6">
-                            <a href="{{ url_for('index') }}" class="{% if request.endpoint == 'index' %}text-red-500{% else %}text-gray-400{% endif %} flex flex-col items-center py-1 transition-colors">
-                                <i class="fas fa-home text-lg"></i>
-                                <span class="text-xs mt-1">Home</span>
-                            </a>
-                            <a href="{{ url_for('content.anime_list') }}" class="{% if request.endpoint == 'content.anime_list' %}text-red-500{% else %}text-gray-400{% endif %} flex flex-col items-center py-1 transition-colors">
-                                <i class="fas fa-play-circle text-lg"></i>
-                                <span class="text-xs mt-1">Anime</span>
-                            </a>
-                            <a href="{{ url_for('content.anime_list') }}" class="text-gray-400 flex flex-col items-center py-1 transition-colors">
-                                <i class="fas fa-dragon text-lg"></i>
-                                <span class="text-xs mt-1">Donghua</span>
-                            </a>
-                            <a href="{{ url_for('content.movies_list') }}" class="{% if request.endpoint == 'content.movies_list' %}text-red-500{% else %}text-gray-400{% endif %} flex flex-col items-center py-1 transition-colors">
-                                <i class="fas fa-film text-lg"></i>
-                                <span class="text-xs mt-1">Movies</span>
-                            </a>
-                            <a href="{{ url_for('content.genres') }}" class="{% if request.endpoint == 'content.genres' %}text-red-500{% else %}text-gray-400{% endif %} flex flex-col items-center py-1 transition-colors">
-                                <i class="fas fa-tags text-lg"></i>
-                                <span class="text-xs mt-1">Genre</span>
-                            </a>
-                        </div>
                     </div>
                 </div>
             </div>
