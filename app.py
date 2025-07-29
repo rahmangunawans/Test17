@@ -192,7 +192,23 @@ def index():
     featured_content = Content.query.filter_by(is_featured=True).all()
     latest_content = Content.query.order_by(Content.created_at.desc()).limit(8).all()
     popular_content = Content.query.order_by(Content.rating.desc()).limit(8).all()
-    return render_template('index.html', featured_content=featured_content, latest_content=latest_content, popular_content=popular_content)
+    
+    # Get featured donghua (Chinese anime)
+    featured_donghua = Content.query.filter_by(content_type='anime').filter(
+        db.or_(
+            Content.title.contains('Chinese'),
+            Content.genre.contains('Donghua'),
+            Content.genre.contains('Chinese'),
+            Content.description.contains('Chinese'),
+            Content.description.contains('Donghua')
+        )
+    ).limit(8).all()
+    
+    return render_template('index.html', 
+                         featured_content=featured_content, 
+                         latest_content=latest_content, 
+                         popular_content=popular_content,
+                         featured_donghua=featured_donghua)
 
 @app.route('/dashboard')
 @login_required
