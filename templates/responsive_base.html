@@ -512,39 +512,38 @@
                         </a>
                     </div>
 
-                    <!-- Search Bar - Desktop -->
-                    <div class="mx-2 hidden md:block">
-                        <div id="search-container" class="relative">
-                            <input type="text" id="search-input" placeholder="Cari anime atau film..." 
-                                class="bg-gray-800 text-white px-3 py-2 pl-8 pr-3 rounded-full border border-gray-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all text-sm"
-                                style="width: 200px;"
-                                autocomplete="off"
-                                spellcheck="false">
-                            <div class="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-gray-400">
-                                <i class="fas fa-search text-xs"></i>
+                    <!-- Search Bar + VIP Button + User Icon Container -->
+                    <div class="flex items-center space-x-1">
+                        <!-- Search Bar - Desktop -->
+                        <div class="hidden md:block">
+                            <div id="search-container" class="relative">
+                                <input type="text" id="search-input" placeholder="Cari anime atau film..." 
+                                    class="bg-gray-800 text-white px-3 py-2 pl-8 pr-3 rounded-full border border-gray-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all text-sm"
+                                    style="width: 200px;"
+                                    autocomplete="off"
+                                    spellcheck="false">
+                                <div class="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-gray-400">
+                                    <i class="fas fa-search text-xs"></i>
+                                </div>
+                                <!-- Search Results Container for Desktop -->
+                                <div id="search-results" class="absolute top-full left-0 right-0 mt-1 bg-gray-800 border border-gray-600 rounded-lg shadow-lg z-[60] max-h-80 overflow-y-auto hidden"></div>
                             </div>
-                            <!-- Search Results Container for Desktop -->
-                            <div id="search-results" class="absolute top-full left-0 right-0 mt-1 bg-gray-800 border border-gray-600 rounded-lg shadow-lg z-[60] max-h-80 overflow-y-auto hidden"></div>
                         </div>
-                    </div>
 
-                    <!-- Search Bar - Mobile (Responsive) -->
-                    <div class="flex-1 mx-2 sm:mx-4 md:hidden">
-                        <div id="mobile-search-container" class="relative">
-                            <input type="text" id="mobile-search-input" placeholder="Cari anime atau film..." 
-                                class="w-full bg-gray-800 text-white px-3 py-2 pl-8 pr-4 rounded-full border border-gray-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all text-sm"
-                                autocomplete="off"
-                                spellcheck="false">
-                            <div class="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-gray-400">
-                                <i class="fas fa-search text-xs"></i>
+                        <!-- Search Bar - Mobile (Responsive) -->
+                        <div class="flex-1 mx-2 sm:mx-4 md:hidden">
+                            <div id="mobile-search-container" class="relative">
+                                <input type="text" id="mobile-search-input" placeholder="Cari anime atau film..." 
+                                    class="w-full bg-gray-800 text-white px-3 py-2 pl-8 pr-4 rounded-full border border-gray-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all text-sm"
+                                    autocomplete="off"
+                                    spellcheck="false">
+                                <div class="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-gray-400">
+                                    <i class="fas fa-search text-xs"></i>
+                                </div>
+                                <!-- Search Results Container for Mobile with proper positioning -->
+                                <div id="mobile-search-results" class="fixed top-32 left-4 right-4 rounded-lg shadow-2xl z-[60] max-h-60 overflow-y-auto hidden"></div>
                             </div>
-                            <!-- Search Results Container for Mobile with proper positioning -->
-                            <div id="mobile-search-results" class="fixed top-32 left-4 right-4 rounded-lg shadow-2xl z-[60] max-h-60 overflow-y-auto hidden"></div>
                         </div>
-                    </div>
-
-                    <!-- VIP Button + User Icon -->
-                    <div class="flex items-center space-x-2">
                         <!-- VIP Button -->
                         {% if not current_user.is_authenticated or not current_user.is_vip() %}
                         <a href="{{ url_for('subscription.subscription_page') }}" 
