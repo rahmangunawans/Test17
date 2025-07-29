@@ -15,6 +15,13 @@ from torrent_streaming import TorrentStreamer, create_torrent_routes
 # Load environment variables
 load_dotenv()
 
+# Load Supabase password from .env if exists
+if os.path.exists('.env'):
+    with open('.env', 'r') as f:
+        for line in f:
+            if line.startswith('SUPABASE_PASSWORD='):
+                os.environ['SUPABASE_PASSWORD'] = line.split('=', 1)[1].strip()
+
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
 
@@ -31,17 +38,19 @@ app.secret_key = os.environ.get("SESSION_SECRET") or "dev-secret-key-for-replit-
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0  # Disable caching for development
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
-# Configure the database - use existing PostgreSQL database (treat as Supabase per user preference)
-database_url = os.environ.get("DATABASE_URL")
+# Configure the database - prioritize Supabase but use existing database until correct URL provided
+supabase_url = os.environ.get("SUPABASE_DATABASE_URL")
+database_url = supabase_url or os.environ.get("DATABASE_URL")
+
 app.config["SQLALCHEMY_DATABASE_URI"] = database_url
 
 if database_url:
-    if "supabase" in database_url:
+    if supabase_url and "supabase" in supabase_url:
         logging.info("Using Supabase PostgreSQL database")
     elif "neon" in database_url:
-        logging.info("Using Neon PostgreSQL database (configured as Supabase equivalent)")
+        logging.info("Using Neon PostgreSQL database (waiting for correct Supabase URL)")
     else:
-        logging.info("Using PostgreSQL database (configured as Supabase)")
+        logging.info("Using PostgreSQL database")
 else:
     logging.error("No database URL configured")
 
