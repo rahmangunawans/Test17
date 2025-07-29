@@ -464,15 +464,24 @@
                             <div class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
                                 <i class="fas fa-search text-lg"></i>
                             </div>
+                            <!-- Search Results Container for Desktop -->
+                            <div id="search-results" class="absolute top-full left-0 right-0 mt-1 bg-gray-800 border border-gray-600 rounded-lg shadow-lg z-50 max-h-80 overflow-y-auto hidden"></div>
                         </div>
                     </div>
 
-                    <!-- Search Button - Mobile -->
-                    <div class="flex-1 mx-4 md:hidden">
-                        <button id="mobile-search-toggle" class="w-full bg-gray-800 text-gray-400 px-4 py-2.5 rounded-full border border-gray-600 text-left flex items-center">
-                            <i class="fas fa-search mr-3"></i>
-                            <span>Cari anime atau film...</span>
-                        </button>
+                    <!-- Search Bar - Mobile (Responsive) -->
+                    <div class="flex-1 mx-2 sm:mx-4 md:hidden">
+                        <div id="mobile-search-container" class="relative">
+                            <input type="text" id="mobile-search-input" placeholder="Cari anime atau film..." 
+                                class="w-full bg-gray-800 text-white px-3 py-2 pl-8 pr-4 rounded-full border border-gray-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all text-sm"
+                                autocomplete="off"
+                                spellcheck="false">
+                            <div class="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-gray-400">
+                                <i class="fas fa-search text-xs"></i>
+                            </div>
+                            <!-- Search Results Container for Mobile -->
+                            <div id="mobile-search-results" class="absolute top-full left-0 right-0 mt-1 bg-gray-800 border border-gray-600 rounded-lg shadow-lg z-50 max-h-80 overflow-y-auto hidden"></div>
+                        </div>
                     </div>
 
                     <!-- VIP Button + User Icon -->
