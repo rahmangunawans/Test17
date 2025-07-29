@@ -38,21 +38,16 @@ app.secret_key = os.environ.get("SESSION_SECRET") or "dev-secret-key-for-replit-
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0  # Disable caching for development
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
-# Configure the database - prioritize Supabase but use existing database until correct URL provided
+# Configure the database - prioritize Supabase but fallback to working database
 supabase_url = os.environ.get("SUPABASE_DATABASE_URL")
-database_url = supabase_url or os.environ.get("DATABASE_URL")
+fallback_url = os.environ.get("DATABASE_URL")
 
-app.config["SQLALCHEMY_DATABASE_URI"] = database_url
-
-if database_url:
-    if supabase_url and "supabase" in supabase_url:
-        logging.info("Using Supabase PostgreSQL database")
-    elif "neon" in database_url:
-        logging.info("Using Neon PostgreSQL database (waiting for correct Supabase URL)")
-    else:
-        logging.info("Using PostgreSQL database")
+if supabase_url:
+    app.config["SQLALCHEMY_DATABASE_URI"] = supabase_url
+    logging.info("Using Supabase PostgreSQL database from environment variable")
 else:
-    logging.error("No database URL configured")
+    app.config["SQLALCHEMY_DATABASE_URI"] = fallback_url
+    logging.info("Using fallback database (waiting for correct SUPABASE_DATABASE_URL)")
 
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
     "pool_recycle": 300,
