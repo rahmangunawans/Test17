@@ -424,6 +424,64 @@
             border: 2px solid rgba(255, 0, 0, 0.5) !important;
             box-shadow: 0 0 10px rgba(255, 255, 255, 0.8) !important;
         }
+
+        /* Mobile Search Results Positioning */
+        #mobile-search-results {
+            background: rgba(31, 41, 55, 0.98);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(75, 85, 99, 0.6);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+            animation: slideDown 0.2s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Mobile search container constraints */
+        @media (max-width: 640px) {
+            #mobile-search-container {
+                max-width: calc(100vw - 180px); /* Account for VIP button and user icon */
+            }
+            
+            #mobile-search-input {
+                font-size: 14px;
+                padding: 8px 12px 8px 28px;
+            }
+        }
+
+        /* Search result items styling */
+        .search-result-item {
+            padding: 12px 16px;
+            border-bottom: 1px solid rgba(75, 85, 99, 0.3);
+            transition: background-color 0.2s ease;
+        }
+
+        .search-result-item:hover,
+        .search-result-item.active {
+            background-color: rgba(239, 68, 68, 0.1);
+        }
+
+        .search-result-item:last-child {
+            border-bottom: none;
+        }
+
+        /* Prevent body scroll when search results are open on mobile */
+        .search-results-open {
+            overflow: hidden;
+        }
+
+        /* Search input focus styles */
+        #mobile-search-input:focus {
+            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
+        }
     </style>
 </head>
 
@@ -465,7 +523,7 @@
                                 <i class="fas fa-search text-lg"></i>
                             </div>
                             <!-- Search Results Container for Desktop -->
-                            <div id="search-results" class="absolute top-full left-0 right-0 mt-1 bg-gray-800 border border-gray-600 rounded-lg shadow-lg z-50 max-h-80 overflow-y-auto hidden"></div>
+                            <div id="search-results" class="absolute top-full left-0 right-0 mt-1 bg-gray-800 border border-gray-600 rounded-lg shadow-lg z-[60] max-h-80 overflow-y-auto hidden"></div>
                         </div>
                     </div>
 
@@ -479,8 +537,8 @@
                             <div class="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-gray-400">
                                 <i class="fas fa-search text-xs"></i>
                             </div>
-                            <!-- Search Results Container for Mobile -->
-                            <div id="mobile-search-results" class="absolute top-full left-0 right-0 mt-1 bg-gray-800 border border-gray-600 rounded-lg shadow-lg z-50 max-h-80 overflow-y-auto hidden"></div>
+                            <!-- Search Results Container for Mobile with proper positioning -->
+                            <div id="mobile-search-results" class="fixed top-32 left-4 right-4 rounded-lg shadow-2xl z-[60] max-h-60 overflow-y-auto hidden"></div>
                         </div>
                     </div>
 
