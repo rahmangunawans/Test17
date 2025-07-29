@@ -38,27 +38,30 @@ app.secret_key = os.environ.get("SESSION_SECRET") or "dev-secret-key-for-replit-
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0  # Disable caching for development
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
-# Configure the database - Robust configuration with Supabase and fallback
+# Configure the database - Use Supabase exclusively as requested
 supabase_password = os.environ.get("SUPABASE_PASSWORD")
 supabase_project_ref = "hmbdcxowqjodhxwqwfenm"  # Correct project ref from screenshot
-fallback_url = os.environ.get("DATABASE_URL")
 
-# Set up environment for manual Supabase connection when user is ready
 if supabase_password:
+    # Use Session Pooler with optimized connection settings for Supabase
     supabase_url = f"postgresql://postgres.{supabase_project_ref}:{supabase_password}@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres"
-    # Save constructed URL for user to test manually if needed
-    os.environ["CONSTRUCTED_SUPABASE_URL"] = supabase_url
-    logging.info(f"Supabase URL constructed for project {supabase_project_ref} - available for manual testing")
-
-# Use stable database for now to keep application running
-app.config["SQLALCHEMY_DATABASE_URI"] = fallback_url
-logging.info("Using stable PostgreSQL database (Supabase credentials ready for manual activation)")
+    app.config["SQLALCHEMY_DATABASE_URI"] = supabase_url
+    logging.info(f"Using Supabase PostgreSQL database (Session Pooler) with project: {supabase_project_ref}")
+else:
+    logging.error("Supabase password required but not provided")
+    raise Exception("SUPABASE_PASSWORD environment variable is required")
 
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
-    "pool_recycle": 300,
+    "pool_recycle": 60,  # Shorter recycle for Supabase pooler
     "pool_pre_ping": True,
+    "pool_timeout": 10,
+    "pool_size": 1,  # Minimal pool size for Supabase
+    "max_overflow": 2,
     "connect_args": {
-        "sslmode": "require"  # Ensure SSL for secure connections
+        "sslmode": "require",
+        "connect_timeout": 8,
+        "application_name": "aniflix-streaming",
+        "options": "-c statement_timeout=30000"
     }
 }
 
