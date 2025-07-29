@@ -5,6 +5,7 @@ from models import db, Content, Episode, User, WatchHistory, Notification, Syste
 from notifications import create_notification, notify_admin_message, notify_new_episode, notify_new_content
 from werkzeug.security import generate_password_hash
 from sqlalchemy import text, inspect
+from anilist_integration import anilist_service
 import logging
 import json
 
@@ -129,6 +130,63 @@ def add_content():
             flash(f'Error adding content: {str(e)}', 'error')
     
     return render_template('admin/content_form.html')
+
+@admin_bp.route('/api/anilist/search')
+@login_required
+@admin_required
+def anilist_search():
+    """API endpoint to search AniList for anime/manga data"""
+    query = request.args.get('q', '').strip()
+    search_type = request.args.get('type', 'anime')  # anime or manga
+    
+    if not query:
+        return jsonify({'error': 'Query parameter is required'}), 400
+    
+    try:
+        if search_type == 'manga':
+            result = anilist_service.search_manga(query)
+            results = [result] if result else []
+        else:
+            results = anilist_service.search_anime(query, limit=5)
+        
+        return jsonify({
+            'success': True,
+            'results': results,
+            'count': len(results)
+        })
+        
+    except Exception as e:
+        logging.error(f"AniList search error: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': 'Failed to search AniList. Please try again.'
+        }), 500
+
+@admin_bp.route('/api/anilist/get/<int:anilist_id>')
+@login_required
+@admin_required
+def anilist_get_by_id(anilist_id):
+    """API endpoint to get specific anime by AniList ID"""
+    try:
+        result = anilist_service.search_anime_by_id(anilist_id)
+        
+        if result:
+            return jsonify({
+                'success': True,
+                'result': result
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': 'Anime not found'
+            }), 404
+            
+    except Exception as e:
+        logging.error(f"AniList get by ID error: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': 'Failed to get anime data. Please try again.'
+        }), 500
 
 @admin_bp.route('/admin/content/<int:content_id>/edit', methods=['GET', 'POST'])
 @login_required

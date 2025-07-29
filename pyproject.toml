@@ -20,4 +20,6 @@ dependencies = [
     "eventlet>=0.40.1",
     "libtorrent>=2.0.11",
     "requests>=2.32.4",
+    "aiohttp>=3.12.15",
+    "anilistpython>=0.1.3",
 ]

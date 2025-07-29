@@ -18,8 +18,49 @@
             <p class="text-gray-400">{% if content %}Update content details{% else %}Add new anime, donghua, or movie{% endif %}</p>
         </div>
 
-        <!-- Form -->
+        <!-- AniList Search Section -->
+        <div class="bg-gray-800 rounded-lg p-6 mb-6">
+            <h3 class="text-xl font-semibold text-white mb-4">
+                <i class="fas fa-search mr-2"></i>AniList Auto-Fill
+            </h3>
+            <p class="text-gray-400 mb-4">Search AniList to automatically populate content details</p>
+            
+            <div class="flex gap-4 mb-4">
+                <div class="flex-1">
+                    <input type="text" id="anilist-search" 
+                           placeholder="Search anime/donghua/manga on AniList..."
+                           class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-red-500">
+                </div>
+                <button type="button" id="search-anilist-btn" 
+                        class="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg transition-colors">
+                    <i class="fas fa-search mr-2"></i>Search
+                </button>
+            </div>
+            
+            <!-- Search Results -->
+            <div id="anilist-results" class="hidden">
+                <h4 class="text-lg font-medium text-white mb-3">Search Results:</h4>
+                <div id="results-container" class="space-y-2 max-h-60 overflow-y-auto">
+                    <!-- Results will be populated here -->
+                </div>
+            </div>
+            
+            <!-- Loading indicator -->
+            <div id="search-loading" class="hidden text-center py-4">
+                <i class="fas fa-spinner fa-spin text-red-500 text-2xl"></i>
+                <p class="text-gray-400 mt-2">Searching AniList...</p>
+            </div>
+        </div>
+
+        <!-- Manual Form -->
         <div class="bg-gray-800 rounded-lg p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-xl font-semibold text-white">
+                    <i class="fas fa-edit mr-2"></i>Content Details
+                </h3>
+                <span class="text-sm text-gray-400">Manual input or auto-filled from AniList</span>
+            </div>
+            
             <form method="POST" class="space-y-6">
                 <div class="grid md:grid-cols-2 gap-6">
                     <div>
@@ -114,7 +155,7 @@
                     <label class="block text-sm font-medium text-gray-300 mb-2">Description</label>
                     <textarea name="description" rows="4"
                               class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-red-500"
-                              placeholder="Content description...">{{ content.description if content else '' }}</textarea>
+                              placeholder="Enter content description...">{{ content.description if content else '' }}</textarea>
                 </div>
 
                 <div>
@@ -140,4 +181,154 @@
         </div>
     </div>
 </div>
+
+<!-- AniList Integration JavaScript -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('anilist-search');
+    const searchBtn = document.getElementById('search-anilist-btn');
+    const resultsDiv = document.getElementById('anilist-results');
+    const resultsContainer = document.getElementById('results-container');
+    const loadingDiv = document.getElementById('search-loading');
+    
+    // Form fields
+    const titleField = document.querySelector('input[name="title"]');
+    const descriptionField = document.querySelector('textarea[name="description"]');
+    const genreField = document.querySelector('input[name="genre"]');
+    const yearField = document.querySelector('input[name="year"]');
+    const ratingField = document.querySelector('input[name="rating"]');
+    const contentTypeField = document.querySelector('select[name="content_type"]');
+    const thumbnailField = document.querySelector('input[name="thumbnail_url"]');
+    const studioField = document.querySelector('input[name="studio"]');
+    const totalEpisodesField = document.querySelector('input[name="total_episodes"]');
+    const statusField = document.querySelector('select[name="status"]');
+    
+    // Search function
+    function searchAniList() {
+        const query = searchInput.value.trim();
+        if (!query) {
+            alert('Please enter a search query');
+            return;
+        }
+        
+        // Show loading
+        loadingDiv.classList.remove('hidden');
+        resultsDiv.classList.add('hidden');
+        searchBtn.disabled = true;
+        
+        // Make API request
+        fetch(`/admin/api/anilist/search?q=${encodeURIComponent(query)}`)
+            .then(response => response.json())
+            .then(data => {
+                loadingDiv.classList.add('hidden');
+                searchBtn.disabled = false;
+                
+                if (data.success && data.results.length > 0) {
+                    displayResults(data.results);
+                } else {
+                    resultsContainer.innerHTML = `
+                        <div class="text-center py-4">
+                            <i class="fas fa-exclamation-triangle text-yellow-500 text-2xl mb-2"></i>
+                            <p class="text-gray-400">No results found for "${query}"</p>
+                            <p class="text-sm text-gray-500">Try a different search term</p>
+                        </div>
+                    `;
+                    resultsDiv.classList.remove('hidden');
+                }
+            })
+            .catch(error => {
+                console.error('Search error:', error);
+                loadingDiv.classList.add('hidden');
+                searchBtn.disabled = false;
+                resultsContainer.innerHTML = `
+                    <div class="text-center py-4">
+                        <i class="fas fa-times-circle text-red-500 text-2xl mb-2"></i>
+                        <p class="text-red-400">Search failed</p>
+                        <p class="text-sm text-gray-500">Please try again</p>
+                    </div>
+                `;
+                resultsDiv.classList.remove('hidden');
+            });
+    }
+    
+    // Display search results
+    function displayResults(results) {
+        resultsContainer.innerHTML = '';
+        
+        results.forEach((anime, index) => {
+            const resultDiv = document.createElement('div');
+            resultDiv.className = 'bg-gray-700 rounded-lg p-4 cursor-pointer hover:bg-gray-600 transition-colors';
+            
+            resultDiv.innerHTML = `
+                <div class="flex items-start gap-4">
+                    <img src="${anime.thumbnail_url || '/static/img/placeholder.jpg'}" 
+                         alt="${anime.title}" 
+                         class="w-16 h-20 object-cover rounded">
+                    <div class="flex-1">
+                        <h5 class="text-white font-semibold mb-1">${anime.title}</h5>
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="bg-${anime.content_type === 'anime' ? 'blue' : anime.content_type === 'donghua' ? 'green' : 'purple'}-600 text-white text-xs px-2 py-1 rounded">
+                                ${anime.content_type.toUpperCase()}
+                            </span>
+                            ${anime.year ? `<span class="text-gray-400 text-sm">${anime.year}</span>` : ''}
+                            ${anime.rating ? `<span class="text-yellow-400 text-sm">★ ${anime.rating}</span>` : ''}
+                        </div>
+                        <p class="text-gray-300 text-sm mb-2">${anime.genre || 'No genres'}</p>
+                        <p class="text-gray-400 text-xs line-clamp-2">${anime.description ? anime.description.substring(0, 150) + '...' : 'No description'}</p>
+                    </div>
+                </div>
+            `;
+            
+            resultDiv.addEventListener('click', () => fillForm(anime));
+            resultsContainer.appendChild(resultDiv);
+        });
+        
+        resultsDiv.classList.remove('hidden');
+    }
+    
+    // Fill form with selected anime data
+    function fillForm(anime) {
+        if (titleField) titleField.value = anime.title || '';
+        if (descriptionField) descriptionField.value = anime.description || '';
+        if (genreField) genreField.value = anime.genre || '';
+        if (yearField && anime.year) yearField.value = anime.year;
+        if (ratingField && anime.rating) ratingField.value = anime.rating;
+        if (contentTypeField) contentTypeField.value = anime.content_type || 'anime';
+        if (thumbnailField) thumbnailField.value = anime.thumbnail_url || '';
+        if (studioField) studioField.value = anime.studio || '';
+        if (totalEpisodesField && anime.total_episodes) totalEpisodesField.value = anime.total_episodes;
+        if (statusField) statusField.value = anime.status || 'unknown';
+        
+        // Hide results and show success message
+        resultsDiv.classList.add('hidden');
+        
+        // Scroll to form
+        document.querySelector('form').scrollIntoView({ behavior: 'smooth' });
+        
+        // Show success notification
+        const notification = document.createElement('div');
+        notification.className = 'fixed top-4 right-4 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+        notification.innerHTML = `
+            <div class="flex items-center">
+                <i class="fas fa-check-circle mr-2"></i>
+                <span>Form auto-filled from AniList!</span>
+            </div>
+        `;
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.remove();
+        }, 3000);
+    }
+    
+    // Event listeners
+    searchBtn.addEventListener('click', searchAniList);
+    searchInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            searchAniList();
+        }
+    });
+});
+</script>
 {% endblock %}
