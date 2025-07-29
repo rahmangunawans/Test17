@@ -194,13 +194,10 @@ def index():
     popular_content = Content.query.order_by(Content.rating.desc()).limit(8).all()
     
     # Get featured donghua (Chinese anime)
-    featured_donghua = Content.query.filter_by(content_type='anime').filter(
+    featured_donghua = Content.query.filter(
         db.or_(
-            Content.title.contains('Chinese'),
-            Content.genre.contains('Donghua'),
-            Content.genre.contains('Chinese'),
-            Content.description.contains('Chinese'),
-            Content.description.contains('Donghua')
+            Content.genre.like('%Donghua%'),
+            Content.genre.like('%Chinese%')
         )
     ).limit(8).all()
     
