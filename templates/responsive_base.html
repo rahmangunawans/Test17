@@ -759,58 +759,81 @@
                     </div>
                 </div>
                 
-                <!-- Navigation Links - Desktop Style -->
+                <!-- All Channels Grid - WeTV Style -->
                 <div class="flex-1 overflow-y-auto">
-                    <div class="p-4 space-y-2">
-                        <a href="{{ url_for('index') }}" 
-                           class="flex items-center px-4 py-3 {% if request.endpoint == 'index' %}text-white bg-red-600{% else %}text-gray-300 hover:text-white hover:bg-gray-800{% endif %} rounded-lg font-medium transition-all duration-200">
-                            <i class="fas fa-home mr-3"></i>
-                            Home
-                        </a>
-                        <a href="{{ url_for('content.anime_list') }}"
-                           class="flex items-center px-4 py-3 {% if request.endpoint == 'content.anime_list' %}text-white bg-red-600{% else %}text-gray-300 hover:text-white hover:bg-gray-800{% endif %} rounded-lg font-medium transition-all duration-200">
-                            <i class="fas fa-play-circle mr-3"></i>
-                            Anime
-                        </a>
-                        <a href="{{ url_for('content.donghua_list') }}"
-                           class="flex items-center px-4 py-3 {% if request.endpoint == 'content.donghua_list' %}text-white bg-red-600{% else %}text-gray-300 hover:text-white hover:bg-gray-800{% endif %} rounded-lg font-medium transition-all duration-200">
-                            <i class="fas fa-dragon mr-3"></i>
-                            Donghua
-                        </a>
-                        <a href="{{ url_for('content.movies_list') }}"
-                           class="flex items-center px-4 py-3 {% if request.endpoint == 'content.movies_list' %}text-white bg-red-600{% else %}text-gray-300 hover:text-white hover:bg-gray-800{% endif %} rounded-lg font-medium transition-all duration-200">
-                            <i class="fas fa-film mr-3"></i>
-                            Movies
-                        </a>
-                        <a href="{{ url_for('content.genres') }}"
-                           class="flex items-center px-4 py-3 {% if request.endpoint == 'content.genres' %}text-white bg-red-600{% else %}text-gray-300 hover:text-white hover:bg-gray-800{% endif %} rounded-lg font-medium transition-all duration-200">
-                            <i class="fas fa-tags mr-3"></i>
-                            Genres
-                        </a>
+                    <div class="p-4">
+                        <h2 class="text-white text-xl font-bold mb-6">All channels</h2>
                         
+                        <!-- Grid Layout 2x4 -->
+                        <div class="grid grid-cols-2 gap-4 mb-6">
+                            <!-- Home -->
+                            <a href="{{ url_for('index') }}" 
+                               class="bg-gradient-to-br {% if request.endpoint == 'index' %}from-red-600 to-red-800{% else %}from-gray-700 to-gray-800 hover:from-gray-600 hover:to-gray-700{% endif %} rounded-xl p-4 h-20 flex items-center justify-center transition-all duration-200">
+                                <span class="text-white font-semibold text-sm">Home</span>
+                            </a>
+                            
+                            <!-- Donghua -->
+                            <a href="{{ url_for('content.donghua_list') }}" 
+                               class="bg-gradient-to-br {% if request.endpoint == 'content.donghua_list' %}from-red-600 to-red-800{% else %}from-gray-700 to-gray-800 hover:from-gray-600 hover:to-gray-700{% endif %} rounded-xl p-4 h-20 flex items-center justify-center transition-all duration-200">
+                                <span class="text-white font-semibold text-sm">Chinese</span>
+                            </a>
+                            
+                            <!-- Anime -->
+                            <a href="{{ url_for('content.anime_list') }}" 
+                               class="bg-gradient-to-br {% if request.endpoint == 'content.anime_list' %}from-red-600 to-red-800{% else %}from-gray-700 to-gray-800 hover:from-gray-600 hover:to-gray-700{% endif %} rounded-xl p-4 h-20 flex items-center justify-center transition-all duration-200">
+                                <span class="text-white font-semibold text-sm">Anime</span>
+                            </a>
+                            
+                            <!-- Movies -->
+                            <a href="{{ url_for('content.movies_list') }}" 
+                               class="bg-gradient-to-br {% if request.endpoint == 'content.movies_list' %}from-red-600 to-red-800{% else %}from-gray-700 to-gray-800 hover:from-gray-600 hover:to-gray-700{% endif %} rounded-xl p-4 h-20 flex items-center justify-center transition-all duration-200">
+                                <span class="text-white font-semibold text-sm">Movies</span>
+                            </a>
+                            
+                            <!-- Genre -->
+                            <a href="{{ url_for('content.genres') }}" 
+                               class="bg-gradient-to-br {% if request.endpoint == 'content.genres' %}from-red-600 to-red-800{% else %}from-gray-700 to-gray-800 hover:from-gray-600 hover:to-gray-700{% endif %} rounded-xl p-4 h-20 flex items-center justify-center transition-all duration-200">
+                                <span class="text-white font-semibold text-sm">Genres</span>
+                            </a>
+                            
+                            <!-- Dashboard (if logged in) -->
+                            {% if current_user.is_authenticated %}
+                                <a href="{{ url_for('dashboard') }}" 
+                                   class="bg-gradient-to-br {% if request.endpoint == 'dashboard' %}from-red-600 to-red-800{% else %}from-gray-700 to-gray-800 hover:from-gray-600 hover:to-gray-700{% endif %} rounded-xl p-4 h-20 flex items-center justify-center transition-all duration-200">
+                                    <span class="text-white font-semibold text-sm">Dashboard</span>
+                                </a>
+                            {% else %}
+                                <!-- VIP for non-logged users -->
+                                <a href="{{ url_for('subscription.subscription_page') }}" 
+                                   class="bg-gradient-to-br from-yellow-600 to-orange-700 hover:from-yellow-500 hover:to-orange-600 rounded-xl p-4 h-20 flex items-center justify-center transition-all duration-200">
+                                    <span class="text-white font-semibold text-sm flex items-center">
+                                        <i class="fas fa-crown mr-2"></i>VIP
+                                    </span>
+                                </a>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Additional Options for Logged Users -->
                         {% if current_user.is_authenticated %}
+                        <div class="space-y-2">
                             <a href="{{ url_for('profile') }}"
-                               class="flex items-center px-4 py-3 {% if request.endpoint == 'profile' or request.endpoint == 'edit_profile' %}text-white bg-red-600{% else %}text-gray-300 hover:text-white hover:bg-gray-800{% endif %} rounded-lg font-medium transition-all duration-200">
+                               class="flex items-center px-4 py-3 {% if request.endpoint == 'profile' or request.endpoint == 'edit_profile' %}text-white bg-red-600{% else %}text-gray-300 hover:text-white hover:bg-gray-800{% endif %} rounded-lg font-medium transition-all duration-200 text-sm">
                                 <i class="fas fa-user-circle mr-3"></i>
                                 Profile
                             </a>
-                            <a href="{{ url_for('dashboard') }}"
-                               class="flex items-center px-4 py-3 {% if request.endpoint == 'dashboard' %}text-white bg-red-600{% else %}text-gray-300 hover:text-white hover:bg-gray-800{% endif %} rounded-lg font-medium transition-all duration-200">
-                                <i class="fas fa-tachometer-alt mr-3"></i>
-                                Dashboard
-                            </a>
                             <a href="{{ url_for('subscription.subscription_page') }}"
-                               class="flex items-center px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg font-medium transition-all duration-200">
+                               class="flex items-center px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg font-medium transition-all duration-200 text-sm">
                                 <i class="fas fa-crown mr-3"></i>
                                 Subscription
                             </a>
                             {% if current_user.is_admin() %}
                                 <a href="{{ url_for('admin.admin_dashboard') }}"
-                                   class="flex items-center px-4 py-3 text-yellow-400 hover:text-yellow-300 hover:bg-gray-800 rounded-lg font-medium transition-all duration-200">
+                                   class="flex items-center px-4 py-3 text-yellow-400 hover:text-yellow-300 hover:bg-gray-800 rounded-lg font-medium transition-all duration-200 text-sm">
                                     <i class="fas fa-cog mr-3"></i>
                                     Admin Panel
                                 </a>
                             {% endif %}
+                        </div>
                         {% endif %}
                     </div>
                 </div>
