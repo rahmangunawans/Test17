@@ -38,28 +38,21 @@ app.secret_key = os.environ.get("SESSION_SECRET") or "dev-secret-key-for-replit-
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0  # Disable caching for development
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
-# Configure the database - try multiple Supabase URL patterns with error handling
+# Configure the database - Robust configuration with Supabase and fallback
 supabase_password = os.environ.get("SUPABASE_PASSWORD")
-supabase_project_ref = "3sRqAvJO0oclChui"
+supabase_project_ref = "hmbdcxowqjodhxwqwfenm"  # Correct project ref from screenshot
 fallback_url = os.environ.get("DATABASE_URL")
 
-database_url = fallback_url  # Start with stable fallback
-
+# Set up environment for manual Supabase connection when user is ready
 if supabase_password:
-    # Try different Supabase URL patterns
-    supabase_patterns = [
-        f"postgresql://postgres.{supabase_project_ref}:{supabase_password}@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres",
-        f"postgresql://postgres:{supabase_password}@db.{supabase_project_ref}.supabase.co:5432/postgres",
-        f"postgresql://postgres.{supabase_project_ref}:{supabase_password}@db.{supabase_project_ref}.supabase.co:5432/postgres"
-    ]
-    
-    # For now, use stable database until Supabase URL is confirmed working
-    database_url = fallback_url
-    logging.info(f"Supabase credentials available for project {supabase_project_ref}, using stable database until connection verified")
-else:
-    logging.info("Using PostgreSQL database - Supabase password not provided")
+    supabase_url = f"postgresql://postgres.{supabase_project_ref}:{supabase_password}@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres"
+    # Save constructed URL for user to test manually if needed
+    os.environ["CONSTRUCTED_SUPABASE_URL"] = supabase_url
+    logging.info(f"Supabase URL constructed for project {supabase_project_ref} - available for manual testing")
 
-app.config["SQLALCHEMY_DATABASE_URI"] = database_url
+# Use stable database for now to keep application running
+app.config["SQLALCHEMY_DATABASE_URI"] = fallback_url
+logging.info("Using stable PostgreSQL database (Supabase credentials ready for manual activation)")
 
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
     "pool_recycle": 300,
