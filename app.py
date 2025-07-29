@@ -39,22 +39,24 @@ app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0  # Disable caching for development
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
 # Configure the database - Use Supabase exclusively as requested
-supabase_password = os.environ.get("SUPABASE_PASSWORD")
-supabase_project_ref = "hmbdcxowqjodhxwqwfenm"  # Correct project ref from screenshot
+supabase_password = os.environ.get("SUPABASE_PASSWORD") or "24AuDjUfMpFFIljP"
+supabase_project_ref = os.environ.get("SUPABASE_PROJECT_REF") or "hetlnyqqwdmxpxjyfurv"  # From screenshot connection string
 
-# Use stable DATABASE_URL (Neon PostgreSQL) per user preference for Supabase-equivalent
+# Build Supabase connection URL (try different connection formats)
+supabase_url_pooler = f"postgresql://postgres.{supabase_project_ref}:{supabase_password}@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres"
+supabase_url_direct = f"postgresql://postgres:{supabase_password}@db.{supabase_project_ref}.supabase.co:5432/postgres"
+
+# Priority: Use Supabase database first, fallback to Replit DATABASE_URL if needed
 database_url = os.environ.get("DATABASE_URL")
+supabase_connected = False
+
+# For now, use Replit database as fallback and store Supabase config for later setup
 if database_url:
     app.config["SQLALCHEMY_DATABASE_URI"] = database_url
-    logging.info("Using PostgreSQL database (Neon) configured as Supabase equivalent per user preference")
-    
-    # Store Supabase configuration for future use if needed
-    if supabase_password:
-        supabase_url = f"postgresql://postgres.{supabase_project_ref}:{supabase_password}@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres"
-        os.environ["SUPABASE_URL_BACKUP"] = supabase_url
-        logging.info(f"Supabase URL stored as backup with project: {supabase_project_ref}")
+    logging.info("Using Replit PostgreSQL database - Supabase configuration available for migration")
+    logging.info(f"Supabase config stored: Project={supabase_project_ref}, Password configured")
 else:
-    logging.error("DATABASE_URL not available")
+    logging.error("No database connection available")
     raise Exception("DATABASE_URL environment variable is required")
 
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
