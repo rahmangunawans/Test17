@@ -428,235 +428,173 @@
 </head>
 
 <body>
-    <!-- Navigation - Two Level Design -->
-    <!-- App Header -->
-    <div class="bg-black bg-opacity-95 fixed w-full z-30 shadow-lg">
-        <!-- Top Header Bar -->
-        <div class="bg-gray-900 bg-opacity-90 border-b border-gray-700">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="flex items-center justify-between h-14">
-                    <!-- Logo -->
+    <!-- Clean Header Design -->
+    <header class="fixed w-full z-30 bg-black">
+        <!-- Main Header -->
+        <div class="bg-gray-900 border-b border-gray-800">
+            <div class="max-w-7xl mx-auto px-4">
+                <div class="flex items-center justify-between h-16">
+                    <!-- Left: Logo -->
                     <div class="flex-shrink-0">
                         <a href="{{ url_for('index') }}" class="flex items-center" id="main-nav-logo">
                             {% if system_settings.site_logo_url %}
                                 <img src="{{ system_settings.site_logo_url }}" 
                                      alt="{{ system_settings.site_logo_alt or 'AniFlix' }}" 
-                                     class="h-8 w-auto max-w-28 bg-white rounded-md p-1"
-                                     style="filter: drop-shadow(0 0 4px rgba(255,255,255,0.3));"
+                                     class="h-10 w-auto"
                                      onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';"
-                                     onload="console.log('Logo loaded successfully:', this.src);"
-                                     id="nav-logo-image"
-                                     data-debug="logo-image">
-                                <span class="text-xl font-bold text-red-500" style="display: none;" id="nav-logo-text">
-                                    {% set logo_text = system_settings.site_logo_alt or 'AniFlix' %}
-                                    {% if 'aniflix' in logo_text.lower() %}
-                                        {% set ani_index = logo_text.lower().find('ani') %}
-                                        {% if ani_index != -1 %}
-                                            {% set ani_part = logo_text[ani_index:ani_index+3] %}
-                                            {% set flix_part = logo_text[ani_index+3:] %}
-                                            <span class="text-red-500">{{ ani_part }}</span><span class="text-white">{{ flix_part }}</span>
-                                        {% else %}
-                                            <span class="text-white">{{ logo_text }}</span>
-                                        {% endif %}
-                                    {% else %}
-                                        <span class="text-white">{{ logo_text }}</span>
-                                    {% endif %}
+                                     id="nav-logo-image">
+                                <span class="text-2xl font-bold" style="display: none;" id="nav-logo-text">
+                                    <span class="text-red-500">Ani</span><span class="text-white">Flix</span>
                                 </span>
                             {% else %}
-                                <span class="text-xl font-bold text-red-500" id="nav-logo-text">
-                                    {% set logo_text = system_settings.site_logo_alt or 'AniFlix' %}
-                                    {% if 'aniflix' in logo_text.lower() %}
-                                        {% set ani_index = logo_text.lower().find('ani') %}
-                                        {% if ani_index != -1 %}
-                                            {% set ani_part = logo_text[ani_index:ani_index+3] %}
-                                            {% set flix_part = logo_text[ani_index+3:] %}
-                                            <span class="text-red-500">{{ ani_part }}</span><span class="text-white">{{ flix_part }}</span>
-                                        {% else %}
-                                            <span class="text-white">{{ logo_text }}</span>
-                                        {% endif %}
-                                    {% else %}
-                                        <span class="text-white">{{ logo_text }}</span>
-                                    {% endif %}
+                                <span class="text-2xl font-bold" id="nav-logo-text">
+                                    <span class="text-red-500">Ani</span><span class="text-white">Flix</span>
                                 </span>
                             {% endif %}
                         </a>
                     </div>
 
-                    <!-- Center - Search Bar (Desktop) -->
-                    <div class="hidden md:flex flex-1 max-w-md mx-8">
-                        <div id="search-container" class="relative w-full">
+                    <!-- Center: Search Bar -->
+                    <div class="flex-1 max-w-lg mx-8 hidden md:block">
+                        <div id="search-container" class="relative">
                             <input type="text" id="search-input" placeholder="Cari anime atau film..." 
-                                class="bg-gray-800 text-white px-4 py-2 pl-10 pr-4 rounded-full text-sm w-full focus:outline-none focus:ring-2 focus:ring-red-500 transition-all duration-200 border border-gray-600"
-                                autocomplete="off"
-                                spellcheck="false">
+                                class="w-full bg-gray-800 text-white px-4 py-2.5 pl-10 rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all"
+                                autocomplete="off">
                             <div class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
-                                <i class="fas fa-search text-sm"></i>
+                                <i class="fas fa-search"></i>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Right Side - VIP Button & User Menu -->
-                    <div class="flex items-center space-x-3">
+                    <!-- Right: Actions -->
+                    <div class="flex items-center space-x-4">
                         <!-- VIP Button -->
                         {% if not current_user.is_authenticated or not current_user.is_vip() %}
                         <a href="{{ url_for('subscription.subscription_page') }}" 
-                           class="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white px-4 py-2 rounded-full text-sm font-bold flex items-center transition-all duration-200 shadow-lg">
-                            <i class="fas fa-crown mr-2"></i>
-                            <span class="hidden sm:inline">Go VIP</span>
-                            <span class="sm:hidden">VIP</span>
+                           class="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white px-4 py-2 rounded-lg font-bold text-sm transition-all duration-200 flex items-center">
+                            <i class="fas fa-crown mr-2"></i>VIP
                         </a>
                         {% endif %}
 
                         {% if current_user.is_authenticated %}
-                        <!-- Notification Bell -->
+                        <!-- Notifications -->
                         <div id="notification-bell-container" class="relative">
                             <button id="notification-bell" 
-                                    class="relative p-2 text-gray-300 hover:text-white transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800 rounded-lg">
+                                    class="p-2 text-gray-300 hover:text-white transition-colors rounded-lg">
                                 <i class="fas fa-bell text-lg"></i>
                                 <span id="notification-badge" 
-                                      class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center hidden">0</span>
+                                      class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center hidden">0</span>
                             </button>
                         </div>
 
-                        <!-- User Menu -->
+                        <!-- User Avatar -->
                         <div class="relative">
-                            <button class="bg-gray-800 flex text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white border-2 border-gray-600 hover:border-red-500 transition-colors" id="user-menu-button" aria-expanded="false" aria-haspopup="true">
-                                <span class="sr-only">Open user menu</span>
+                            <button class="flex items-center p-1 rounded-full hover:bg-gray-800 transition-colors" id="user-menu-button">
                                 <div class="h-8 w-8 rounded-full bg-red-600 flex items-center justify-center">
                                     <span class="text-sm font-medium text-white">{{ current_user.username[0].upper() }}</span>
                                 </div>
                             </button>
-                            <div class="origin-top-right absolute right-0 mt-2 w-56 rounded-xl shadow-2xl py-2 bg-gray-800 border border-gray-700 ring-1 ring-black ring-opacity-5 focus:outline-none hidden dropdown-menu" role="menu" aria-orientation="vertical" aria-labelledby="user-menu-button" tabindex="-1" id="user-menu">
-                                <!-- User Info Header -->
+                            <div class="hidden absolute right-0 mt-2 w-56 bg-gray-800 rounded-lg shadow-xl border border-gray-700 py-2 dropdown-menu" id="user-menu">
                                 <div class="px-4 py-3 border-b border-gray-700">
                                     <p class="text-sm font-medium text-white">{{ current_user.username }}</p>
-                                    <p class="text-xs text-gray-400 truncate">{{ current_user.email }}</p>
+                                    <p class="text-xs text-gray-400">{{ current_user.email }}</p>
                                     {% if current_user.is_vip() %}
                                     <span class="inline-block mt-1 px-2 py-1 text-xs bg-yellow-500 text-black rounded-full font-medium">
                                         <i class="fas fa-crown mr-1"></i>VIP
                                     </span>
                                     {% endif %}
                                 </div>
-                                
-                                <!-- Menu Items -->
                                 <div class="py-1">
-                                    <a href="{{ url_for('profile') }}" class="flex items-center px-4 py-2 text-sm text-gray-200 hover:bg-gray-700 hover:text-white dropdown-item" role="menuitem">
-                                        <i class="fas fa-user-circle mr-3 text-red-400"></i>
-                                        View Profile
+                                    <a href="{{ url_for('profile') }}" class="flex items-center px-4 py-2 text-sm text-gray-200 hover:bg-gray-700 hover:text-white">
+                                        <i class="fas fa-user-circle mr-3 text-red-400"></i>Profile
                                     </a>
-                                    <a href="{{ url_for('dashboard') }}" class="flex items-center px-4 py-2 text-sm text-gray-200 hover:bg-gray-700 hover:text-white dropdown-item" role="menuitem">
-                                        <i class="fas fa-tachometer-alt mr-3 text-blue-400"></i>
-                                        Your Dashboard
+                                    <a href="{{ url_for('dashboard') }}" class="flex items-center px-4 py-2 text-sm text-gray-200 hover:bg-gray-700 hover:text-white">
+                                        <i class="fas fa-tachometer-alt mr-3 text-blue-400"></i>Dashboard
                                     </a>
-                                    <a href="{{ url_for('subscription.subscription_page') }}" class="flex items-center px-4 py-2 text-sm text-gray-200 hover:bg-gray-700 hover:text-white dropdown-item" role="menuitem">
-                                        <i class="fas fa-crown mr-3 text-yellow-400"></i>
-                                        Subscription
+                                    <a href="{{ url_for('subscription.subscription_page') }}" class="flex items-center px-4 py-2 text-sm text-gray-200 hover:bg-gray-700 hover:text-white">
+                                        <i class="fas fa-crown mr-3 text-yellow-400"></i>Subscription
                                     </a>
                                     {% if current_user.is_admin() %}
-                                    <a href="{{ url_for('admin.admin_dashboard') }}" class="flex items-center px-4 py-2 text-sm text-gray-200 hover:bg-gray-700 hover:text-white dropdown-item" role="menuitem">
-                                        <i class="fas fa-cog mr-3 text-purple-400"></i>
-                                        Admin Panel
-                                    </a>
-                                    <a href="{{ url_for('admin.system_settings') }}" class="flex items-center px-4 py-2 text-sm text-gray-200 hover:bg-gray-700 hover:text-white dropdown-item" role="menuitem">
-                                        <i class="fas fa-server mr-3 text-orange-400"></i>
-                                        System Settings
+                                    <a href="{{ url_for('admin.admin_dashboard') }}" class="flex items-center px-4 py-2 text-sm text-gray-200 hover:bg-gray-700 hover:text-white">
+                                        <i class="fas fa-cog mr-3 text-purple-400"></i>Admin
                                     </a>
                                     {% endif %}
                                 </div>
-                                
-                                <!-- Logout -->
                                 <div class="border-t border-gray-700 py-1">
-                                    <a href="{{ url_for('auth.logout') }}" class="flex items-center px-4 py-2 text-sm text-red-300 hover:bg-red-600 hover:text-white dropdown-item" role="menuitem">
-                                        <i class="fas fa-sign-out-alt mr-3"></i>
-                                        Sign out
+                                    <a href="{{ url_for('auth.logout') }}" class="flex items-center px-4 py-2 text-sm text-red-300 hover:bg-red-600 hover:text-white">
+                                        <i class="fas fa-sign-out-alt mr-3"></i>Logout
                                     </a>
                                 </div>
                             </div>
                         </div>
                         {% else %}
                         <!-- Login Button -->
-                        <button data-login
-                            class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-full text-sm font-medium flex items-center transition-colors">
-                            <i class="fas fa-user mr-2"></i>
-                            <span class="hidden sm:inline">Sign In</span>
-                            <span class="sm:hidden">Login</span>
+                        <button data-login class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center">
+                            <i class="fas fa-user mr-2"></i>Login
                         </button>
                         {% endif %}
 
-                        <!-- Mobile Menu Toggle -->
-                        <div class="md:hidden">
-                            <button type="button" id="mobile-menu-toggle" class="p-2 text-gray-300 hover:text-white">
-                                <span class="sr-only">Open menu</span>
-                                <div class="w-6 h-6 flex flex-col justify-center items-center">
-                                    <span class="block w-5 h-0.5 bg-current mb-1"></span>
-                                    <span class="block w-5 h-0.5 bg-current mb-1"></span>
-                                    <span class="block w-5 h-0.5 bg-current"></span>
-                                </div>
-                            </button>
-                        </div>
+                        <!-- Mobile Menu Button -->
+                        <button id="mobile-menu-toggle" class="md:hidden p-2 text-gray-300 hover:text-white">
+                            <i class="fas fa-bars text-lg"></i>
+                        </button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Horizontal Navigation Bar -->
-        <nav class="bg-black bg-opacity-90">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="flex items-center justify-between h-12">
-                    <!-- Desktop Navigation -->
-                    <div class="hidden md:flex items-center space-x-8 flex-1">
-                        <a href="{{ url_for('index') }}" class="nav-link {% if request.endpoint == 'index' %}text-white border-b-2 border-red-500{% else %}text-gray-300 hover:text-white{% endif %} px-3 py-3 text-sm font-medium transition-all duration-200">
-                            <i class="fas fa-home mr-2"></i>Home
-                        </a>
-                        <a href="{{ url_for('content.anime_list') }}"
-                            class="nav-link {% if request.endpoint == 'content.anime_list' %}text-white border-b-2 border-red-500{% else %}text-gray-300 hover:text-white{% endif %} px-3 py-3 text-sm font-medium transition-all duration-200">
-                            <i class="fas fa-play-circle mr-2"></i>Anime
-                        </a>
-                        <a href="{{ url_for('content.anime_list') }}"
-                            class="nav-link text-gray-300 hover:text-white px-3 py-3 text-sm font-medium transition-all duration-200">
-                            <i class="fas fa-dragon mr-2"></i>Donghua
-                        </a>
-                        <a href="{{ url_for('content.movies_list') }}"
-                            class="nav-link {% if request.endpoint == 'content.movies_list' %}text-white border-b-2 border-red-500{% else %}text-gray-300 hover:text-white{% endif %} px-3 py-3 text-sm font-medium transition-all duration-200">
-                            <i class="fas fa-film mr-2"></i>Movies
-                        </a>
-                        <a href="{{ url_for('content.genres') }}"
-                            class="nav-link {% if request.endpoint == 'content.genres' %}text-white border-b-2 border-red-500{% else %}text-gray-300 hover:text-white{% endif %} px-3 py-3 text-sm font-medium transition-all duration-200">
-                            <i class="fas fa-tags mr-2"></i>Genre
-                        </a>
-                    </div>
+        <!-- Navigation Bar -->
+        <nav class="bg-black border-b border-gray-800">
+            <div class="max-w-7xl mx-auto px-4">
+                <!-- Desktop Navigation -->
+                <div class="hidden md:flex items-center h-12 space-x-8">
+                    <a href="{{ url_for('index') }}" class="{% if request.endpoint == 'index' %}text-red-500 border-b-2 border-red-500{% else %}text-gray-300 hover:text-white{% endif %} px-3 py-3 text-sm font-medium transition-all">
+                        <i class="fas fa-home mr-2"></i>Home
+                    </a>
+                    <a href="{{ url_for('content.anime_list') }}" class="{% if request.endpoint == 'content.anime_list' %}text-red-500 border-b-2 border-red-500{% else %}text-gray-300 hover:text-white{% endif %} px-3 py-3 text-sm font-medium transition-all">
+                        <i class="fas fa-play-circle mr-2"></i>Anime
+                    </a>
+                    <a href="{{ url_for('content.anime_list') }}" class="text-gray-300 hover:text-white px-3 py-3 text-sm font-medium transition-all">
+                        <i class="fas fa-dragon mr-2"></i>Donghua
+                    </a>
+                    <a href="{{ url_for('content.movies_list') }}" class="{% if request.endpoint == 'content.movies_list' %}text-red-500 border-b-2 border-red-500{% else %}text-gray-300 hover:text-white{% endif %} px-3 py-3 text-sm font-medium transition-all">
+                        <i class="fas fa-film mr-2"></i>Movies
+                    </a>
+                    <a href="{{ url_for('content.genres') }}" class="{% if request.endpoint == 'content.genres' %}text-red-500 border-b-2 border-red-500{% else %}text-gray-300 hover:text-white{% endif %} px-3 py-3 text-sm font-medium transition-all">
+                        <i class="fas fa-tags mr-2"></i>Genre
+                    </a>
+                    <div class="flex-1"></div>
+                    <button class="text-gray-300 hover:text-white p-2 transition-colors">
+                        <i class="fas fa-ellipsis-h"></i>
+                    </button>
+                </div>
 
-                    <!-- Right Side Menu Icon -->
-                    <div class="hidden md:flex">
-                        <button class="text-gray-300 hover:text-white p-2 transition-colors" title="More Options">
-                            <i class="fas fa-ellipsis-h text-lg"></i>
-                        </button>
-                    </div>
-
-                    <!-- Mobile Navigation Items -->
-                    <div class="md:hidden flex items-center justify-center w-full">
-                        <div class="flex items-center space-x-6">
-                            <a href="{{ url_for('index') }}" class="{% if request.endpoint == 'index' %}text-red-500{% else %}text-gray-300{% endif %} hover:text-white transition-colors">
-                                <i class="fas fa-home text-lg"></i>
-                            </a>
-                            <a href="{{ url_for('content.anime_list') }}" class="{% if request.endpoint == 'content.anime_list' %}text-red-500{% else %}text-gray-300{% endif %} hover:text-white transition-colors">
-                                <i class="fas fa-play-circle text-lg"></i>
-                            </a>
-                            <a href="{{ url_for('content.anime_list') }}" class="text-gray-300 hover:text-white transition-colors">
-                                <i class="fas fa-dragon text-lg"></i>
-                            </a>
-                            <a href="{{ url_for('content.movies_list') }}" class="{% if request.endpoint == 'content.movies_list' %}text-red-500{% else %}text-gray-300{% endif %} hover:text-white transition-colors">
-                                <i class="fas fa-film text-lg"></i>
-                            </a>
-                            <a href="{{ url_for('content.genres') }}" class="{% if request.endpoint == 'content.genres' %}text-red-500{% else %}text-gray-300{% endif %} hover:text-white transition-colors">
-                                <i class="fas fa-tags text-lg"></i>
-                            </a>
-                        </div>
-                    </div>
+                <!-- Mobile Bottom Navigation -->
+                <div class="md:hidden flex items-center justify-around h-12 bg-gray-900">
+                    <a href="{{ url_for('index') }}" class="{% if request.endpoint == 'index' %}text-red-500{% else %}text-gray-400{% endif %} flex flex-col items-center py-1">
+                        <i class="fas fa-home text-lg"></i>
+                        <span class="text-xs mt-1">Home</span>
+                    </a>
+                    <a href="{{ url_for('content.anime_list') }}" class="{% if request.endpoint == 'content.anime_list' %}text-red-500{% else %}text-gray-400{% endif %} flex flex-col items-center py-1">
+                        <i class="fas fa-play-circle text-lg"></i>
+                        <span class="text-xs mt-1">Anime</span>
+                    </a>
+                    <a href="{{ url_for('content.anime_list') }}" class="text-gray-400 flex flex-col items-center py-1">
+                        <i class="fas fa-dragon text-lg"></i>
+                        <span class="text-xs mt-1">Donghua</span>
+                    </a>
+                    <a href="{{ url_for('content.movies_list') }}" class="{% if request.endpoint == 'content.movies_list' %}text-red-500{% else %}text-gray-400{% endif %} flex flex-col items-center py-1">
+                        <i class="fas fa-film text-lg"></i>
+                        <span class="text-xs mt-1">Movies</span>
+                    </a>
+                    <a href="{{ url_for('content.genres') }}" class="{% if request.endpoint == 'content.genres' %}text-red-500{% else %}text-gray-400{% endif %} flex flex-col items-center py-1">
+                        <i class="fas fa-tags text-lg"></i>
+                        <span class="text-xs mt-1">Genre</span>
+                    </a>
                 </div>
             </div>
         </nav>
-    </div>
+    </header>
 
         <!-- Mobile menu - Desktop Style -->
         <div id="mobile-navigation" class="hidden fixed inset-0 z-40 bg-black bg-opacity-95 backdrop-blur-sm md:hidden">
