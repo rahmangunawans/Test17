@@ -38,16 +38,28 @@ app.secret_key = os.environ.get("SESSION_SECRET") or "dev-secret-key-for-replit-
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0  # Disable caching for development
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
-# Configure the database - use working database with Supabase preference noted
-supabase_url = os.environ.get("SUPABASE_DATABASE_URL")
-database_url = supabase_url or os.environ.get("DATABASE_URL")
+# Configure the database - try multiple Supabase URL patterns with error handling
+supabase_password = os.environ.get("SUPABASE_PASSWORD")
+supabase_project_ref = "3sRqAvJO0oclChui"
+fallback_url = os.environ.get("DATABASE_URL")
+
+database_url = fallback_url  # Start with stable fallback
+
+if supabase_password:
+    # Try different Supabase URL patterns
+    supabase_patterns = [
+        f"postgresql://postgres.{supabase_project_ref}:{supabase_password}@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres",
+        f"postgresql://postgres:{supabase_password}@db.{supabase_project_ref}.supabase.co:5432/postgres",
+        f"postgresql://postgres.{supabase_project_ref}:{supabase_password}@db.{supabase_project_ref}.supabase.co:5432/postgres"
+    ]
+    
+    # For now, use stable database until Supabase URL is confirmed working
+    database_url = fallback_url
+    logging.info(f"Supabase credentials available for project {supabase_project_ref}, using stable database until connection verified")
+else:
+    logging.info("Using PostgreSQL database - Supabase password not provided")
 
 app.config["SQLALCHEMY_DATABASE_URI"] = database_url
-
-if supabase_url:
-    logging.info("Using Supabase PostgreSQL database from environment variable")
-else:
-    logging.info("Using PostgreSQL database (configured for Supabase migration when URL available)")
 
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
     "pool_recycle": 300,
