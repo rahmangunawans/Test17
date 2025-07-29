@@ -50,30 +50,10 @@ supabase_url_direct = f"postgresql://postgres:{supabase_password}@db.{supabase_p
 database_url = os.environ.get("DATABASE_URL")
 supabase_connected = False
 
-# Use Supabase database as primary, Replit as fallback
-if supabase_password and supabase_project_ref:
-    try:
-        # Test Supabase connection first
-        import psycopg2
-        test_conn = psycopg2.connect(supabase_url_pooler, connect_timeout=10)
-        test_conn.close()
-        
-        app.config["SQLALCHEMY_DATABASE_URI"] = supabase_url_pooler
-        logging.info(f"Successfully connected to Supabase PostgreSQL database: {supabase_project_ref}")
-        
-    except Exception as e:
-        logging.error(f"Supabase connection failed: {e}")
-        if database_url:
-            app.config["SQLALCHEMY_DATABASE_URI"] = database_url
-            logging.info("Using Replit PostgreSQL database as fallback")
-        else:
-            raise Exception("Neither Supabase nor Replit database connection available")
-else:
-    if database_url:
-        app.config["SQLALCHEMY_DATABASE_URI"] = database_url
-        logging.info("Using Replit PostgreSQL database")
-    else:
-        raise Exception("No database connection available")
+# Use Supabase database exclusively as requested
+app.config["SQLALCHEMY_DATABASE_URI"] = supabase_url_pooler
+logging.info(f"Using Supabase PostgreSQL database: {supabase_project_ref}")
+logging.info(f"Connection: postgres.{supabase_project_ref}@aws-0-ap-southeast-1.pooler.supabase.com:6543")
 
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
     "pool_recycle": 300,
