@@ -6,18 +6,22 @@ let searchCache = new Map();
 let lastSearchTime = 0;
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Simple Mobile menu toggle
+    // Desktop and Mobile menu toggle
     const mobileToggle = document.getElementById('mobile-menu-toggle');
+    const desktopToggle = document.getElementById('desktop-menu-toggle');
     const mobileNav = document.getElementById('mobile-navigation');
     
     console.log('Mobile toggle element:', mobileToggle);
+    console.log('Desktop toggle element:', desktopToggle);
     console.log('Mobile nav element:', mobileNav);
     
-    if (mobileToggle && mobileNav) {
-        console.log('Setting up mobile menu event listener');
-        mobileToggle.addEventListener('click', function(e) {
-            e.preventDefault();
-            console.log('Mobile menu toggle clicked');
+    // Handle both mobile and desktop menu toggles
+    if ((mobileToggle || desktopToggle) && mobileNav) {
+        console.log('Setting up menu event listeners');
+        
+        // Function to toggle menu
+        function toggleMenu(source) {
+            console.log(`${source} menu toggle clicked`);
             console.log('Before toggle - classes:', mobileNav.className);
             
             // Check if menu is currently visible
@@ -36,7 +40,23 @@ document.addEventListener('DOMContentLoaded', function() {
             
             console.log('After toggle - classes:', mobileNav.className);
             console.log('Is hidden:', mobileNav.classList.contains('hidden'));
-        });
+        }
+        
+        // Mobile menu toggle
+        if (mobileToggle) {
+            mobileToggle.addEventListener('click', function(e) {
+                e.preventDefault();
+                toggleMenu('Mobile');
+            });
+        }
+        
+        // Desktop menu toggle
+        if (desktopToggle) {
+            desktopToggle.addEventListener('click', function(e) {
+                e.preventDefault();
+                toggleMenu('Desktop');
+            });
+        }
         
         // Close menu when clicking on navigation links or close button
         mobileNav.addEventListener('click', function(e) {
@@ -49,7 +69,11 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Close menu on outside click
         document.addEventListener('click', function(e) {
-            if (!mobileToggle.contains(e.target) && !mobileNav.contains(e.target)) {
+            const clickedInsideToggle = (mobileToggle && mobileToggle.contains(e.target)) || 
+                                       (desktopToggle && desktopToggle.contains(e.target));
+            const clickedInsideNav = mobileNav.contains(e.target);
+            
+            if (!clickedInsideToggle && !clickedInsideNav) {
                 mobileNav.classList.add('hidden');
                 mobileNav.style.display = 'none';
             }
