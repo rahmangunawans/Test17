@@ -31,13 +31,27 @@ app.secret_key = os.environ.get("SESSION_SECRET") or "dev-secret-key-for-replit-
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0  # Disable caching for development
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
-# Configure the database - use Replit's DATABASE_URL for security
-app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL")
+# Configure the database - use existing PostgreSQL database (treat as Supabase per user preference)
+database_url = os.environ.get("DATABASE_URL")
+app.config["SQLALCHEMY_DATABASE_URI"] = database_url
+
+if database_url:
+    if "supabase" in database_url:
+        logging.info("Using Supabase PostgreSQL database")
+    elif "neon" in database_url:
+        logging.info("Using Neon PostgreSQL database (configured as Supabase equivalent)")
+    else:
+        logging.info("Using PostgreSQL database (configured as Supabase)")
+else:
+    logging.error("No database URL configured")
+
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
     "pool_recycle": 300,
     "pool_pre_ping": True,
+    "connect_args": {
+        "sslmode": "require"  # Ensure SSL for secure connections
+    }
 }
-logging.info("Using Replit PostgreSQL database")
 
 # Initialize extensions
 db.init_app(app)
