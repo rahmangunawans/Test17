@@ -513,14 +513,15 @@
                     </div>
 
                     <!-- Search Bar - Desktop -->
-                    <div class="mx-4 hidden md:block">
+                    <div class="mx-2 hidden md:block">
                         <div id="search-container" class="relative">
                             <input type="text" id="search-input" placeholder="Cari anime atau film..." 
-                                class="bg-gray-800 text-white px-4 py-2.5 pl-10 pr-4 rounded-full border border-gray-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all w-80"
+                                class="bg-gray-800 text-white px-3 py-2 pl-8 pr-3 rounded-full border border-gray-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all text-sm"
+                                style="width: 200px;"
                                 autocomplete="off"
                                 spellcheck="false">
-                            <div class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
-                                <i class="fas fa-search text-sm"></i>
+                            <div class="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-gray-400">
+                                <i class="fas fa-search text-xs"></i>
                             </div>
                             <!-- Search Results Container for Desktop -->
                             <div id="search-results" class="absolute top-full left-0 right-0 mt-1 bg-gray-800 border border-gray-600 rounded-lg shadow-lg z-[60] max-h-80 overflow-y-auto hidden"></div>
@@ -543,7 +544,7 @@
                     </div>
 
                     <!-- VIP Button + User Icon -->
-                    <div class="flex items-center space-x-3">
+                    <div class="flex items-center space-x-2">
                         <!-- VIP Button -->
                         {% if not current_user.is_authenticated or not current_user.is_vip() %}
                         <a href="{{ url_for('subscription.subscription_page') }}" 
