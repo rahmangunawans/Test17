@@ -168,6 +168,7 @@ AniFlix is a premium anime and movie streaming platform built with Flask. The ap
 - July 29, 2025. Redesigned homepage header with two-level navigation: implemented app header with logo, search bar, VIP button, and user icon, added horizontal navigation bar with Home, Anime, Donghua, Movies, Genre, and menu icon, enhanced mobile responsiveness and visual hierarchy
 - July 29, 2025. Fixed header structure conflicts: completely redesigned navigation with clean, organized layout eliminating element conflicts, improved spacing and visual hierarchy, enhanced mobile bottom navigation with icons and labels, streamlined user interface for better usability
 - July 29, 2025. Redesigned header layout per user specification: implemented exact App Header structure with Logo, Search Bar, VIP Button, and User Icon for login, created Horizontal Navigation Bar with Home, Anime, Donghua, Movies, Genre, and Menu Icon, optimized spacing and visual hierarchy for better organization
+- July 29, 2025. Fixed menu icon placement: removed mobile menu toggle from App Header and placed it correctly in Horizontal Navigation Bar as requested, ensuring clean separation between App Header and Navigation Bar elements
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
