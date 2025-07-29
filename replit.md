@@ -181,6 +181,7 @@ AniFlix is a premium anime and movie streaming platform built with Flask. The ap
 - July 29, 2025. Fixed content overlap issue with two-level navigation: increased top padding from pt-24 to pt-32 (96px to 128px) on all content pages (anime_list, donghua_list, movies_list, genres, dashboard, subscription) to prevent header collision with page content, ensuring proper spacing between navigation bar and main content
 - July 29, 2025. Enhanced horizontal navigation bar per user request: removed all icons except Menu icon, enabled horizontal scrolling for navigation items (Home, Anime, Donghua, Movies, Genre), implemented scrollbar-hide CSS for clean scrolling experience on both desktop and mobile, positioned Menu icon at the end with proper fixed positioning
 - July 29, 2025. Cleaned up menu icon display: removed text label "Menu" from both desktop and mobile navigation, showing only the menu icon (ellipsis for desktop, bars for mobile) with tooltip on hover for better minimalist appearance
+- July 29, 2025. Made horizontal navigation bar background transparent: changed from bg-black to bg-transparent for cleaner visual integration with the main header
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
