@@ -40,7 +40,7 @@ app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
 # Configure the database - Use Supabase exclusively as requested
 supabase_password = os.environ.get("SUPABASE_PASSWORD") or "24AuDjUfMpFFIljP"
-supabase_project_ref = os.environ.get("SUPABASE_PROJECT_REF") or "hetlnyqqwdmxpxjyfurv"  # From screenshot connection string
+supabase_project_ref = os.environ.get("SUPABASE_PROJECT_REF") or "heotmyzuxabzfobirhnm"  # Correct project ID from user
 
 # Build Supabase connection URL (try different connection formats)
 supabase_url_pooler = f"postgresql://postgres.{supabase_project_ref}:{supabase_password}@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres"
@@ -50,14 +50,30 @@ supabase_url_direct = f"postgresql://postgres:{supabase_password}@db.{supabase_p
 database_url = os.environ.get("DATABASE_URL")
 supabase_connected = False
 
-# For now, use Replit database as fallback and store Supabase config for later setup
-if database_url:
-    app.config["SQLALCHEMY_DATABASE_URI"] = database_url
-    logging.info("Using Replit PostgreSQL database - Supabase configuration available for migration")
-    logging.info(f"Supabase config stored: Project={supabase_project_ref}, Password configured")
+# Use Supabase database as primary, Replit as fallback
+if supabase_password and supabase_project_ref:
+    try:
+        # Test Supabase connection first
+        import psycopg2
+        test_conn = psycopg2.connect(supabase_url_pooler, connect_timeout=10)
+        test_conn.close()
+        
+        app.config["SQLALCHEMY_DATABASE_URI"] = supabase_url_pooler
+        logging.info(f"Successfully connected to Supabase PostgreSQL database: {supabase_project_ref}")
+        
+    except Exception as e:
+        logging.error(f"Supabase connection failed: {e}")
+        if database_url:
+            app.config["SQLALCHEMY_DATABASE_URI"] = database_url
+            logging.info("Using Replit PostgreSQL database as fallback")
+        else:
+            raise Exception("Neither Supabase nor Replit database connection available")
 else:
-    logging.error("No database connection available")
-    raise Exception("DATABASE_URL environment variable is required")
+    if database_url:
+        app.config["SQLALCHEMY_DATABASE_URI"] = database_url
+        logging.info("Using Replit PostgreSQL database")
+    else:
+        raise Exception("No database connection available")
 
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
     "pool_recycle": 300,
