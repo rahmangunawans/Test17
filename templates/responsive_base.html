@@ -606,7 +606,7 @@
                                     <span class="text-lg font-medium text-white">{{ current_user.username[0].upper() }}</span>
                                 </div>
                             </button>
-                            <div class="hidden absolute right-0 mt-2 w-56 bg-gray-800 rounded-xl shadow-2xl border border-gray-700 py-2 dropdown-menu" id="user-menu">
+                            <div class="hidden absolute right-0 mt-2 w-56 bg-gray-800 rounded-xl shadow-2xl border border-gray-700 py-2 dropdown-menu z-[100]" id="user-menu">
                                 <div class="px-4 py-3 border-b border-gray-700">
                                     <p class="text-sm font-medium text-white">{{ current_user.username }}</p>
                                     <p class="text-xs text-gray-400 truncate">{{ current_user.email }}</p>
@@ -658,7 +658,7 @@
         </div>
 
         <!-- Horizontal Navigation Bar -->
-        <nav id="horizontal-navbar" class="horizontal-nav bg-transparent border-b border-gray-800 relative z-20" style="background: transparent !important;">
+        <nav id="horizontal-navbar" class="horizontal-nav bg-transparent border-b border-gray-800 relative z-10" style="background: transparent !important;">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex items-center justify-between h-14">
                     <!-- Navigation Links dengan horizontal scroll -->
