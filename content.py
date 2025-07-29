@@ -71,6 +71,35 @@ def anime_list():
     
     return render_template('anime_list.html', anime_list=anime_list, genre=genre, search=search)
 
+@content_bp.route('/donghua')
+def donghua_list():
+    page = request.args.get('page', 1, type=int)
+    genre = request.args.get('genre')
+    search = request.args.get('search')
+    
+    # Filter anime content by Chinese/Donghua keywords or genres
+    query = Content.query.filter_by(content_type='anime').filter(
+        db.or_(
+            Content.title.contains('Chinese'),
+            Content.genre.contains('Donghua'),
+            Content.genre.contains('Chinese'),
+            Content.description.contains('Chinese'),
+            Content.description.contains('Donghua')
+        )
+    )
+    
+    if genre:
+        query = query.filter(Content.genre.contains(genre))
+    
+    if search:
+        query = query.filter(Content.title.contains(search))
+    
+    donghua_list = query.order_by(Content.created_at.desc()).paginate(
+        page=page, per_page=12, error_out=False
+    )
+    
+    return render_template('donghua_list.html', donghua_list=donghua_list, genre=genre, search=search)
+
 @content_bp.route('/anime/<int:content_id>')
 def anime_redirect(content_id):
     """Redirect anime detail to first episode"""

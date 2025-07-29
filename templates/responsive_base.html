@@ -635,7 +635,7 @@
                         <a href="{{ url_for('content.anime_list') }}" class="{% if request.endpoint == 'content.anime_list' %}text-red-500 border-b-2 border-red-500{% else %}text-gray-300 hover:text-white{% endif %} px-4 py-4 text-sm font-medium transition-all duration-200 flex items-center">
                             <i class="fas fa-play-circle mr-2"></i>Anime
                         </a>
-                        <a href="{{ url_for('content.anime_list') }}" class="text-gray-300 hover:text-white px-4 py-4 text-sm font-medium transition-all duration-200 flex items-center">
+                        <a href="{{ url_for('content.donghua_list') }}" class="{% if request.endpoint == 'content.donghua_list' %}text-red-500 border-b-2 border-red-500{% else %}text-gray-300 hover:text-white{% endif %} px-4 py-4 text-sm font-medium transition-all duration-200 flex items-center">
                             <i class="fas fa-dragon mr-2"></i>Donghua
                         </a>
                         <a href="{{ url_for('content.movies_list') }}" class="{% if request.endpoint == 'content.movies_list' %}text-red-500 border-b-2 border-red-500{% else %}text-gray-300 hover:text-white{% endif %} px-4 py-4 text-sm font-medium transition-all duration-200 flex items-center">
@@ -662,7 +662,7 @@
                             <i class="fas fa-play-circle text-lg"></i>
                             <span class="text-xs mt-1">Anime</span>
                         </a>
-                        <a href="{{ url_for('content.anime_list') }}" class="text-gray-400 flex flex-col items-center py-1 transition-colors">
+                        <a href="{{ url_for('content.donghua_list') }}" class="{% if request.endpoint == 'content.donghua_list' %}text-red-500{% else %}text-gray-400 hover:text-white{% endif %} flex flex-col items-center py-1 transition-colors">
                             <i class="fas fa-dragon text-lg"></i>
                             <span class="text-xs mt-1">Donghua</span>
                         </a>
@@ -735,6 +735,11 @@
                            class="flex items-center px-4 py-3 {% if request.endpoint == 'content.anime_list' %}text-white bg-red-600{% else %}text-gray-300 hover:text-white hover:bg-gray-800{% endif %} rounded-lg font-medium transition-all duration-200">
                             <i class="fas fa-play-circle mr-3"></i>
                             Anime
+                        </a>
+                        <a href="{{ url_for('content.donghua_list') }}"
+                           class="flex items-center px-4 py-3 {% if request.endpoint == 'content.donghua_list' %}text-white bg-red-600{% else %}text-gray-300 hover:text-white hover:bg-gray-800{% endif %} rounded-lg font-medium transition-all duration-200">
+                            <i class="fas fa-dragon mr-3"></i>
+                            Donghua
                         </a>
                         <a href="{{ url_for('content.movies_list') }}"
                            class="flex items-center px-4 py-3 {% if request.endpoint == 'content.movies_list' %}text-white bg-red-600{% else %}text-gray-300 hover:text-white hover:bg-gray-800{% endif %} rounded-lg font-medium transition-all duration-200">
