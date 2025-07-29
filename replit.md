@@ -195,6 +195,7 @@ AniFlix is a premium anime and movie streaming platform built with Flask. The ap
 - July 29, 2025. Fixed admin dashboard content overlap by updating all admin pages from pt-24 to pt-32 padding to prevent horizontal navigation bar collision with page headers, ensured proper spacing on dashboard, content, users, episodes, analytics, system_settings, vip_management, content_form, edit_user, and episode_form pages
 - July 29, 2025. Aligned Featured Donghua styling with Featured Anime by changing badge background from bg-red-600 to bg-black bg-opacity-70 and genre tags from bg-red-700 text-white to bg-gray-700 text-gray-300 for consistent visual appearance
 - July 29, 2025. Successfully completed migration from Replit Agent to standard Replit environment: verified all packages are installed correctly, confirmed Supabase PostgreSQL database connectivity, validated admin panel functionality including content management for anime/donghua/movies types, ensured video streaming and torrent services work properly, all migration checklist items completed successfully
+- July 29, 2025. Enhanced admin content management with proper Donghua support: added Donghua as dedicated content type in add/edit content forms alongside Anime and Movie options, updated Content model documentation to include donghua type, modified donghua_list route to filter by content_type='donghua' instead of keyword filtering, ensured comprehensive content type support across admin panel
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.

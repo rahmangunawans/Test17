@@ -49,7 +49,7 @@ class Content(db.Model):
     genre = db.Column(db.String(100))
     year = db.Column(db.Integer)
     rating = db.Column(db.Float, default=0.0)
-    content_type = db.Column(db.String(20), default='anime')  # anime, movie
+    content_type = db.Column(db.String(20), default='anime')  # anime, donghua, movie
     thumbnail_url = db.Column(db.String(500))
     trailer_url = db.Column(db.String(500))
     total_episodes = db.Column(db.Integer)  # Total number of episodes
