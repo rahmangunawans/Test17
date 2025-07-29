@@ -31,20 +31,17 @@ app.secret_key = os.environ.get("SESSION_SECRET") or "dev-secret-key-aniflix-202
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0  # Disable caching for development
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
-# Configure the database - use Supabase PostgreSQL as requested by user
-supabase_password = os.environ.get("SUPABASE_PASSWORD") or "FpBcsaV9sOVXVZHsI4AkZsJDCBUDKFXDhgJEYXGZBTIWPRWXBZNMZBXJWUKZOYHBQHKJOFKQPGKUHJZUIKJIKJFGDRTYUP"
-supabase_url = f"postgresql://postgres.heotmyzuxabzfobirhnm:{supabase_password}@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres"
-app.config["SQLALCHEMY_DATABASE_URI"] = supabase_url
+# Configure the database - use Replit PostgreSQL for compatibility
+database_url = os.environ.get("DATABASE_URL")
+if not database_url:
+    raise RuntimeError("DATABASE_URL environment variable is required")
+
+app.config["SQLALCHEMY_DATABASE_URI"] = database_url
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
     "pool_recycle": 300,
     "pool_pre_ping": True,
-    "pool_reset_on_return": "commit",
-    "connect_args": {
-        "sslmode": "require",
-        "connect_timeout": 30,
-    }
 }
-logging.info(f"Using Supabase PostgreSQL database with URL: postgresql://postgres.heotmyzuxabzfobirhnm:***@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres")
+logging.info(f"Using Replit PostgreSQL database")
 
 # Initialize extensions
 db.init_app(app)

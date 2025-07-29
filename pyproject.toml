@@ -19,4 +19,5 @@ dependencies = [
     "flask-socketio>=5.5.1",
     "eventlet>=0.40.1",
     "libtorrent>=2.0.11",
+    "requests>=2.32.4",
 ]
