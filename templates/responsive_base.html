@@ -513,10 +513,10 @@
                     </div>
 
                     <!-- Search Bar - Desktop -->
-                    <div class="flex-1 max-w-md mx-6 hidden md:block">
+                    <div class="mx-4 hidden md:block">
                         <div id="search-container" class="relative">
                             <input type="text" id="search-input" placeholder="Cari anime atau film..." 
-                                class="w-full bg-gray-800 text-white px-4 py-2.5 pl-10 rounded-full border border-gray-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all"
+                                class="bg-gray-800 text-white px-4 py-2.5 pl-10 pr-4 rounded-full border border-gray-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all w-80"
                                 autocomplete="off"
                                 spellcheck="false">
                             <div class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
@@ -543,7 +543,7 @@
                     </div>
 
                     <!-- VIP Button + User Icon -->
-                    <div class="flex items-center space-x-4">
+                    <div class="flex items-center space-x-3">
                         <!-- VIP Button -->
                         {% if not current_user.is_authenticated or not current_user.is_vip() %}
                         <a href="{{ url_for('subscription.subscription_page') }}" 
