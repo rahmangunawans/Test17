@@ -552,8 +552,8 @@
         <nav class="bg-black border-b border-gray-800">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex items-center justify-between h-14">
-                    <!-- Navigation Links -->
-                    <div class="hidden md:flex items-center space-x-8">
+                    <!-- Navigation Links dengan Icon Menu -->
+                    <div class="hidden md:flex items-center space-x-8 flex-1">
                         <a href="{{ url_for('index') }}" class="{% if request.endpoint == 'index' %}text-red-500 border-b-2 border-red-500{% else %}text-gray-300 hover:text-white{% endif %} px-4 py-4 text-sm font-medium transition-all duration-200 flex items-center">
                             <i class="fas fa-home mr-2"></i>Home
                         </a>
@@ -569,15 +569,15 @@
                         <a href="{{ url_for('content.genres') }}" class="{% if request.endpoint == 'content.genres' %}text-red-500 border-b-2 border-red-500{% else %}text-gray-300 hover:text-white{% endif %} px-4 py-4 text-sm font-medium transition-all duration-200 flex items-center">
                             <i class="fas fa-tags mr-2"></i>Genre
                         </a>
-                    </div>
-
-                    <!-- Icon Menu -->
-                    <div class="flex items-center space-x-2">
-                        <button class="hidden md:block text-gray-300 hover:text-white p-3 transition-colors rounded-lg" title="More Options">
+                        <!-- Icon Menu langsung setelah Genre -->
+                        <button class="text-gray-300 hover:text-white px-4 py-4 text-sm font-medium transition-all duration-200 flex items-center" title="More Options">
                             <i class="fas fa-ellipsis-h text-xl"></i>
                         </button>
-                        <!-- Mobile Menu Toggle -->
-                        <button id="mobile-menu-toggle" class="md:hidden p-3 text-gray-300 hover:text-white transition-colors rounded-lg">
+                    </div>
+
+                    <!-- Mobile Menu Toggle (hanya untuk mobile) -->
+                    <div class="md:hidden">
+                        <button id="mobile-menu-toggle" class="p-3 text-gray-300 hover:text-white transition-colors rounded-lg">
                             <i class="fas fa-bars text-xl"></i>
                         </button>
                     </div>
