@@ -492,6 +492,26 @@
         #mobile-search-input:focus {
             box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
         }
+
+        /* Scroll-responsive navbar styles */
+        .navbar-scroll-hidden {
+            transform: translateY(-100%);
+            transition: transform 0.3s ease-in-out;
+        }
+
+        .navbar-scroll-visible {
+            transform: translateY(0);
+            transition: transform 0.3s ease-in-out;
+        }
+
+        /* Horizontal Navigation Bar akan disembunyikan saat scroll */
+        .horizontal-nav {
+            transition: transform 0.3s ease-in-out;
+        }
+
+        .horizontal-nav.hidden-on-scroll {
+            transform: translateY(-100%);
+        }
     </style>
 </head>
 
@@ -634,7 +654,7 @@
         </div>
 
         <!-- Horizontal Navigation Bar -->
-        <nav class="bg-transparent border-b border-gray-800" style="background: transparent !important;">
+        <nav id="horizontal-navbar" class="horizontal-nav bg-transparent border-b border-gray-800" style="background: transparent !important;">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex items-center justify-between h-14">
                     <!-- Navigation Links dengan horizontal scroll -->
@@ -1399,6 +1419,42 @@
             }
         `;
         document.head.appendChild(style);
+
+        // Scroll-responsive navbar functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const horizontalNavbar = document.getElementById('horizontal-navbar');
+            let lastScrollTop = 0;
+            let isNavbarVisible = true;
+            
+            if (horizontalNavbar) {
+                window.addEventListener('scroll', function() {
+                    const currentScrollTop = window.pageYOffset || document.documentElement.scrollTop;
+                    
+                    // Avoid negative scrolling issues
+                    if (currentScrollTop < 0) return;
+                    
+                    // Check scroll direction
+                    if (currentScrollTop > lastScrollTop && currentScrollTop > 100) {
+                        // Scrolling down - hide navbar
+                        if (isNavbarVisible) {
+                            horizontalNavbar.classList.add('hidden-on-scroll');
+                            isNavbarVisible = false;
+                        }
+                    } else if (currentScrollTop < lastScrollTop) {
+                        // Scrolling up - show navbar
+                        if (!isNavbarVisible) {
+                            horizontalNavbar.classList.remove('hidden-on-scroll');
+                            isNavbarVisible = true;
+                        }
+                    }
+                    
+                    // Update last scroll position
+                    lastScrollTop = currentScrollTop;
+                }, { passive: true });
+                
+                console.log('Scroll-responsive navbar initialized');
+            }
+        });
     </script>
 
     <!-- Socket.IO for real-time notifications -->
