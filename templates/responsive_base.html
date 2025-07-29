@@ -507,10 +507,14 @@
         /* Horizontal Navigation Bar akan disembunyikan saat scroll */
         .horizontal-nav {
             transition: transform 0.3s ease-in-out;
+            position: relative;
+            z-index: 20;
         }
 
         .horizontal-nav.hidden-on-scroll {
             transform: translateY(-100%);
+            opacity: 0;
+            visibility: hidden;
         }
     </style>
 </head>
@@ -654,7 +658,7 @@
         </div>
 
         <!-- Horizontal Navigation Bar -->
-        <nav id="horizontal-navbar" class="horizontal-nav bg-transparent border-b border-gray-800" style="background: transparent !important;">
+        <nav id="horizontal-navbar" class="horizontal-nav bg-transparent border-b border-gray-800 relative z-20" style="background: transparent !important;">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex items-center justify-between h-14">
                     <!-- Navigation Links dengan horizontal scroll -->
@@ -1434,15 +1438,17 @@
                     if (currentScrollTop < 0) return;
                     
                     // Check scroll direction
-                    if (currentScrollTop > lastScrollTop && currentScrollTop > 100) {
-                        // Scrolling down - hide navbar
+                    if (currentScrollTop > lastScrollTop && currentScrollTop > 50) {
+                        // Scrolling down - hide horizontal navbar
                         if (isNavbarVisible) {
+                            console.log('Hiding horizontal navbar - scrolling down');
                             horizontalNavbar.classList.add('hidden-on-scroll');
                             isNavbarVisible = false;
                         }
-                    } else if (currentScrollTop < lastScrollTop) {
-                        // Scrolling up - show navbar
+                    } else if (currentScrollTop < lastScrollTop || currentScrollTop <= 50) {
+                        // Scrolling up or near top - show horizontal navbar
                         if (!isNavbarVisible) {
+                            console.log('Showing horizontal navbar - scrolling up');
                             horizontalNavbar.classList.remove('hidden-on-scroll');
                             isNavbarVisible = true;
                         }
