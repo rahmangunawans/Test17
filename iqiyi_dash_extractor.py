@@ -47,18 +47,38 @@ def extract_m3u8_from_dash(dash_url):
             data = response.json()
             logging.info("Successfully parsed DASH response as JSON")
             
-            # Check for dm3u8 field (IQiyi specific) 
+            # Check for M3U8 playlist content in data.program.video[].m3u8
+            if 'data' in data and 'program' in data['data'] and 'video' in data['data']['program']:
+                videos = data['data']['program']['video']
+                for i, video in enumerate(videos):
+                    if 'm3u8' in video and video['m3u8'] and '#EXTM3U' in video['m3u8']:
+                        m3u8_content = video['m3u8']
+                        segments = m3u8_content.count('#EXTINF:')
+                        logging.info(f"Found M3U8 playlist content at data.program.video[{i}].m3u8 with {segments} segments")
+                        
+                        # Create a data URL with the M3U8 content
+                        import base64
+                        m3u8_b64 = base64.b64encode(m3u8_content.encode('utf-8')).decode('utf-8')
+                        m3u8_data_url = f"data:application/vnd.apple.mpegurl;base64,{m3u8_b64}"
+                        
+                        return {
+                            'success': True,
+                            'm3u8_url': m3u8_data_url,
+                            'm3u8_content': m3u8_content,
+                            'total_segments': segments,
+                            'message': f'M3U8 playlist extracted with {segments} segments'
+                        }
+            
+            # Fallback: Check for dm3u8 field (IQiyi specific)
             if 'dm3u8' in data:
                 dm3u8_url = data['dm3u8']
-                # Note: dm3u8 often contains incomplete URL, but we found direct M3U8 content
-                # The DASH URL itself returns M3U8 playlist content
                 logging.info(f"Found dm3u8 field: {dm3u8_url}")
-                logging.info("DASH URL returns M3U8 playlist content directly")
+                logging.info("No direct M3U8 content found, using dm3u8 URL")
                 return {
                     'success': True,
-                    'm3u8_url': dash_url,  # Use original DASH URL as it serves M3U8 content
+                    'm3u8_url': dm3u8_url,
                     'total_segments': 0,
-                    'message': 'Direct M3U8 content available from DASH URL'
+                    'message': 'M3U8 URL extracted from dm3u8 field'
                 }
             
             # First check for direct M3U8 URL in the JSON response

@@ -685,10 +685,9 @@ async function extractAndPlayDash(dashUrl) {
         const result = await response.json();
         
         if (result.success && result.m3u8_url) {
-            // For IQiyi streams, use iframe embed as the extracted URL is a direct TS file
-            // which requires special handling that's better done through IQiyi's player
-            showEmbedPlayer(dashUrl);
-            showNotification(`IQiyi stream extracted successfully (bitrate: ${result.bitrate || 'unknown'})`, 'success');
+            // Use Video.js to play the extracted M3U8 playlist
+            showVideoPlayer(result.m3u8_url);
+            showNotification(`M3U8 playlist loaded with ${result.total_segments || 0} segments`, 'success');
         } else {
             // Fallback to iframe if extraction fails
             showEmbedPlayer(dashUrl);
