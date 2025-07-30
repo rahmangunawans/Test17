@@ -291,9 +291,15 @@ class AnimeDataService:
             # Try to find trailer URL
             trailer_url = self._find_trailer_url(title)
             
+            # Generate character overview placeholder for AniList
+            character_overview = f"Main characters from {title}. Details about character roles, relationships, and development throughout the series."
+            if content_type == 'movie':
+                character_overview = f"Main characters from {title}. Details about character roles and development in this film."
+
             return {
                 'title': title,
                 'description': description,
+                'character_overview': character_overview,
                 'genre': genre_str,
                 'year': year,
                 'rating': rating,
@@ -446,9 +452,9 @@ class AnimeDataService:
             genre_str = ', '.join(genre_list) if genre_list else ''
             
             # Get description and clean it
-            synopsis = anime_data.get('synopsis', '')
-            description = synopsis.replace('[Written by MAL Rewrite]', '').strip()
-            if len(description) > 1000:
+            synopsis = anime_data.get('synopsis', '') or ''
+            description = synopsis.replace('[Written by MAL Rewrite]', '').strip() if synopsis else ''
+            if description and len(description) > 1000:
                 description = description[:997] + '...'
             
             # Get episodes count
@@ -498,9 +504,15 @@ class AnimeDataService:
             # Try to find trailer URL
             trailer_url = self._find_trailer_url(title)
             
+            # Generate character overview placeholder
+            character_overview = f"Main characters from {title}. Details about character roles, relationships, and development throughout the series."
+            if content_type == 'movie':
+                character_overview = f"Main characters from {title}. Details about character roles and development in this film."
+
             return {
                 'title': title,
                 'description': description,
+                'character_overview': character_overview,
                 'genre': genre_str,
                 'year': year,
                 'rating': rating,

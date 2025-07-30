@@ -176,6 +176,13 @@
                 </div>
 
                 <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-2">Character Overview</label>
+                    <textarea name="character_overview" rows="4"
+                              class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-red-500"
+                              placeholder="Describe main characters and their roles...">{{ content.character_overview if content else '' }}</textarea>
+                </div>
+
+                <div>
                     <label class="flex items-center">
                         <input type="checkbox" name="is_featured" value="1"
                                {{ 'checked' if content and content.is_featured else '' }}
@@ -211,6 +218,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Form fields
     const titleField = document.querySelector('input[name="title"]');
     const descriptionField = document.querySelector('textarea[name="description"]');
+    const characterOverviewField = document.querySelector('textarea[name="character_overview"]');
     const genreField = document.querySelector('input[name="genre"]');
     const yearField = document.querySelector('input[name="year"]');
     const ratingField = document.querySelector('input[name="rating"]');
@@ -345,6 +353,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function fillForm(anime, source) {
         if (titleField) titleField.value = anime.title || '';
         if (descriptionField) descriptionField.value = anime.description || '';
+        if (characterOverviewField) characterOverviewField.value = anime.character_overview || '';
         if (genreField) genreField.value = anime.genre || '';
         if (yearField && anime.year) yearField.value = anime.year;
         if (ratingField && anime.rating) ratingField.value = anime.rating;

@@ -46,6 +46,7 @@ class Content(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text)
+    character_overview = db.Column(db.Text)  # Character descriptions and overview
     genre = db.Column(db.String(100))
     year = db.Column(db.Integer)
     rating = db.Column(db.Float, default=0.0)

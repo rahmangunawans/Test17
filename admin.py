@@ -106,6 +106,7 @@ def add_content():
             content = Content(
                 title=request.form['title'],
                 description=request.form['description'],
+                character_overview=request.form.get('character_overview', ''),
                 genre=request.form['genre'],
                 year=int(request.form['year']),
                 rating=float(request.form['rating']),
@@ -204,6 +205,7 @@ def edit_content(content_id):
             
             content.title = request.form['title']
             content.description = request.form['description']
+            content.character_overview = request.form.get('character_overview', '')
             content.genre = request.form['genre']
             content.year = int(request.form['year'])
             content.rating = float(request.form['rating'])
