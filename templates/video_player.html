@@ -7,9 +7,11 @@
 <link href="https://vjs.zencdn.net/8.8.0/video-js.css" rel="stylesheet">
 <script>
 // Ensure Video.js loads properly
+let videoJSLoaded = false;
+
 function loadVideoJS() {
     return new Promise((resolve, reject) => {
-        if (window.videojs) {
+        if (window.videojs || videoJSLoaded) {
             resolve();
             return;
         }
@@ -18,6 +20,7 @@ function loadVideoJS() {
         script.src = 'https://vjs.zencdn.net/8.8.0/video.min.js';
         script.onload = () => {
             console.log('Video.js loaded successfully');
+            videoJSLoaded = true;
             resolve();
         };
         script.onerror = () => {
@@ -28,8 +31,10 @@ function loadVideoJS() {
     });
 }
 
-// Load Video.js immediately
-loadVideoJS().catch(console.error);
+// Load Video.js when DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+    loadVideoJS().catch(console.error);
+});
 </script>
 
 <style>
@@ -607,26 +612,34 @@ function switchServer(serverType, serverUrl) {
     }
 }
 
-function showVideoPlayer(url, type) {
+async function showVideoPlayer(url, type) {
     const videoElement = document.getElementById('video-player');
     videoElement.classList.remove('hidden');
     
-    // Create new Video.js player
-    player = videojs('video-player', {
-        fluid: true,
-        responsive: true,
-        playbackRates: [0.5, 1, 1.25, 1.5, 2],
-        controls: true,
-        preload: 'metadata',
-        sources: [{
-            src: url,
-            type: type
-        }]
-    });
-    
-    // Set up player events
-    if (episodeData) {
-        setupPlayerEvents(player, episodeData);
+    try {
+        // Ensure Video.js is loaded
+        await loadVideoJS();
+        
+        // Create new Video.js player
+        player = videojs('video-player', {
+            fluid: true,
+            responsive: true,
+            playbackRates: [0.5, 1, 1.25, 1.5, 2],
+            controls: true,
+            preload: 'metadata',
+            sources: [{
+                src: url,
+                type: type
+            }]
+        });
+        
+        // Set up player events
+        if (episodeData) {
+            setupPlayerEvents(player, episodeData);
+        }
+    } catch (error) {
+        console.error('Failed to initialize Video.js player:', error);
+        showNotification('Video player failed to load', 'error');
     }
 }
 
@@ -634,7 +647,19 @@ function showEmbedPlayer(url) {
     const embedContainer = document.getElementById('embed-container');
     const embedPlayer = document.getElementById('embed-player');
     
-    embedPlayer.src = url;
+    // Convert DASH URL to IQiyi embed URL if needed
+    let embedUrl = url;
+    if (url.includes('cache.video.iqiyi.com/dash')) {
+        // Extract tvid from DASH URL
+        const tvidMatch = url.match(/[?&]tvid=([^&]+)/);
+        if (tvidMatch) {
+            const tvid = tvidMatch[1];
+            embedUrl = `https://www.iqiyi.com/player/${tvid}/`;
+            console.log('Converted DASH URL to IQiyi player:', embedUrl);
+        }
+    }
+    
+    embedPlayer.src = embedUrl;
     embedContainer.classList.remove('hidden');
 }
 
@@ -660,9 +685,10 @@ async function extractAndPlayDash(dashUrl) {
         const result = await response.json();
         
         if (result.success && result.m3u8_url) {
-            // Play the extracted M3U8 URL
-            showVideoPlayer(result.m3u8_url, 'application/x-mpegURL');
-            showNotification(`IQiyi stream loaded successfully (${result.total_segments || 0} segments)`, 'success');
+            // For IQiyi streams, use iframe embed as the extracted URL is a direct TS file
+            // which requires special handling that's better done through IQiyi's player
+            showEmbedPlayer(dashUrl);
+            showNotification(`IQiyi stream extracted successfully (bitrate: ${result.bitrate || 'unknown'})`, 'success');
         } else {
             // Fallback to iframe if extraction fails
             showEmbedPlayer(dashUrl);
