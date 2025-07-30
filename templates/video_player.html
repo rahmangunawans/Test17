@@ -7,12 +7,14 @@
 <link href="https://vjs.zencdn.net/8.8.0/video-js.css" rel="stylesheet">
 <script src="https://vjs.zencdn.net/8.8.0/video.min.js" onload="console.log('Video.js loaded successfully')" onerror="console.error('Video.js failed to load')"></script>
 
-<!-- Webtor.io Player Script -->
-<script>
-// Initialize Webtor.io Player when DOM is ready
-console.log('Webtor.io player script loaded');
+<!-- WebTorrent for real-time browser streaming -->
+<script src="https://cdn.jsdelivr.net/npm/webtorrent@latest/webtorrent.min.js" onload="console.log('WebTorrent loaded successfully')" onerror="console.error('WebTorrent failed to load')"></script>
 
-// Load Webtor.io Player script dynamically
+<!-- Webtor.io fallback -->
+<script>
+console.log('WebTorrent streaming script loaded');
+
+// Load Webtor.io Player script as fallback
 function loadWebtorScript() {
     return new Promise((resolve, reject) => {
         if (window.webtor) {
@@ -24,7 +26,7 @@ function loadWebtorScript() {
         script.src = 'https://cdn.jsdelivr.net/npm/@webtor/embed-sdk-js/dist/index.min.js';
         script.async = true;
         script.onload = () => {
-            console.log('Webtor.io SDK loaded successfully');
+            console.log('Webtor.io SDK loaded successfully as fallback');
             resolve();
         };
         script.onerror = () => {
@@ -900,8 +902,9 @@ function copyTorrentLink() {
     });
 }
 
-// Webtor.io Embed SDK streaming functions
-let webtorPlayer = null;
+// WebTorrent real-time streaming
+let webTorrentClient = null;
+let currentTorrent = null;
 
 async function startTorrentStreaming() {
     if (!currentTorrentUrl) {
@@ -909,10 +912,10 @@ async function startTorrentStreaming() {
         return;
     }
     
-    console.log('Starting Python torrent streaming for:', currentTorrentUrl);
+    console.log('Starting real-time WebTorrent streaming for:', currentTorrentUrl);
     
     // Update UI
-    updateTorrentStatus('Creating streaming session...', 'text-yellow-400');
+    updateTorrentStatus('Initializing WebTorrent client...', 'text-yellow-400');
     const startBtn = document.getElementById('start-torrent-btn');
     if (startBtn) startBtn.disabled = true;
     
@@ -932,46 +935,93 @@ async function startTorrentStreaming() {
     videoPlayerElement.innerHTML = '';
     
     try {
-        // Create streaming session via Python API
-        updateTorrentStatus('Connecting to Python streaming service...', 'text-yellow-400');
+        // Check if WebTorrent is available
+        if (typeof WebTorrent === 'undefined') {
+            throw new Error('WebTorrent not available');
+        }
         
-        const response = await fetch('/torrent/create-session', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                'magnet': currentTorrentUrl
-            })
+        // Initialize WebTorrent client
+        updateTorrentStatus('Starting WebTorrent client...', 'text-yellow-400');
+        
+        if (webTorrentClient) {
+            webTorrentClient.destroy();
+        }
+        
+        webTorrentClient = new WebTorrent();
+        
+        // Add torrent
+        updateTorrentStatus('Loading torrent...', 'text-yellow-400');
+        updateProgressIndicators('Loading', '0%', '0 KB/s', '0');
+        
+        currentTorrent = webTorrentClient.add(currentTorrentUrl, {
+            announce: [
+                'wss://tracker.btorrent.xyz',
+                'wss://tracker.openwebtorrent.com',
+                'wss://tracker.fastcast.nz'
+            ]
         });
         
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
+        currentTorrent.on('ready', () => {
+            console.log('Torrent ready:', currentTorrent.name);
+            updateTorrentStatus('Torrent ready - Finding video file...', 'text-green-400');
+            
+            // Find the largest video file
+            const videoFile = findLargestVideoFile(currentTorrent.files);
+            
+            if (videoFile) {
+                console.log('Video file found:', videoFile.name);
+                updateTorrentStatus('Streaming video file...', 'text-green-400');
+                
+                // Create video element and stream
+                videoPlayerElement.innerHTML = `
+                    <video controls autoplay class="w-full h-full rounded-xl bg-black">
+                        <source src="" type="video/mp4">
+                        Your browser does not support the video tag.
+                    </video>
+                `;
+                
+                const videoElement = videoPlayerElement.querySelector('video');
+                
+                // Stream the file to video element
+                videoFile.streamTo(videoElement);
+                
+                showNotification('Torrent streaming started successfully!', 'success');
+                updateProgressIndicators('Streaming', '100%', 'WebTorrent', currentTorrent.numPeers);
+                
+            } else {
+                throw new Error('No video file found in torrent');
+            }
+        });
         
-        const sessionData = await response.json();
+        currentTorrent.on('download', () => {
+            const progress = Math.round(currentTorrent.progress * 100);
+            const speed = formatBytes(currentTorrent.downloadSpeed) + '/s';
+            const peers = currentTorrent.numPeers;
+            
+            updateProgressIndicators('Downloading', progress + '%', speed, peers);
+        });
         
-        if (!sessionData.success) {
-            throw new Error(sessionData.error || 'Failed to create streaming session');
-        }
+        currentTorrent.on('error', (err) => {
+            console.error('Torrent error:', err);
+            updateTorrentStatus('Torrent error: ' + err.message, 'text-red-400');
+            showNotification('Torrent streaming failed: ' + err.message, 'error');
+            showWebTorrentFallback();
+        });
         
-        console.log('Streaming session created:', sessionData.session_id);
-        
-        // Get streaming URLs
-        const streamingUrls = sessionData.session_info.streaming_urls;
-        
-        // Create streaming interface
-        createStreamingInterface(sessionData.session_id, streamingUrls);
-        
-        updateTorrentStatus('Streaming ready', 'text-green-400');
-        showNotification('Python torrent streaming ready! Choose your preferred service.', 'success');
-        updateProgressIndicators('Ready', '100%', 'Active', 'Python API');
+        // Set timeout for torrent loading
+        setTimeout(() => {
+            if (currentTorrent && !currentTorrent.ready) {
+                console.log('Torrent loading timeout, showing fallback');
+                updateTorrentStatus('Loading timeout - Using fallback', 'text-yellow-400');
+                showWebTorrentFallback();
+            }
+        }, 15000); // 15 second timeout
         
     } catch (error) {
-        console.error('Error creating torrent session:', error);
-        updateTorrentStatus('Session creation failed', 'text-red-400');
-        showNotification('Failed to create streaming session. Using fallback options.', 'error');
-        showFallbackInterface();
+        console.error('WebTorrent error:', error);
+        updateTorrentStatus('WebTorrent failed - Using fallback', 'text-red-400');
+        showNotification('WebTorrent streaming failed. Using fallback options.', 'error');
+        showWebTorrentFallback();
     }
     
     function createStreamingInterface(sessionId, streamingUrls) {
@@ -1116,6 +1166,93 @@ async function startTorrentStreaming() {
     setTimeout(() => {
         if (startBtn) startBtn.disabled = false;
     }, 3000);
+}
+
+// Helper functions for WebTorrent
+function findLargestVideoFile(files) {
+    const videoExtensions = ['.mp4', '.mkv', '.avi', '.mov', '.wmv', '.flv', '.webm', '.m4v'];
+    let largestFile = null;
+    let largestSize = 0;
+    
+    files.forEach(file => {
+        const extension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
+        if (videoExtensions.includes(extension) && file.length > largestSize) {
+            largestSize = file.length;
+            largestFile = file;
+        }
+    });
+    
+    return largestFile;
+}
+
+function formatBytes(bytes) {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+}
+
+function showWebTorrentFallback() {
+    const videoPlayerElement = document.getElementById('torrent-video-player');
+    
+    videoPlayerElement.innerHTML = `
+        <div class="w-full h-full bg-gradient-to-br from-purple-900 to-blue-900 rounded-xl flex items-center justify-center p-8" style="min-height: 400px;">
+            <div class="text-center text-white max-w-md">
+                <div class="text-6xl mb-4">🌐</div>
+                <h3 class="text-xl font-bold mb-4">External Streaming Services</h3>
+                <p class="mb-6 text-gray-300">Use these external services for torrent streaming:</p>
+                
+                <div class="space-y-3">
+                    <button onclick="openWebtorIo()" 
+                            class="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 px-6 rounded-lg transition-colors font-semibold">
+                        🌐 WebTor.io
+                    </button>
+                    <button onclick="openInstantIo()" 
+                            class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-lg transition-colors font-semibold">
+                        ⚡ Instant.io
+                    </button>
+                    <button onclick="openBTorrent()" 
+                            class="w-full bg-green-600 hover:bg-green-700 text-white py-3 px-6 rounded-lg transition-colors font-semibold">
+                        🔥 BTorrent
+                    </button>
+                    <button onclick="copyTorrentLink()" 
+                            class="w-full bg-gray-600 hover:bg-gray-700 text-white py-3 px-6 rounded-lg transition-colors font-semibold">
+                        📋 Copy Magnet Link
+                    </button>
+                </div>
+                
+                <p class="text-xs text-gray-400 mt-4">
+                    External services will open in new tabs
+                </p>
+            </div>
+        </div>
+    `;
+}
+
+function stopTorrentStreaming() {
+    console.log('Stopping torrent streaming');
+    
+    if (currentTorrent) {
+        currentTorrent.destroy();
+        currentTorrent = null;
+    }
+    
+    if (webTorrentClient) {
+        webTorrentClient.destroy();
+        webTorrentClient = null;
+    }
+    
+    // Reset UI
+    updateTorrentStatus('Streaming stopped', 'text-gray-400');
+    updateProgressIndicators('Stopped', '0%', '0 KB/s', '0');
+    
+    // Show default message
+    document.getElementById('torrent-default-message').classList.remove('hidden');
+    document.getElementById('torrent-video-container').classList.add('hidden');
+    document.getElementById('torrent-actions').classList.add('hidden');
+    
+    showNotification('Torrent streaming stopped', 'info');
 }
 
 // New helper functions
