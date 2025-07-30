@@ -291,10 +291,8 @@ class AnimeDataService:
             # Try to find trailer URL
             trailer_url = self._find_trailer_url(title)
             
-            # Generate character overview placeholder for AniList
-            character_overview = f"Main characters from {title}. Details about character roles, relationships, and development throughout the series."
-            if content_type == 'movie':
-                character_overview = f"Main characters from {title}. Details about character roles and development in this film."
+            # Try to get character information from AniList
+            character_overview = self._get_character_overview_anilist(anime_data, title, content_type)
 
             return {
                 'title': title,
@@ -504,10 +502,8 @@ class AnimeDataService:
             # Try to find trailer URL
             trailer_url = self._find_trailer_url(title)
             
-            # Generate character overview placeholder
-            character_overview = f"Main characters from {title}. Details about character roles, relationships, and development throughout the series."
-            if content_type == 'movie':
-                character_overview = f"Main characters from {title}. Details about character roles and development in this film."
+            # Try to get character information from MyAnimeList
+            character_overview = self._get_character_overview_mal(anime_data, title, content_type)
 
             return {
                 'title': title,
@@ -575,6 +571,179 @@ class AnimeDataService:
         except Exception as e:
             logging.error(f"Error formatting manga data: {str(e)}")
             return {}
+
+    def _get_character_overview_anilist(self, anime_data: Dict[str, Any], title: str, content_type: str) -> str:
+        """
+        Get character overview information from AniList data
+        
+        Args:
+            anime_data: Raw anime data from AniList
+            title: Anime title
+            content_type: Type of content (anime, movie, donghua)
+            
+        Returns:
+            Character overview string with main character information
+        """
+        try:
+            # Try to get character information if available
+            characters_info = []
+            
+            # AniList API might have character data in different formats
+            if 'characters' in anime_data and anime_data['characters']:
+                characters = anime_data['characters']
+                if isinstance(characters, list):
+                    for char in characters[:5]:  # Limit to top 5 characters
+                        if isinstance(char, dict):
+                            char_name = char.get('name', {}).get('full', '') or char.get('name', '')
+                            char_role = char.get('role', '')
+                            if char_name:
+                                role_text = f" ({char_role})" if char_role else ""
+                                characters_info.append(f"{char_name}{role_text}")
+            
+            # If we have character data, format it properly
+            if characters_info:
+                char_list = ", ".join(characters_info)
+                if content_type == 'movie':
+                    return f"Main characters: {char_list}. These characters drive the story and development in this film."
+                else:
+                    return f"Main characters: {char_list}. These characters develop throughout the series with complex relationships and story arcs."
+            
+            # Fallback: try to extract character mentions from description
+            description = anime_data.get('desc', '')
+            if description:
+                # Look for character name patterns in description
+                character_mentions = self._extract_character_mentions(description)
+                if character_mentions:
+                    char_list = ", ".join(character_mentions[:3])  # Top 3 mentions
+                    return f"Key characters mentioned: {char_list}. {title} features these characters in important roles throughout the story."
+            
+            # Final fallback with meaningful content
+            if content_type == 'movie':
+                return f"{title} features a cast of characters whose interactions and development drive the film's narrative forward."
+            else:
+                return f"{title} showcases diverse characters with unique personalities and backgrounds, each contributing to the overall story through their relationships and individual growth arcs."
+                
+        except Exception as e:
+            logging.error(f"Error getting character overview for '{title}': {str(e)}")
+            return f"{title} features memorable characters that contribute to an engaging storyline."
+    
+    def _get_character_overview_mal(self, anime_data: Dict[str, Any], title: str, content_type: str) -> str:
+        """
+        Get character overview information from MyAnimeList data
+        
+        Args:
+            anime_data: Raw anime data from MyAnimeList
+            title: Anime title
+            content_type: Type of content (anime, movie, donghua)
+            
+        Returns:
+            Character overview string with main character information
+        """
+        try:
+            # MyAnimeList API structure might have character info
+            characters_info = []
+            
+            # Try to get character data from MAL API response
+            if 'characters' in anime_data and anime_data['characters']:
+                characters = anime_data['characters']
+                if isinstance(characters, list):
+                    for char in characters[:5]:  # Limit to top 5 characters
+                        if isinstance(char, dict):
+                            char_name = char.get('name', '')
+                            char_role = char.get('role', '')
+                            if char_name:
+                                role_text = f" ({char_role})" if char_role else ""
+                                characters_info.append(f"{char_name}{role_text}")
+            
+            # If we have character data, format it properly
+            if characters_info:
+                char_list = ", ".join(characters_info)
+                if content_type == 'movie':
+                    return f"Main characters: {char_list}. These characters are central to the film's plot and emotional impact."
+                else:
+                    return f"Main characters: {char_list}. The series follows these characters through their personal journeys and interconnected storylines."
+            
+            # Try to extract from synopsis
+            synopsis = anime_data.get('synopsis', '')
+            if synopsis:
+                character_mentions = self._extract_character_mentions(synopsis)
+                if character_mentions:
+                    char_list = ", ".join(character_mentions[:3])
+                    return f"Featured characters: {char_list}. {title} explores their stories and character development throughout the narrative."
+            
+            # Get genres to create more specific character description
+            genres = anime_data.get('genres', [])
+            genre_names = [g.get('name', '') for g in genres if isinstance(g, dict)] if genres else []
+            
+            # Create genre-specific character descriptions
+            if any(genre in ['Action', 'Adventure', 'Shounen'] for genre in genre_names):
+                return f"{title} features dynamic characters who face challenges and grow stronger through their adventures and battles."
+            elif any(genre in ['Romance', 'Drama', 'Slice of Life'] for genre in genre_names):
+                return f"{title} presents relatable characters dealing with personal relationships, emotions, and everyday life situations."
+            elif any(genre in ['Fantasy', 'Magic', 'Supernatural'] for genre in genre_names):
+                return f"{title} showcases characters with unique abilities and backgrounds in a world filled with magic and supernatural elements."
+            else:
+                if content_type == 'movie':
+                    return f"{title} brings together memorable characters whose individual stories converge in this cinematic experience."
+                else:
+                    return f"{title} features well-developed characters, each with distinct personalities and motivations that drive the series forward."
+                
+        except Exception as e:
+            logging.error(f"Error getting MAL character overview for '{title}': {str(e)}")
+            return f"{title} features engaging characters that bring depth and personality to the story."
+    
+    def _extract_character_mentions(self, text: str) -> List[str]:
+        """
+        Extract potential character names from description text
+        
+        Args:
+            text: Description text to analyze
+            
+        Returns:
+            List of potential character names
+        """
+        try:
+            import re
+            
+            # Remove HTML tags and clean text
+            clean_text = re.sub(r'<[^>]+>', '', text)
+            
+            # Look for capitalized words that might be character names
+            # This is a simple heuristic approach
+            potential_names = []
+            
+            # Pattern for potential names (capitalized words, excluding common words)
+            words = clean_text.split()
+            skip_words = {'The', 'A', 'An', 'And', 'Or', 'But', 'In', 'On', 'At', 'To', 'For', 'Of', 'With', 'By', 'From', 'Up', 'About', 'Into', 'Through', 'During', 'Before', 'After', 'Above', 'Below', 'Between', 'Among', 'Since', 'Until', 'While', 'Because', 'Although', 'However', 'Therefore', 'Meanwhile', 'Furthermore', 'Moreover', 'Nevertheless'}
+            
+            for i, word in enumerate(words):
+                # Clean word from punctuation
+                clean_word = re.sub(r'[^\w]', '', word)
+                
+                # Check if it's a potential character name
+                if (len(clean_word) >= 3 and 
+                    clean_word[0].isupper() and 
+                    clean_word not in skip_words and
+                    not clean_word.isupper()):  # Avoid all-caps words
+                    
+                    # Check if next word is also capitalized (compound names like "Naruto Uzumaki")
+                    if i + 1 < len(words):
+                        next_word = re.sub(r'[^\w]', '', words[i + 1])
+                        if (len(next_word) >= 2 and 
+                            next_word[0].isupper() and 
+                            next_word not in skip_words):
+                            potential_names.append(f"{clean_word} {next_word}")
+                            continue
+                    
+                    potential_names.append(clean_word)
+            
+            # Remove duplicates and return top candidates
+            unique_names = list(dict.fromkeys(potential_names))  # Preserve order
+            return unique_names[:5]  # Return top 5 potential names
+            
+        except Exception as e:
+            logging.error(f"Error extracting character mentions: {str(e)}")
+            return []
 
 # Global instance
 anime_data_service = AnimeDataService()
