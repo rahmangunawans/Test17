@@ -98,17 +98,13 @@
                                         <i class="fas fa-code mr-1"></i>Embed
                                     </span>
                                     {% endif %}
-                                    {% if episode.server_torrent_url %}
-                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-500/20 text-purple-400 border border-purple-500/30" title="Torrent/Magnet Available">
-                                        <i class="fas fa-magnet mr-1"></i>Torrent
-                                    </span>
-                                    {% endif %}
+
                                     {% if episode.video_url %}
                                     <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-500/20 text-yellow-400 border border-yellow-500/30" title="Direct Video Available">
                                         <i class="fas fa-video mr-1"></i>Direct
                                     </span>
                                     {% endif %}
-                                    {% if not episode.server_m3u8_url and not episode.server_embed_url and not episode.server_torrent_url and not episode.video_url %}
+                                    {% if not episode.server_m3u8_url and not episode.server_embed_url and not episode.video_url %}
                                     <span class="text-red-400 text-xs">No servers configured</span>
                                     {% endif %}
                                 </div>
