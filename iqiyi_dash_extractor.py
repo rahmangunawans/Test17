@@ -47,17 +47,19 @@ def extract_m3u8_from_dash(dash_url):
             data = response.json()
             logging.info("Successfully parsed DASH response as JSON")
             
-            # Check for dm3u8 field (IQiyi specific)
+            # Check for dm3u8 field (IQiyi specific) 
             if 'dm3u8' in data:
                 dm3u8_url = data['dm3u8']
-                if dm3u8_url and dm3u8_url.startswith('http'):
-                    logging.info(f"Found dm3u8 URL: {dm3u8_url}")
-                    return {
-                        'success': True,
-                        'm3u8_url': dm3u8_url,
-                        'total_segments': 0,
-                        'message': 'M3U8 URL extracted from dm3u8 field'
-                    }
+                # Note: dm3u8 often contains incomplete URL, but we found direct M3U8 content
+                # The DASH URL itself returns M3U8 playlist content
+                logging.info(f"Found dm3u8 field: {dm3u8_url}")
+                logging.info("DASH URL returns M3U8 playlist content directly")
+                return {
+                    'success': True,
+                    'm3u8_url': dash_url,  # Use original DASH URL as it serves M3U8 content
+                    'total_segments': 0,
+                    'message': 'Direct M3U8 content available from DASH URL'
+                }
             
             # First check for direct M3U8 URL in the JSON response
             if 'm3u8' in data:

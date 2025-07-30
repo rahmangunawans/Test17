@@ -546,7 +546,7 @@ let player;
 let episodeData = {
     id: {{ episode.id or 0 }},
     watchTime: {{ watch_time or 0 }},
-    canWatchFull: {{ 'true' if can_watch_full else 'false' }},
+    canWatchFull: {{ can_watch_full|tojson }},
     maxWatchTime: {{ max_watch_time or 'null' }}
 };
 
