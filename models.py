@@ -76,7 +76,7 @@ class Episode(db.Model):
     # Multiple streaming servers
     server_m3u8_url = db.Column(db.String(500))  # M3U8 streaming URL
     server_embed_url = db.Column(db.String(500))  # Embed iframe URL
-    iqiyi_url = db.Column(db.String(500))  # IQiyi streaming URL
+    dash_url = db.Column(db.String(500))  # IQiyi DASH URL for M3U8 extraction
     subtitle_urls = db.Column(db.Text)  # JSON string for subtitle URLs
     
     created_at = db.Column(db.DateTime, default=datetime.utcnow)

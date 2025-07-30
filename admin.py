@@ -9,7 +9,7 @@ from anilist_integration import anilist_service
 
 import logging
 import json
-from iqiyi_dash import extract_m3u8_from_dash
+from iqiyi_dash_extractor import extract_m3u8_from_dash
 
 admin_bp = Blueprint('admin', __name__)
 
