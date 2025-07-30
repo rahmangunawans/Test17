@@ -612,13 +612,29 @@ function switchServer(serverType, serverUrl) {
     }
 }
 
-async function showVideoPlayer(url, type) {
+async function showVideoPlayer(url, type = 'video/mp4') {
     const videoElement = document.getElementById('video-player');
     videoElement.classList.remove('hidden');
     
     try {
-        // Ensure Video.js is loaded
-        await loadVideoJS();
+        // Dispose existing player if any
+        if (player) {
+            player.dispose();
+            player = null;
+        }
+        
+        // Wait for Video.js to be available
+        let retries = 0;
+        while (!window.videojs && retries < 50) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+            retries++;
+        }
+        
+        if (!window.videojs) {
+            throw new Error('Video.js not available');
+        }
+        
+        console.log('Initializing Video.js player with:', { url, type });
         
         // Create new Video.js player
         player = videojs('video-player', {
@@ -627,19 +643,30 @@ async function showVideoPlayer(url, type) {
             playbackRates: [0.5, 1, 1.25, 1.5, 2],
             controls: true,
             preload: 'metadata',
-            sources: [{
-                src: url,
-                type: type
-            }]
+            html5: {
+                hls: {
+                    enableLowInitialPlaylist: true,
+                    smoothQualityChange: true
+                }
+            }
+        });
+        
+        // Set the source
+        player.src({
+            src: url,
+            type: type
         });
         
         // Set up player events
         if (episodeData) {
             setupPlayerEvents(player, episodeData);
         }
+        
+        console.log('Video.js player initialized successfully');
+        
     } catch (error) {
         console.error('Failed to initialize Video.js player:', error);
-        showNotification('Video player failed to load', 'error');
+        showNotification('Video player initialization failed: ' + error.message, 'error');
     }
 }
 
@@ -684,9 +711,13 @@ async function extractAndPlayDash(dashUrl) {
         
         const result = await response.json();
         
-        if (result.success && result.m3u8_url) {
-            // Use Video.js to play the extracted M3U8 playlist
-            showVideoPlayer(result.m3u8_url);
+        if (result.success && result.m3u8_content) {
+            // Create blob URL from M3U8 content
+            const blob = new Blob([result.m3u8_content], { type: 'application/vnd.apple.mpegurl' });
+            const m3u8Url = URL.createObjectURL(blob);
+            
+            // Use Video.js to play the M3U8 playlist
+            showVideoPlayer(m3u8Url, 'application/x-mpegURL');
             showNotification(`M3U8 playlist loaded with ${result.total_segments || 0} segments`, 'success');
         } else {
             // Fallback to iframe if extraction fails

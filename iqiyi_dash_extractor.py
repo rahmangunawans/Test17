@@ -56,14 +56,9 @@ def extract_m3u8_from_dash(dash_url):
                         segments = m3u8_content.count('#EXTINF:')
                         logging.info(f"Found M3U8 playlist content at data.program.video[{i}].m3u8 with {segments} segments")
                         
-                        # Create a data URL with the M3U8 content
-                        import base64
-                        m3u8_b64 = base64.b64encode(m3u8_content.encode('utf-8')).decode('utf-8')
-                        m3u8_data_url = f"data:application/vnd.apple.mpegurl;base64,{m3u8_b64}"
-                        
+                        # Return the M3U8 content directly for client-side blob creation
                         return {
                             'success': True,
-                            'm3u8_url': m3u8_data_url,
                             'm3u8_content': m3u8_content,
                             'total_segments': segments,
                             'message': f'M3U8 playlist extracted with {segments} segments'
