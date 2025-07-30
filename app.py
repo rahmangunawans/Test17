@@ -1,5 +1,6 @@
 import os
 import logging
+import json
 from datetime import datetime
 from flask import Flask, render_template, request, redirect, url_for, jsonify
 from flask_sqlalchemy import SQLAlchemy
@@ -72,6 +73,17 @@ login_manager.init_app(app)
 # socketio.init_app(app)  # Disabled for stability
 login_manager.login_view = 'auth.login'  # type: ignore
 login_manager.login_message = 'Please log in to access this page.'
+
+# Add custom Jinja2 filters
+@app.template_filter('from_json')
+def from_json_filter(value):
+    """Parse JSON string to Python object"""
+    if not value:
+        return []
+    try:
+        return json.loads(value)
+    except (json.JSONDecodeError, TypeError):
+        return []
 
 @login_manager.user_loader
 def load_user(user_id):

@@ -78,6 +78,10 @@ class Episode(db.Model):
     server_embed_url = db.Column(db.String(500))  # Embed iframe URL
     server_torrent_url = db.Column(db.String(500))  # Torrent/magnet URL
     
+    # IQiyi integration
+    iqiyi_url = db.Column(db.String(500))  # IQiyi episode URL
+    subtitle_urls = db.Column(db.Text)  # JSON string of subtitle URLs
+    
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     # Relationships
