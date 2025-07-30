@@ -77,6 +77,26 @@
                                    placeholder="https://embed.example.com/video/123">
                             <p class="text-xs text-gray-400 mt-1">Embed iframe URL for external player</p>
                         </div>
+
+                        <!-- Server 3: DASH URL -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">
+                                <i class="fas fa-external-link-alt mr-1 text-purple-500"></i>
+                                Server 3 - IQiyi DASH URL
+                            </label>
+                            <div class="flex gap-2">
+                                <input type="url" name="dash_url" id="dash_url"
+                                       value="{{ episode.dash_url if episode else '' }}"
+                                       class="flex-1 px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-red-500"
+                                       placeholder="https://cache.video.iqiyi.com/dash?tvid=...">
+                                <button type="button" onclick="extractDashUrl()" id="extract-dash-btn"
+                                        class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors disabled:opacity-50">
+                                    Extract M3U8
+                                </button>
+                            </div>
+                            <div id="dash-status" class="mt-2 text-sm"></div>
+                            <p class="text-xs text-gray-400 mt-1">IQiyi DASH URL - automatically extracts M3U8 streaming URL</p>
+                        </div>
                         
 
                         
@@ -214,6 +234,104 @@ document.addEventListener('DOMContentLoaded', function() {
             updateSubtitlesDisplay(subtitles);
         } catch (e) {
             console.error('Error parsing existing subtitles:', e);
+        }
+    }
+});
+
+// DASH URL extraction functionality
+async function extractDashUrl() {
+    const dashUrlInput = document.getElementById('dash_url');
+    const extractBtn = document.getElementById('extract-dash-btn');
+    const statusDiv = document.getElementById('dash-status');
+    const m3u8Input = document.querySelector('input[name="server_m3u8_url"]');
+    
+    const dashUrl = dashUrlInput.value.trim();
+    if (!dashUrl) {
+        showStatus('Please enter a DASH URL first', 'error');
+        return;
+    }
+    
+    // Update UI state
+    extractBtn.disabled = true;
+    extractBtn.textContent = 'Extracting...';
+    showStatus('Extracting M3U8 URL from DASH response...', 'info');
+    
+    try {
+        const response = await fetch('/admin/api/extract-dash', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({ dash_url: dashUrl })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            // Auto-fill the M3U8 URL field
+            if (m3u8Input && result.m3u8_url) {
+                m3u8Input.value = result.m3u8_url;
+                m3u8Input.style.borderColor = '#10b981'; // Green border
+                setTimeout(() => {
+                    m3u8Input.style.borderColor = '';
+                }, 3000);
+            }
+            
+            const segmentInfo = result.total_segments ? ` (${result.total_segments} segments)` : '';
+            showStatus(`✅ M3U8 URL extracted successfully${segmentInfo}`, 'success');
+        } else {
+            showStatus(`❌ Extraction failed: ${result.error}`, 'error');
+        }
+        
+    } catch (error) {
+        console.error('DASH extraction error:', error);
+        showStatus('❌ Network error during extraction', 'error');
+    } finally {
+        // Reset UI state
+        extractBtn.disabled = false;
+        extractBtn.textContent = 'Extract M3U8';
+    }
+}
+
+function showStatus(message, type) {
+    const statusDiv = document.getElementById('dash-status');
+    statusDiv.textContent = message;
+    
+    // Remove existing classes
+    statusDiv.className = 'mt-2 text-sm';
+    
+    // Add type-specific styling
+    switch (type) {
+        case 'success':
+            statusDiv.className += ' text-green-400';
+            break;
+        case 'error':
+            statusDiv.className += ' text-red-400';
+            break;
+        case 'info':
+            statusDiv.className += ' text-blue-400';
+            break;
+        default:
+            statusDiv.className += ' text-gray-400';
+    }
+    
+    // Auto-clear success/info messages after 10 seconds
+    if (type === 'success' || type === 'info') {
+        setTimeout(() => {
+            statusDiv.textContent = '';
+        }, 10000);
+    }
+}
+
+// Auto-extract when DASH URL is pasted or changed
+document.getElementById('dash_url').addEventListener('blur', function() {
+    const dashUrl = this.value.trim();
+    if (dashUrl && dashUrl.includes('cache.video.iqiyi.com/dash')) {
+        // Only auto-extract if M3U8 field is empty
+        const m3u8Input = document.querySelector('input[name="server_m3u8_url"]');
+        if (!m3u8Input.value.trim()) {
+            setTimeout(() => extractDashUrl(), 500);
         }
     }
 });

@@ -9,6 +9,7 @@ from anilist_integration import anilist_service
 
 import logging
 import json
+from iqiyi_dash import extract_m3u8_from_dash
 
 admin_bp = Blueprint('admin', __name__)
 
@@ -286,6 +287,7 @@ def add_episode(content_id):
                 description=request.form.get('description', ''),
                 server_m3u8_url=request.form.get('server_m3u8_url', ''),
                 server_embed_url=request.form.get('server_embed_url', ''),
+                dash_url=request.form.get('dash_url', ''),
                 subtitle_urls=request.form.get('subtitle_urls', '')
             )
             db.session.add(episode)
@@ -318,6 +320,7 @@ def edit_episode(episode_id):
             episode.description = request.form.get('description', '')
             episode.server_m3u8_url = request.form.get('server_m3u8_url', '')
             episode.server_embed_url = request.form.get('server_embed_url', '')
+            episode.dash_url = request.form.get('dash_url', '')
             episode.subtitle_urls = request.form.get('subtitle_urls', '')
             
             db.session.commit()
@@ -893,4 +896,41 @@ def update_system_settings():
         db.session.rollback()
     
     return redirect(url_for('admin.system_settings'))
+
+@admin_bp.route('/api/extract-dash', methods=['POST'])
+@login_required
+@admin_required
+def extract_dash_url():
+    """Extract M3U8 URL from IQiyi DASH URL"""
+    try:
+        data = request.get_json()
+        dash_url = data.get('dash_url', '').strip()
+        
+        if not dash_url:
+            return jsonify({"success": False, "error": "DASH URL is required"}), 400
+        
+        # Extract M3U8 from DASH URL
+        result = extract_m3u8_from_dash(dash_url)
+        
+        if result['success']:
+            return jsonify({
+                "success": True,
+                "m3u8_url": result['m3u8_url'],
+                "message": "M3U8 URL extracted successfully",
+                "total_segments": result.get('total_segments', 0)
+            })
+        else:
+            return jsonify({
+                "success": False,
+                "error": result['error'],
+                "message": "Failed to extract M3U8 URL"
+            }), 400
+            
+    except Exception as e:
+        logging.error(f"DASH extraction error: {e}")
+        return jsonify({
+            "success": False,
+            "error": str(e),
+            "message": "Server error during extraction"
+        }), 500
 
