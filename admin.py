@@ -193,9 +193,18 @@ def anilist_get_by_id(anilist_id):
         }), 500
 
 @admin_bp.route('/api/iqiyi/extract', methods=['POST'])
+@login_required
+@admin_required
 def iqiyi_extract():
     """Extract M3U8 and subtitles from IQiyi URL"""
     try:
+        logging.info("=== IQiyi EXTRACTION ENDPOINT HIT ===")
+        logging.info(f"Request method: {request.method}")
+        logging.info(f"Request content type: {request.content_type}")
+        logging.info(f"Request path: {request.path}")
+        logging.info(f"User: {current_user.email if current_user.is_authenticated else 'Not authenticated'}")
+        logging.info(f"Raw request data: {request.get_data()}")
+        
         logging.info("IQiyi extraction request received")
         data = request.get_json()
         if not data:
