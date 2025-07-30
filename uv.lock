@@ -1318,6 +1318,7 @@ dependencies = [
     { name = "sqlalchemy" },
     { name = "stripe" },
     { name = "trafilatura" },
+    { name = "urllib3" },
     { name = "werkzeug" },
 ]
 
@@ -1342,6 +1343,7 @@ requires-dist = [
     { name = "sqlalchemy", specifier = ">=2.0.41" },
     { name = "stripe", specifier = ">=12.2.0" },
     { name = "trafilatura", specifier = ">=2.0.0" },
+    { name = "urllib3", specifier = ">=2.5.0" },
     { name = "werkzeug", specifier = ">=3.1.3" },
 ]
 
