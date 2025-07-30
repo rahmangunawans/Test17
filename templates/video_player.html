@@ -3,38 +3,15 @@
 {% block title %}{{ episode.title }} - {{ content.title }} - AniFlix{% endblock %}
 
 {% block head %}
-<!-- Video.js CSS and JS with fallback -->
-<link href="https://vjs.zencdn.net/8.8.0/video-js.css" rel="stylesheet">
+<!-- HLS.js for M3U8 streaming -->
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 <script>
-// Ensure Video.js loads properly
-let videoJSLoaded = false;
-
-function loadVideoJS() {
-    return new Promise((resolve, reject) => {
-        if (window.videojs || videoJSLoaded) {
-            resolve();
-            return;
-        }
-        
-        const script = document.createElement('script');
-        script.src = 'https://vjs.zencdn.net/8.8.0/video.min.js';
-        script.onload = () => {
-            console.log('Video.js loaded successfully');
-            videoJSLoaded = true;
-            resolve();
-        };
-        script.onerror = () => {
-            console.error('Video.js failed to load');
-            reject(new Error('Video.js load failed'));
-        };
-        document.head.appendChild(script);
-    });
+// Check HLS.js support
+function supportsHLS() {
+    return Hls.isSupported();
 }
 
-// Load Video.js when DOM is ready
-document.addEventListener('DOMContentLoaded', () => {
-    loadVideoJS().catch(console.error);
-});
+console.log('HLS.js support:', supportsHLS());
 </script>
 
 <style>
@@ -246,17 +223,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="relative rounded-2xl overflow-hidden bg-gradient-to-br from-slate-800 to-slate-900 shadow-2xl">
                     <div class="aspect-video relative">
                         <div id="video-container" class="w-full h-full">
-                            <!-- Video.js Player (for M3U8 and direct video) -->
+                            <!-- HTML5 Video Player (with HLS.js support) -->
                             <video
                                 id="video-player"
-                                class="video-js vjs-default-skin w-full h-full hidden"
+                                class="w-full h-full hidden"
                                 controls
                                 preload="auto"
-                                poster="{{ content.thumbnail_url }}"
-                                data-setup="{}">
-                                <p class="vjs-no-js text-white p-8">
-                                    To view this video please enable JavaScript, and consider upgrading to a web browser that
-                                    <a href="https://videojs.com/html5-video-support/" target="_blank" class="text-red-400">supports HTML5 video</a>.
+                                poster="{{ content.thumbnail_url }}">
+                                <p class="text-white p-8">
+                                    Your browser does not support HTML5 video.
                                 </p>
                             </video>
                             
@@ -617,66 +592,74 @@ async function showVideoPlayer(url, type = 'video/mp4') {
     videoElement.classList.remove('hidden');
     
     try {
-        // Dispose existing player if any
-        if (player) {
-            player.dispose();
-            player = null;
-        }
-        
-        // Wait for Video.js to be available
-        let retries = 0;
-        while (!window.videojs && retries < 50) {
-            await new Promise(resolve => setTimeout(resolve, 100));
-            retries++;
-        }
-        
-        if (!window.videojs) {
-            throw new Error('Video.js not available');
-        }
-        
-        console.log('Initializing Video.js player with:', { url, type });
+        console.log('Initializing video player with:', { url, type });
         
         // Check if video element exists
         if (!videoElement) {
             throw new Error('Video element not found');
         }
         
-        // Reset video element to ensure clean state
-        videoElement.innerHTML = '';
-        videoElement.classList.add('video-js');
-        
-        // Create new Video.js player
-        player = videojs(videoElement, {
-            fluid: true,
-            responsive: true,
-            playbackRates: [0.5, 1, 1.25, 1.5, 2],
-            controls: true,
-            preload: 'metadata',
-            techOrder: ['html5'],
-            html5: {
-                hls: {
-                    enableLowInitialPlaylist: true,
-                    smoothQualityChange: true,
-                    overrideNative: true
-                }
-            }
-        });
-        
-        // Set the source
-        player.src({
-            src: url,
-            type: type
-        });
-        
-        // Set up player events
-        if (episodeData) {
-            setupPlayerEvents(player, episodeData);
+        // Dispose existing HLS instance if any
+        if (window.currentHls) {
+            window.currentHls.destroy();
+            window.currentHls = null;
         }
         
-        console.log('Video.js player initialized successfully');
+        // Reset video element
+        videoElement.removeAttribute('src');
+        videoElement.load();
+        
+        // For M3U8 streams, use HLS.js
+        if (type === 'application/x-mpegURL' || url.includes('.m3u8') || url.startsWith('blob:')) {
+            if (Hls.isSupported()) {
+                console.log('Using HLS.js for M3U8 streaming');
+                
+                const hls = new Hls({
+                    enableWorker: true,
+                    lowLatencyMode: false,
+                    backBufferLength: 90
+                });
+                
+                hls.loadSource(url);
+                hls.attachMedia(videoElement);
+                
+                hls.on(Hls.Events.MANIFEST_PARSED, function() {
+                    console.log('HLS manifest parsed successfully');
+                    showNotification('M3U8 stream loaded successfully', 'success');
+                });
+                
+                hls.on(Hls.Events.ERROR, function(event, data) {
+                    console.error('HLS error:', data);
+                    if (data.fatal) {
+                        showNotification('HLS streaming error: ' + data.details, 'error');
+                    }
+                });
+                
+                window.currentHls = hls;
+                
+            } else if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
+                console.log('Using native HLS support');
+                videoElement.src = url;
+                showNotification('Using native HLS support', 'success');
+            } else {
+                throw new Error('HLS not supported on this browser');
+            }
+        } else {
+            // For direct video files
+            console.log('Using direct video playback');
+            videoElement.src = url;
+            showNotification('Direct video loaded', 'success');
+        }
+        
+        // Set up player events for progress tracking
+        if (episodeData) {
+            setupVideoEvents(videoElement, episodeData);
+        }
+        
+        console.log('Video player initialized successfully');
         
     } catch (error) {
-        console.error('Failed to initialize Video.js player:', error);
+        console.error('Failed to initialize video player:', error);
         showNotification('Video player initialization failed: ' + error.message, 'error');
     }
 }
@@ -768,6 +751,43 @@ async function extractAndPlayDash(dashUrl) {
 function loadSubtitles() {
     // Subtitle functionality placeholder
     console.log('Subtitle loading ready');
+}
+
+function setupVideoEvents(videoElement, episodeData) {
+    // Setup progress tracking for HTML5 video
+    videoElement.addEventListener('timeupdate', function() {
+        const currentTime = videoElement.currentTime;
+        const duration = videoElement.duration;
+        
+        if (duration > 0) {
+            // Update progress every 30 seconds
+            if (Math.floor(currentTime) % 30 === 0) {
+                updateWatchProgress(episodeData.id, currentTime, duration);
+            }
+        }
+    });
+    
+    // Resume from last position
+    if (episodeData.watch_progress && episodeData.watch_progress > 10) {
+        videoElement.addEventListener('loadedmetadata', function() {
+            videoElement.currentTime = episodeData.watch_progress;
+        }, { once: true });
+    }
+}
+
+function updateWatchProgress(episodeId, currentTime, duration) {
+    fetch('/save-watch-progress', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            episode_id: episodeId,
+            watch_time: Math.floor(currentTime * 1000)
+        })
+    }).catch(error => {
+        console.log('Failed to save progress:', error);
+    });
 }
 
 function setupPlayerEvents(player, data) {
