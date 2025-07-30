@@ -587,8 +587,9 @@ function switchServer(serverType, serverUrl) {
             showNotification('Switched to Embed Server', 'success');
             break;
             
-
-
+        default:
+            showNotification('Unknown server type', 'error');
+            break;
     }
 }
 
@@ -775,7 +776,7 @@ function showNotification(message, type = 'info') {
     }, 3000);
 }
 
-
+// Remove duplicate - will use the one at the end
 
 function changeSubtitle(subtitleUrl) {
     if (!subtitleUrl) {
