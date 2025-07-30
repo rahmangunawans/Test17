@@ -1,165 +1,67 @@
-# -*- coding: utf8 -*-
-import json
-import requests
-import urllib3
-import re
-from bs4 import BeautifulSoup
 import logging
+from iqiyi_api_original import iqiyi_api
+from typing import Optional, List, Dict
 
-# Disable SSL warnings
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-
-class IQiyiIntegration:
+class IqiyiIntegration:
     def __init__(self):
-        self.headers = {
-            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
-            'accept-language': 'en-US,en;q=0.9',
-            'accept-encoding': 'gzip, deflate, br',
-            'cache-control': 'no-cache',
-            'pragma': 'no-cache',
-            'sec-fetch-dest': 'document',
-            'sec-fetch-mode': 'navigate',
-            'sec-fetch-site': 'none',
-            'sec-fetch-user': '?1',
-            'upgrade-insecure-requests': '1'
-        }
-        self.session = requests.Session()
-        self.session.verify = False
-        logging.info("IQiyi integration initialized")
+        """Initialize IQiyi integration with original API"""
+        self.api = iqiyi_api
+        logging.info("IQiyi integration initialized with original API")
 
-    def request(self, method, url, **kwargs):
-        try:
-            kwargs.setdefault('headers', self.headers)
-            response = self.session.request(method, url, **kwargs)
-            response.raise_for_status()
-            return response
-        except Exception as e:
-            logging.error(f'Error making request to {url}: {str(e)}')
-            return None
+    def get_m3u8_url(self, iqiyi_url: str) -> Optional[str]:
+        """
+        Extract M3U8 streaming URL from IQiyi video page using original API
         
-    def get_player_data(self, url):
-        """Extract player data from IQiyi page"""
-        response = self.request('get', url)
-        if not response:
-            return None
+        Args:
+            iqiyi_url: IQiyi video URL
             
-        soup = BeautifulSoup(response.text, 'html.parser')
-        script_tag = soup.find('script', {'id': '__NEXT_DATA__'})
-        
-        if not script_tag:
-            logging.error("No __NEXT_DATA__ script tag found")
-            return None
-            
+        Returns:
+            M3U8 URL if found, None otherwise
+        """
         try:
-            json_data = script_tag.string.strip()
-            data = json.loads(json_data)
-            return data
+            logging.info(f"Using original API to extract M3U8 from: {iqiyi_url}")
+            
+            # Use the original API to get M3U8 URL
+            m3u8_url = self.api.get_m3u8_url(iqiyi_url)
+            
+            if m3u8_url:
+                logging.info(f"Successfully extracted M3U8 URL: {m3u8_url}")
+                return m3u8_url
+            else:
+                logging.info("No M3U8 URL found - using iframe fallback")
+                return None
+            
         except Exception as e:
-            logging.error(f"Error parsing JSON data: {e}")
-            return None
-    
-    def get_episode_list(self, url):
-        """Get all episodes from an IQiyi series"""
-        data = self.get_player_data(url)
-        if not data:
-            return []
-            
-        episodes = []
-        try:
-            cache_playlist = data['props']['initialState']['play']['cachePlayList']['1']
-            for i, episode in enumerate(cache_playlist):
-                episode_data = {
-                    'episode_number': i + 1,
-                    'title': episode.get('subTitle', f'Episode {i + 1}'),
-                    'url': f"https://www.iq.com{episode.get('albumPlayUrl', '')}"
-                }
-                episodes.append(episode_data)
-        except KeyError as e:
-            logging.error(f"Error extracting episode list: {e}")
-            
-        return episodes
-    
-    def get_subtitles(self, url, subtitle_type="srt"):
-        """Get subtitles for an episode"""
-        try:
-            # For now, return empty list as IQiyi requires complex authentication
-            # This will show "No subtitles found" message
-            logging.info("IQiyi subtitle extraction not available")
-            return []
-        except Exception as e:
-            logging.error(f"Error extracting subtitles: {e}")
-            return []
-    
-    def get_dash_params(self, url):
-        """Extract DASH parameters from page"""
-        data = self.get_player_data(url)
-        if not data:
-            return None
-            
-        try:
-            log = data['props']['initialProps']['pageProps']['prePlayerData']['ssrlog']
-            url_pattern = r'http://intel-cache\.video\.qiyi\.domain/dash\?([^\s]+)'
-            urls = re.findall(url_pattern, log)
-            
-            if urls:
-                return urls[0]
-        except KeyError as e:
-            logging.error(f"Error extracting DASH params: {e}")
-            
-        return None
-    
-    def get_m3u8_url(self, url):
-        """Get M3U8 streaming URL for an episode"""
-        try:
-            # For now, return None as IQiyi requires complex authentication
-            # This will trigger the iframe fallback
-            logging.info("IQiyi M3U8 extraction not available - using iframe fallback")
-            return None
-        except Exception as e:
-            logging.error(f"Error extracting M3U8 URL: {e}")
-            return None
-    
-    def get_actors(self, url):
-        """Get actor list from series"""
-        data = self.get_player_data(url)
-        if not data:
-            return []
-            
-        actors = []
-        try:
-            actor_arr = data['props']['initialState']['album']['videoAlbumInfo']['actorArr']
-            for actor in actor_arr:
-                actors.append(actor.get('name', 'Unknown'))
-        except KeyError as e:
-            logging.error(f"Error extracting actors: {e}")
-            
-        return actors
-    
-    def extract_content_info(self, url):
-        """Extract comprehensive content information from IQiyi URL"""
-        data = self.get_player_data(url)
-        if not data:
-            return None
-            
-        try:
-            album_info = data['props']['initialState']['album']['videoAlbumInfo']
-            
-            content_info = {
-                'title': album_info.get('name', 'Unknown Title'),
-                'description': album_info.get('description', ''),
-                'thumbnail_url': album_info.get('picUrl', ''),
-                'year': album_info.get('year', ''),
-                'genre': [genre.get('name', '') for genre in album_info.get('genreList', [])],
-                'actors': [actor.get('name', '') for actor in album_info.get('actorArr', [])],
-                'episodes': self.get_episode_list(url),
-                'content_type': 'anime'  # Default to anime, can be adjusted
-            }
-            
-            return content_info
-        except Exception as e:
-            logging.error(f"Error extracting content info: {e}")
+            logging.error(f"Error extracting M3U8 from IQiyi using original API: {e}")
             return None
 
-# Initialize IQiyi integration
-iqiyi_integration = IQiyiIntegration()
+    def get_subtitles(self, iqiyi_url: str, subtitle_type: str = "srt") -> List[Dict]:
+        """
+        Extract subtitles from IQiyi video page using original API
+        
+        Args:
+            iqiyi_url: IQiyi video URL
+            subtitle_type: Type of subtitles to extract (srt, vtt, etc.)
+            
+        Returns:
+            List of subtitle dictionaries
+        """
+        try:
+            logging.info(f"Using original API to extract subtitles from: {iqiyi_url}")
+            
+            # Use the original API to get subtitles
+            subtitles = self.api.get_subtitles(iqiyi_url, subtitle_type)
+            
+            if subtitles:
+                logging.info(f"Successfully extracted {len(subtitles)} subtitles")
+                return subtitles
+            else:
+                logging.info("No subtitles found")
+                return []
+            
+        except Exception as e:
+            logging.error(f"Error extracting subtitles from IQiyi using original API: {e}")
+            return []
+
+# Create global instance
+iqiyi_integration = IqiyiIntegration()
