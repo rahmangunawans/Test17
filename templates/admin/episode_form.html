@@ -160,20 +160,29 @@
 {% block extra_js %}
 <script>
 // IQiyi integration functions
-async function extractIqiyiData() {
+async function extractIqiyiData(event) {
+    console.log('Extract IQiyi Data function called');
+    
     const iqiyiUrl = document.querySelector('input[name="iqiyi_url"]').value;
+    console.log('IQiyi URL from input:', iqiyiUrl);
     
     if (!iqiyiUrl) {
+        console.warn('No IQiyi URL provided');
         alert('Please enter an IQiyi URL first');
         return;
     }
     
-    const button = event.target;
+    const button = event ? event.target : document.getElementById('extract-iqiyi-btn');
+    console.log('Button element:', button);
+    
     const originalText = button.innerHTML;
     button.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Extracting...';
     button.disabled = true;
     
+    console.log('Starting extraction request...');
+    
     try {
+        console.log('Making API request to /admin/api/iqiyi/extract');
         const response = await fetch('/admin/api/iqiyi/extract', {
             method: 'POST',
             headers: {
@@ -182,7 +191,11 @@ async function extractIqiyiData() {
             body: JSON.stringify({ url: iqiyiUrl })
         });
         
+        console.log('API Response status:', response.status);
+        console.log('API Response ok:', response.ok);
+        
         const data = await response.json();
+        console.log('API Response data:', data);
         
         if (data.success) {
             // Update M3U8 URL if extracted
@@ -283,8 +296,14 @@ document.addEventListener('DOMContentLoaded', function() {
     // Add click event listener for IQiyi extraction button
     const extractBtn = document.getElementById('extract-iqiyi-btn');
     if (extractBtn) {
-        extractBtn.addEventListener('click', extractIqiyiData);
+        console.log('Found extract button:', extractBtn);
+        extractBtn.addEventListener('click', function(event) {
+            console.log('Extract button clicked!');
+            extractIqiyiData(event);
+        });
         console.log('IQiyi extraction button event listener added');
+    } else {
+        console.error('Extract button not found!');
     }
 });
 </script>
