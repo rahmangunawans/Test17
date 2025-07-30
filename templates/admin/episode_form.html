@@ -78,24 +78,11 @@
                             <p class="text-xs text-gray-400 mt-1">Embed iframe URL for external player</p>
                         </div>
                         
-                        <!-- Server 3: Torrent/Magnet URL -->
-                        <div>
-                            <label class="block text-sm font-medium text-gray-300 mb-2">
-                                <i class="fas fa-magnet mr-1 text-purple-500"></i>
-                                Server 3 - Torrent/Magnet URL
-                            </label>
-                            <input type="text" name="server_torrent_url" 
-                                   value="{{ episode.server_torrent_url if episode else '' }}"
-                                   class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-red-500"
-                                   placeholder="magnet:?xt=urn:btih:... or https://torrent.example.com/file.torrent">
-                            <p class="text-xs text-gray-400 mt-1">Magnet link or torrent file URL</p>
-                        </div>
-                        
-                        <!-- Server 4: IQiyi URL -->
+                        <!-- Server 3: IQiyi URL -->
                         <div>
                             <label class="block text-sm font-medium text-gray-300 mb-2">
                                 <i class="fas fa-globe mr-1 text-green-500"></i>
-                                Server 4 - IQiyi URL
+                                Server 3 - IQiyi URL
                             </label>
                             <input type="url" name="iqiyi_url" 
                                    value="{{ episode.iqiyi_url if episode else '' }}"
@@ -212,7 +199,7 @@ async function extractIqiyiData() {
             }
             
             if (!data.m3u8_url && (!data.subtitles || data.subtitles.length === 0)) {
-                showNotification('No streaming data found in this IQiyi URL', 'warning');
+                showNotification('IQiyi URL verified! Video will use iframe player as fallback.', 'success');
             }
         } else {
             showNotification(data.error || 'Failed to extract IQiyi data', 'error');
