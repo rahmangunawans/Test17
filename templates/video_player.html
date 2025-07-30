@@ -32,60 +32,6 @@ function loadVideoJS() {
 loadVideoJS().catch(console.error);
 </script>
 
-<!-- WebTorrent for real-time browser streaming -->
-<script>
-function loadWebTorrent() {
-    return new Promise((resolve, reject) => {
-        if (window.WebTorrent) {
-            resolve();
-            return;
-        }
-        
-        const script = document.createElement('script');
-        script.src = 'https://cdn.jsdelivr.net/npm/webtorrent@latest/webtorrent.min.js';
-        script.onload = () => {
-            console.log('WebTorrent loaded successfully');
-            resolve();
-        };
-        script.onerror = () => {
-            console.error('WebTorrent failed to load');
-            reject(new Error('WebTorrent load failed'));
-        };
-        document.head.appendChild(script);
-    });
-}
-
-// Load WebTorrent immediately
-loadWebTorrent().catch(console.error);
-</script>
-
-<!-- Webtor.io fallback -->
-<script>
-console.log('WebTorrent streaming script loaded');
-
-// Load Webtor.io Player script as fallback
-function loadWebtorScript() {
-    return new Promise((resolve, reject) => {
-        if (window.webtor) {
-            resolve();
-            return;
-        }
-        
-        const script = document.createElement('script');
-        script.src = 'https://cdn.jsdelivr.net/npm/@webtor/embed-sdk-js/dist/index.min.js';
-        script.async = true;
-        script.onload = () => {
-            console.log('Webtor.io SDK loaded successfully as fallback');
-            resolve();
-        };
-        script.onerror = () => {
-            console.error('Failed to load Webtor.io SDK');
-            reject(new Error('SDK load failed'));
-        };
-        document.head.appendChild(script);
-    });
-}
-</script>
 <style>
 .video-js {
     width: 100% !important;
@@ -123,22 +69,8 @@ function loadWebtorScript() {
 }
 
 .episode-grid::-webkit-scrollbar-thumb {
-    background: linear-gradient(90deg, #ef4444, #dc2626);
+    background: #ef4444;
     border-radius: 4px;
-}
-
-.episode-card {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.episode-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4);
-}
-
-.upgrade-overlay {
-    background: linear-gradient(135deg, rgba(239, 68, 68, 0.95), rgba(124, 58, 237, 0.95));
-    backdrop-filter: blur(20px);
 }
 
 .custom-scrollbar {
@@ -156,22 +88,85 @@ function loadWebtorScript() {
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: linear-gradient(180deg, #ef4444, #dc2626);
+    background: #ef4444;
     border-radius: 3px;
-    transition: background 0.3s ease;
 }
 
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(180deg, #f87171, #ef4444);
+.line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.upgrade-overlay {
+    background: linear-gradient(135deg, rgba(0,0,0,0.9) 0%, rgba(15,23,42,0.95) 100%);
+    backdrop-filter: blur(20px);
+}
+
+.episode-card {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.episode-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+}
+
+/* Enhanced glassmorphism effects */
+.glass-card {
+    background: rgba(30, 41, 59, 0.5);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(148, 163, 184, 0.1);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.glass-card:hover {
+    border-color: rgba(148, 163, 184, 0.2);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+}
+
+/* Improved server button animations */
+.server-btn {
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.server-btn:before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.5s;
+}
+
+.server-btn:hover:before {
+    left: 100%;
+}
+
+/* Progress bar enhancements */
+.progress-bar {
+    background: linear-gradient(90deg, #ef4444 0%, #dc2626 50%, #b91c1c 100%);
+    box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
 }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gradient-to-br from-slate-900 via-gray-900 to-slate-800 pt-32">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        
-        <!-- Back Navigation -->
+<div class="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 pt-32 pb-8">
+    <div class="container mx-auto px-4">
+        <!-- Back Button -->
         <div class="mb-6">
             <a href="{{ url_for('content.anime_list') }}" 
                class="inline-flex items-center px-4 py-2 rounded-xl bg-slate-800/50 hover:bg-slate-700/50 border border-slate-600/30 text-slate-300 hover:text-white transition-all duration-200 backdrop-blur-sm">
@@ -218,21 +213,12 @@ function loadWebtorScript() {
                         </button>
                         {% endif %}
                         
-                        {% if episode.server_torrent_url %}
-                        <button onclick="switchServer('torrent', '{{ episode.server_torrent_url }}')" 
-                                id="server-torrent"
-                                class="server-btn flex items-center px-4 py-2 rounded-lg bg-slate-600 hover:bg-slate-700 text-white font-medium transition-all duration-200">
-                            <i class="fas fa-magnet mr-2"></i>
-                            Server 3 (Torrent)
-                        </button>
-                        {% endif %}
-                        
                         {% if episode.iqiyi_url %}
                         <button onclick="switchServer('iqiyi', '{{ episode.iqiyi_url }}')" 
                                 id="server-iqiyi"
                                 class="server-btn flex items-center px-4 py-2 rounded-lg bg-slate-600 hover:bg-slate-700 text-white font-medium transition-all duration-200">
                             <i class="fas fa-globe mr-2"></i>
-                            Server 4 (IQiyi)
+                            Server 3 (IQiyi)
                         </button>
                         {% endif %}
                         
@@ -294,86 +280,6 @@ function loadWebtorScript() {
                                         allowfullscreen>
                                 </iframe>
                             </div>
-                            
-                            <!-- Torrent/Magnet Player -->
-                            <div id="torrent-container" class="w-full h-full hidden">
-                                <div class="h-full flex flex-col">
-                                    <!-- Torrent Status -->
-                                    <div id="torrent-status" class="bg-slate-800/50 rounded-xl p-4 border border-slate-600/30 mb-4">
-                                        <div class="flex items-center justify-between mb-2">
-                                            <span class="text-slate-400 text-sm">Status:</span>
-                                            <span id="torrent-status-text" class="text-yellow-400 text-sm">Ready to stream</span>
-                                        </div>
-                                        <div class="w-full bg-slate-700 rounded-full h-2 mb-2">
-                                            <div id="torrent-progress" class="bg-purple-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
-                                        </div>
-                                        <div class="flex justify-between text-xs text-slate-500">
-                                            <span id="torrent-speed">Speed: 0 KB/s</span>
-                                            <span id="torrent-peers">Peers: 0</span>
-                                            <span id="torrent-downloaded">Downloaded: 0%</span>
-                                        </div>
-                                    </div>
-
-                                    <!-- Video Player for Torrent -->
-                                    <div id="torrent-video-container" class="flex-1 hidden">
-                                        <div class="w-full h-full bg-black rounded-xl overflow-hidden">
-                                            <video id="torrent-video-player" class="w-full h-full" controls preload="metadata">
-                                                Your browser does not support the video tag.
-                                            </video>
-                                        </div>
-                                    </div>
-
-                                    <!-- Default Message -->
-                                    <div id="torrent-default-message" class="flex-1 flex items-center justify-center bg-slate-800 rounded-xl">
-                                        <div class="text-center text-white p-8">
-                                            <i class="fas fa-magnet text-6xl text-purple-500 mb-4"></i>
-                                            <h3 class="text-2xl font-bold mb-2">Torrent/Magnet Streaming</h3>
-                                            <p class="text-slate-400 mb-6">Stream torrent directly in browser or use external player</p>
-                                            <div class="flex gap-3 justify-center flex-wrap">
-                                                <button id="start-torrent-btn" onclick="startTorrentStreaming()" 
-                                                        class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg font-medium transition-all duration-200 flex items-center">
-                                                    <i class="fas fa-play mr-2"></i>
-                                                    Stream Online
-                                                </button>
-                                                <button onclick="openInWebTorrent()" 
-                                                        class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-all duration-200 flex items-center">
-                                                    <i class="fas fa-external-link-alt mr-2"></i>
-                                                    WebTorrent.io
-                                                </button>
-                                                <button onclick="copyTorrentLink()" 
-                                                        class="bg-slate-600 hover:bg-slate-700 text-white px-6 py-2 rounded-lg font-medium transition-all duration-200 flex items-center">
-                                                    <i class="fas fa-copy mr-2"></i>
-                                                    Copy Link
-                                                </button>
-                                            </div>
-                                            <div class="text-xs text-slate-500 mt-4">
-                                                <p>• Stream Online: Direct browser streaming</p>
-                                                <p>• WebTorrent.io: External torrent streaming service</p>
-                                                <p>• Copy Link: Use with torrent client</p>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <!-- Torrent Actions (when streaming) -->
-                                    <div id="torrent-actions" class="hidden mt-4 flex gap-3">
-                                        <button id="stop-torrent-btn" onclick="stopTorrentStreaming()" 
-                                                class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm transition-colors duration-200 flex items-center">
-                                            <i class="fas fa-stop mr-2"></i>
-                                            Stop Streaming
-                                        </button>
-                                        <button onclick="copyTorrentLink()" 
-                                                class="bg-slate-600 hover:bg-slate-700 text-white px-4 py-2 rounded-lg text-sm transition-colors duration-200 flex items-center">
-                                            <i class="fas fa-copy mr-2"></i>
-                                            Copy Link
-                                        </button>
-                                    </div>
-
-                                    <!-- Hidden torrent link for copying -->
-                                    <div class="hidden">
-                                        <code id="torrent-link"><!-- Torrent link will be inserted here --></code>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
 
                         <!-- Time Limit Overlay for Free Users -->
@@ -405,108 +311,47 @@ function loadWebtorScript() {
                     </div>
                 </div>
 
-                <!-- Episode Info -->
+                <!-- Episode Information -->
                 <div class="glass-card rounded-2xl p-6">
-                    <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
-                        <div class="flex-1">
-                            <div class="flex items-center gap-3 mb-3">
-                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-red-500/20 text-red-400 border border-red-500/30">
-                                    Episode {{ episode.episode_number }}
-                                </span>
-                                {% if episode.duration %}
-                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-slate-500/20 text-slate-400 border border-slate-500/30">
-                                    {{ episode.duration }} min
-                                </span>
-                                {% endif %}
-                            </div>
-                            <h1 class="text-2xl lg:text-3xl font-bold text-white mb-2">{{ episode.title }}</h1>
-                            <h2 class="text-lg text-slate-300 mb-4">{{ content.title }}</h2>
-                            {% if episode.description %}
-                            <p class="text-slate-400 leading-relaxed">{{ episode.description }}</p>
-                            {% endif %}
-                        </div>
-                        
-                        <div class="flex flex-col sm:flex-row gap-3">
-                            {% if not current_user.is_vip() %}
-                            <a href="{{ url_for('subscription.subscription_page') }}" 
-                               class="inline-flex items-center justify-center px-6 py-3 bg-gradient-to-r from-red-500 to-purple-600 hover:from-red-600 hover:to-purple-700 rounded-xl font-semibold text-white transition-all duration-200 transform hover:scale-105">
-                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path>
-                                </svg>
-                                Upgrade to VIP
-                            </a>
-                            {% endif %}
-                            <button onclick="shareEpisode()" 
-                                    class="inline-flex items-center justify-center px-6 py-3 bg-slate-700/50 hover:bg-slate-600/50 border border-slate-600/30 rounded-xl font-semibold text-white transition-all duration-200">
-                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z"></path>
-                                </svg>
-                                Share
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Anime Information -->
-                <div class="glass-card rounded-2xl p-6">
-                    <h3 class="text-xl font-bold text-white mb-6 flex items-center">
-                        <svg class="w-6 h-6 mr-3 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
-                        About This Anime
-                    </h3>
-                    
                     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        <!-- Left Column - Basic Info -->
-                        <div class="lg:col-span-2">
-                            <div class="flex gap-4 mb-6">
-                                <div class="flex-shrink-0 w-24 h-32 rounded-xl overflow-hidden bg-slate-700 border border-slate-600/30">
-                                    <img src="{{ content.thumbnail_url }}" alt="{{ content.title }}" 
-                                         class="w-full h-full object-cover">
-                                </div>
-                                <div class="flex-1 space-y-3">
-                                    <div>
-                                        <h4 class="text-lg font-bold text-white mb-1">{{ content.title }}</h4>
-                                        <div class="flex items-center gap-3 text-sm text-slate-400">
-                                            {% if content.year %}
-                                            <span class="flex items-center gap-1">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                                                </svg>
-                                                {{ content.year }}
-                                            </span>
-                                            {% endif %}
-                                            {% if content.rating %}
-                                            <span class="flex items-center gap-1">
-                                                <svg class="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-                                                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
-                                                </svg>
-                                                {{ "%.1f"|format(content.rating) }}/10
-                                            </span>
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                    
-                                    {% if content.genre %}
-                                    <div>
-                                        <h5 class="text-sm font-semibold text-slate-300 mb-2">Genre</h5>
-                                        <div class="flex flex-wrap gap-2">
-                                            {% for genre in content.genre.split(',') %}
-                                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-500/20 text-purple-400 border border-purple-500/30">
-                                                {{ genre.strip() }}
-                                            </span>
-                                            {% endfor %}
-                                        </div>
-                                    </div>
+                        <!-- Left Column - Main Info -->
+                        <div class="lg:col-span-2 space-y-4">
+                            <!-- Title Section -->
+                            <div>
+                                <h1 class="text-2xl font-bold text-white mb-2">{{ episode.title }}</h1>
+                                <h2 class="text-lg text-slate-300 mb-4">{{ content.title }} - Episode {{ episode.episode_number }}</h2>
+                                
+                                <!-- Meta Information -->
+                                <div class="flex flex-wrap items-center gap-4 text-sm text-slate-400 mb-4">
+                                    {% if content.year %}
+                                    <span class="flex items-center gap-1">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                        </svg>
+                                        {{ content.year }}
+                                    </span>
+                                    {% endif %}
+                                    {% if content.rating %}
+                                    <span class="flex items-center gap-1">
+                                        <svg class="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                                        </svg>
+                                        {{ "%.1f"|format(content.rating) }}/10
+                                    </span>
                                     {% endif %}
                                 </div>
                             </div>
                             
-                            <!-- Description -->
-                            {% if content.description %}
+                            {% if content.genre %}
                             <div>
-                                <h5 class="text-sm font-semibold text-slate-300 mb-3">Synopsis</h5>
-                                <p class="text-slate-400 leading-relaxed">{{ content.description }}</p>
+                                <h5 class="text-sm font-semibold text-slate-300 mb-2">Genre</h5>
+                                <div class="flex flex-wrap gap-2">
+                                    {% for genre in content.genre.split(',') %}
+                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-500/20 text-purple-400 border border-purple-500/30">
+                                        {{ genre.strip() }}
+                                    </span>
+                                    {% endfor %}
+                                </div>
                             </div>
                             {% endif %}
                         </div>
@@ -558,6 +403,14 @@ function loadWebtorScript() {
                             </div>
                         </div>
                     </div>
+                    
+                    <!-- Description -->
+                    {% if content.description %}
+                    <div class="mt-6">
+                        <h5 class="text-sm font-semibold text-slate-300 mb-3">Synopsis</h5>
+                        <p class="text-slate-400 leading-relaxed">{{ content.description }}</p>
+                    </div>
+                    {% endif %}
                 </div>
 
                 <!-- Episodes List -->
@@ -676,55 +529,17 @@ function loadWebtorScript() {
                                              class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300">
                                     </div>
                                     <div class="flex-1 min-w-0">
-                                        <h4 class="font-bold text-white text-sm mb-2 line-clamp-2 group-hover:text-red-400 transition-colors duration-200">
+                                        <h4 class="font-bold text-white text-sm mb-1 line-clamp-2 group-hover:text-red-400 transition-colors duration-200">
                                             {{ trending_content.title }}
                                         </h4>
-                                        <div class="flex items-center gap-2 text-xs text-slate-400 mb-2">
+                                        <div class="flex items-center gap-2 text-xs text-slate-400">
                                             <svg class="w-3 h-3 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
                                                 <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
                                             </svg>
                                             {{ "%.1f"|format(trending_content.rating) }}
+                                            <span class="text-slate-500">•</span>
+                                            <span>{{ trending_content.year }}</span>
                                         </div>
-                                        <div class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-500/20 text-red-400 border border-red-500/30">
-                                            Trending
-                                        </div>
-                                    </div>
-                                </div>
-                            </a>
-                        </div>
-                        {% endfor %}
-                    </div>
-                </div>
-                {% endif %}
-
-                <!-- Recommended Movies -->
-                {% if recommended_movies %}
-                <div class="glass-card rounded-2xl p-6">
-                    <h3 class="text-lg font-bold text-white mb-4 flex items-center">
-                        <svg class="w-5 h-5 mr-2 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 4V2a1 1 0 011-1h4a1 1 0 011 1v2h4a1 1 0 011 1v14a1 1 0 01-1 1H5a1 1 0 01-1-1V5a1 1 0 011-1h2z"></path>
-                        </svg>
-                        Movies for You
-                    </h3>
-                    <div class="grid grid-cols-2 gap-3 max-h-96 overflow-y-auto custom-scrollbar">
-                        {% for movie in recommended_movies[:4] %}
-                        <div class="group">
-                            <a href="{{ url_for('content.anime_redirect', content_id=movie.id) }}" 
-                               class="block rounded-xl bg-slate-800/30 hover:bg-slate-700/50 border border-slate-600/20 hover:border-purple-500/40 overflow-hidden transition-all duration-200">
-                                <div class="aspect-[3/4] relative bg-slate-700">
-                                    <img src="{{ movie.thumbnail_url }}" alt="{{ movie.title }}" 
-                                         class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300">
-                                    <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-                                    <div class="absolute bottom-2 left-2 right-2">
-                                        <div class="flex items-center gap-1 text-xs text-yellow-400 mb-1">
-                                            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
-                                            </svg>
-                                            {{ "%.1f"|format(movie.rating) }}
-                                        </div>
-                                        <h4 class="font-semibold text-white text-xs line-clamp-2 group-hover:text-purple-400 transition-colors duration-200">
-                                            {{ movie.title }}
-                                        </h4>
                                     </div>
                                 </div>
                             </a>
@@ -738,265 +553,18 @@ function loadWebtorScript() {
     </div>
 </div>
 
-<!-- JavaScript -->
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialize app without dependency on external libraries
-    console.log('Initializing video player application...');
-    
-    // Set up episode data
-    const videoData = {
-        episodeId: {{ episode.id }},
-        canWatchFull: {{ 'true' if can_watch_full else 'false' }},
-        maxWatchTime: {{ max_watch_time or 'null' }},
-        isVip: {{ 'true' if current_user.is_vip() else 'false' }},
-        watchTime: {{ watch_history.watch_time or 0 }}
-    };
-    
-    // Initialize with proper library loading
-    setTimeout(async () => {
-        try {
-            // Ensure Video.js is loaded
-            await loadVideoJS();
-            console.log('Video.js is available, initializing...');
-            initializeVideoPlayer(videoData);
-        } catch (error) {
-            console.warn('Video.js not available, using fallback video player');
-            episodeData = videoData;
-        }
-        
-        try {
-            // Ensure WebTorrent is loaded
-            await loadWebTorrent();
-            console.log('WebTorrent is ready for streaming');
-        } catch (error) {
-            console.warn('WebTorrent not available, will use external services');
-        }
-        
-        // Initialize the app regardless of library availability
-        initializeApp();
-    }, 1000);
-});
-
-// Define placeholder functions for missing methods
-function toggleWatchlist(contentId) {
-    showNotification('Watchlist functionality coming soon!', 'info');
-}
-
-function rateAnime(contentId) {
-    showNotification('Rating functionality coming soon!', 'info');
-}
-
-// Progressive streaming function
-function startProgressiveStreaming(videoFile) {
-    console.log('Starting progressive streaming for file:', videoFile.name);
-    
-    const videoPlayerElement = document.getElementById('torrent-video-player');
-    
-    // Create video element with progressive streaming setup
-    videoPlayerElement.innerHTML = `
-        <div class="w-full h-full bg-black rounded-xl overflow-hidden relative">
-            <video 
-                controls 
-                autoplay 
-                preload="metadata"
-                class="w-full h-full"
-                style="background: #000;"
-                id="progressive-video">
-                Your browser does not support the video tag.
-            </video>
-            
-            <div class="absolute top-4 left-4 bg-black bg-opacity-75 text-white px-3 py-1 rounded-lg text-sm">
-                <span class="text-green-400">● </span>Progressive Streaming (5%+)
-            </div>
-            
-            <div class="absolute top-4 right-4 bg-black bg-opacity-75 text-white px-3 py-1 rounded-lg text-sm">
-                <span id="peer-count">${currentTorrent.numPeers} peers</span>
-            </div>
-            
-            <div class="absolute bottom-4 left-4 bg-black bg-opacity-75 text-white px-3 py-1 rounded-lg text-sm">
-                <span id="buffer-status">Buffering...</span>
-            </div>
-        </div>
-    `;
-    
-    const videoElement = document.getElementById('progressive-video');
-    
-    // Set up progressive streaming with WebTorrent
-    try {
-        // Use getBlobURL for progressive streaming
-        videoFile.getBlobURL((err, url) => {
-            if (err) {
-                console.error('Progressive streaming getBlobURL error:', err);
-                updateTorrentStatus('Progressive streaming failed', 'text-red-400');
-                showNotification('Progressive streaming failed. Using basic method.', 'error');
-                
-                // Fallback to appendTo method
-                videoFile.appendTo(videoElement, (appendErr) => {
-                    if (appendErr) {
-                        console.error('Fallback appendTo error:', appendErr);
-                        showWebTorrentFallback();
-                    } else {
-                        console.log('Fallback streaming active');
-                        updateTorrentStatus('Fallback streaming active', 'text-yellow-400');
-                    }
-                });
-                return;
-            }
-            
-            // Set video source to blob URL for progressive streaming
-            videoElement.src = url;
-            console.log('Progressive streaming URL set:', url);
-            updateTorrentStatus('Progressive streaming active', 'text-green-400');
-            
-            // Update buffer status
-            const updateBufferStatus = () => {
-                const progress = Math.round(currentTorrent.progress * 100);
-                const downloaded = formatBytes(currentTorrent.downloaded);
-                const total = formatBytes(currentTorrent.length);
-                
-                const bufferElement = document.getElementById('buffer-status');
-                if (bufferElement) {
-                    bufferElement.textContent = `${progress}% (${downloaded}/${total})`;
-                }
-            };
-            
-            // Update buffer status every second
-            const bufferInterval = setInterval(updateBufferStatus, 1000);
-            
-            // Clean up interval when video ends or errors
-            videoElement.addEventListener('ended', () => clearInterval(bufferInterval));
-            videoElement.addEventListener('error', () => clearInterval(bufferInterval));
-            
-            updateBufferStatus(); // Initial update
-        });
-        
-        // Set up video event listeners
-        videoElement.addEventListener('loadstart', () => {
-            console.log('Progressive video loading started');
-            updateTorrentStatus('Progressive video loading...', 'text-blue-400');
-        });
-        
-        videoElement.addEventListener('canplay', () => {
-            console.log('Progressive video can start playing');
-            updateTorrentStatus('Progressive video ready', 'text-green-400');
-            showNotification('Progressive streaming ready! Video will continue downloading while playing.', 'success');
-        });
-        
-        videoElement.addEventListener('waiting', () => {
-            console.log('Progressive video waiting for more data...');
-            updateTorrentStatus('Buffering more data...', 'text-yellow-400');
-        });
-        
-        videoElement.addEventListener('playing', () => {
-            console.log('Progressive video playing');
-            updateTorrentStatus('Progressive streaming playing', 'text-green-400');
-        });
-        
-        videoElement.addEventListener('error', (e) => {
-            console.error('Progressive video error:', e);
-            updateTorrentStatus('Progressive video error', 'text-red-400');
-            showNotification('Progressive streaming error. Using fallback.', 'error');
-            showWebTorrentFallback();
-        });
-        
-    } catch (error) {
-        console.error('Progressive streaming setup error:', error);
-        updateTorrentStatus('Progressive setup failed', 'text-red-400');
-        showWebTorrentFallback();
-    }
-}
-
 let player;
-let episodeData;
-let currentTorrent = null;
-let webTorrentClient = null;
-let currentTorrentUrl = null;
-let streamingStarted = false;
-
-function initializeVideoPlayer(data) {
-    episodeData = data;
-    
-    try {
-        // Wait for videojs to be available
-        if (typeof videojs === 'undefined') {
-            console.error('Video.js not loaded');
-            return;
-        }
-        
-        player = videojs('video-player', {
-            fluid: true,
-            responsive: true,
-            playbackRates: [0.5, 1, 1.25, 1.5, 2],
-            controls: true,
-            preload: 'metadata'
-        });
-
-        if (episodeData.watchTime > 0) {
-            player.ready(() => {
-                player.currentTime(episodeData.watchTime / 1000);
-                showNotification('Resumed from where you left off', 'info');
-            });
-        }
-        
-        if (!episodeData.canWatchFull && episodeData.maxWatchTime) {
-            setupTimeRestrictions();
-        }
-        
-    } catch (error) {
-        console.error('Error initializing video player:', error);
-    }
-}
-
-function setupTimeRestrictions() {
-    const maxTimeInSeconds = episodeData.maxWatchTime * 60;
-    
-    player.on('timeupdate', function() {
-        const currentTime = player.currentTime();
-        if (currentTime >= maxTimeInSeconds) {
-            player.pause();
-            document.getElementById('upgrade-overlay').classList.remove('hidden');
-        }
-    });
-}
-
-function restartVideo() {
-    player.currentTime(0);
-    player.play();
-    document.getElementById('upgrade-overlay').classList.add('hidden');
-}
-
-function shareEpisode() {
-    if (navigator.share) {
-        navigator.share({
-            title: '{{ episode.title }} - {{ content.title }}',
-            text: 'Watch {{ episode.title }} on AniFlix',
-            url: window.location.href
-        });
-    } else {
-        navigator.clipboard.writeText(window.location.href).then(() => {
-            showNotification('Link copied to clipboard!', 'success');
-        });
-    }
-}
-
-function toggleWatchlist(animeId) {
-    showNotification('Watchlist feature coming soon!', 'info');
-}
-
-function rateAnime(animeId) {
-    const rating = prompt('Rate this anime (1-10):');
-    if (rating && rating >= 1 && rating <= 10) {
-        showNotification('Thank you for your rating!', 'success');
-    } else if (rating !== null) {
-        showNotification('Please enter a valid rating between 1 and 10', 'error');
-    }
-}
+let episodeData = {
+    id: {{ episode.id }},
+    watchTime: {{ watch_time }},
+    canWatchFull: {{ 'true' if can_watch_full else 'false' }},
+    maxWatchTime: {{ max_watch_time if max_watch_time else 'null' }}
+};
 
 // Server switching functionality
 let currentServer = null;
 let currentServerUrl = null;
-let currentTorrentUrl = null;
 
 function switchServer(serverType, serverUrl) {
     if (!serverUrl) {
@@ -1022,17 +590,11 @@ function switchServer(serverType, serverUrl) {
     // Hide all containers
     document.getElementById('video-player').classList.add('hidden');
     document.getElementById('embed-container').classList.add('hidden');
-    document.getElementById('torrent-container').classList.add('hidden');
     
     // Dispose of existing Video.js player if it exists
     if (player && typeof player.dispose === 'function') {
         player.dispose();
         player = null;
-    }
-    
-    // Stop torrent streaming if switching away from torrent server
-    if (currentServer === 'torrent' && serverType !== 'torrent') {
-        stopTorrentStreaming();
     }
     
     switch (serverType) {
@@ -1049,11 +611,6 @@ function switchServer(serverType, serverUrl) {
         case 'embed':
             showEmbedPlayer(serverUrl);
             showNotification('Switched to Embed Server', 'success');
-            break;
-            
-        case 'torrent':
-            showTorrentPlayer(serverUrl);
-            showNotification('Switched to Torrent/Magnet Server', 'success');
             break;
             
         case 'iqiyi':
@@ -1094,774 +651,93 @@ function showEmbedPlayer(url) {
     embedContainer.classList.remove('hidden');
 }
 
-function showTorrentPlayer(url) {
-    const torrentContainer = document.getElementById('torrent-container');
-    const torrentLink = document.getElementById('torrent-link');
+function setupPlayerEvents(player, data) {
+    // Resume from last watched position
+    if (data.watchTime > 0) {
+        player.ready(() => {
+            player.currentTime(data.watchTime / 1000);
+            showNotification('Resumed from where you left off', 'info');
+        });
+    }
     
-    torrentLink.textContent = url;
-    currentTorrentUrl = url;
-    torrentContainer.classList.remove('hidden');
+    // Set up time restrictions for free users
+    if (!data.canWatchFull && data.maxWatchTime) {
+        setupTimeRestrictions(player, data.maxWatchTime);
+    }
     
-    // Show default message and hide video container
-    document.getElementById('torrent-default-message').classList.remove('hidden');
-    document.getElementById('torrent-video-container').classList.add('hidden');
-    document.getElementById('torrent-actions').classList.add('hidden');
-}
-
-function copyTorrentLink() {
-    const torrentLink = document.getElementById('torrent-link');
-    const text = torrentLink.textContent;
-    
-    navigator.clipboard.writeText(text).then(() => {
-        showNotification('Torrent link copied to clipboard!', 'success');
-    }).catch(() => {
-        // Fallback for older browsers
-        const textArea = document.createElement('textarea');
-        textArea.value = text;
-        document.body.appendChild(textArea);
-        textArea.select();
-        document.execCommand('copy');
-        document.body.removeChild(textArea);
-        showNotification('Torrent link copied to clipboard!', 'success');
+    // Track watch progress
+    let lastSavedTime = 0;
+    player.on('timeupdate', function() {
+        const currentTime = Math.floor(player.currentTime());
+        
+        // Save progress every 10 seconds
+        if (currentTime - lastSavedTime >= 10) {
+            saveWatchProgress(data.id, currentTime * 1000);
+            lastSavedTime = currentTime;
+        }
     });
 }
 
-// WebTorrent real-time streaming
-let webTorrentClient = null;
-let currentTorrent = null;
-
-function startTorrentStreaming() {
-    if (!currentTorrentUrl) {
-        showNotification('No torrent URL available', 'error');
-        return;
-    }
+function setupTimeRestrictions(player, maxTimeInMinutes) {
+    const maxTimeInSeconds = maxTimeInMinutes * 60;
     
-    console.log('Starting progressive WebTorrent streaming for:', currentTorrentUrl);
-    
-    // Reset streaming flag
-    streamingStarted = false;
-    
-    // Update UI
-    updateTorrentStatus('Initializing progressive streaming...', 'text-yellow-400');
-    const startBtn = document.getElementById('start-torrent-btn');
-    if (startBtn) startBtn.disabled = true;
-    
-    // Hide default message and show video container
-    const defaultMsg = document.getElementById('torrent-default-message');
-    const videoContainer = document.getElementById('torrent-video-container');
-    const actions = document.getElementById('torrent-actions');
-    
-    if (defaultMsg) defaultMsg.classList.add('hidden');
-    if (videoContainer) videoContainer.classList.remove('hidden');
-    if (actions) actions.classList.remove('hidden');
-    
-    // Get video player element
-    const videoPlayerElement = document.getElementById('torrent-video-player');
-    
-    // Clear previous content and show loading message
-    videoPlayerElement.innerHTML = `
-        <div class="w-full h-full bg-black rounded-xl overflow-hidden relative flex items-center justify-center">
-            <div class="text-center text-white">
-                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
-                <div class="text-lg font-semibold">Connecting to torrent network...</div>
-                <div class="text-sm text-gray-300 mt-2">Progressive streaming will start at 5% download</div>
-            </div>
-        </div>
-    `;
-    
-    try {
-        // Check if WebTorrent is available
-        if (typeof WebTorrent === 'undefined') {
-            throw new Error('WebTorrent not available');
-        }
-        
-        // Initialize WebTorrent client
-        updateTorrentStatus('Starting WebTorrent client...', 'text-yellow-400');
-        
-        if (webTorrentClient) {
-            webTorrentClient.destroy();
-        }
-        
-        webTorrentClient = new WebTorrent();
-        
-        // Add torrent with progressive downloading
-        updateTorrentStatus('Loading torrent for progressive streaming...', 'text-yellow-400');
-        updateProgressIndicators('Connecting', '0%', '0 KB/s', '0');
-        
-        currentTorrent = webTorrentClient.add(currentTorrentUrl, {
-            announce: [
-                'wss://tracker.btorrent.xyz',
-                'wss://tracker.openwebtorrent.com',
-                'wss://tracker.fastcast.nz'
-            ]
-        });
-        
-        currentTorrent.on('ready', () => {
-            console.log('Torrent ready for progressive streaming:', currentTorrent.name);
-            updateTorrentStatus('Torrent ready - Starting download...', 'text-green-400');
-            
-            // Find the largest video file
-            const videoFile = findLargestVideoFile(currentTorrent.files);
-            
-            if (videoFile) {
-                console.log('Video file found for progressive streaming:', videoFile.name, 'Size:', formatBytes(videoFile.length));
-                updateTorrentStatus('Video file identified - Downloading...', 'text-blue-400');
-                showNotification('Video file found! Download starting...', 'info');
-                
-                // Update loading message
-                videoPlayerElement.innerHTML = `
-                    <div class="w-full h-full bg-black rounded-xl overflow-hidden relative flex items-center justify-center">
-                        <div class="text-center text-white">
-                            <div class="animate-pulse rounded-full h-12 w-12 border-2 border-blue-400 mx-auto mb-4 flex items-center justify-center">
-                                <span class="text-blue-400 text-sm font-bold" id="download-percent">0%</span>
-                            </div>
-                            <div class="text-lg font-semibold">Downloading: ${videoFile.name}</div>
-                            <div class="text-sm text-gray-300 mt-2">Progressive streaming will start at 5%</div>
-                            <div class="text-xs text-gray-400 mt-1" id="download-details">Connecting to peers...</div>
-                        </div>
-                    </div>
-                `;
-                
-            } else {
-                throw new Error('No video file found in torrent');
-            }
-        });
-        
-        currentTorrent.on('download', () => {
-            const progress = Math.round(currentTorrent.progress * 100);
-            const speed = formatBytes(currentTorrent.downloadSpeed) + '/s';
-            const peers = currentTorrent.numPeers;
-            
-            updateProgressIndicators('Downloading', progress + '%', speed, peers);
-            
-            // Progressive streaming - start streaming when 5% downloaded
-            if (!streamingStarted && progress >= 5) {
-                streamingStarted = true;
-                console.log('5% downloaded, starting progressive streaming...');
-                updateTorrentStatus('Progressive streaming starting (5% downloaded)', 'text-green-400');
-                showNotification('5% downloaded! Starting progressive streaming...', 'success');
-                
-                // Find and start streaming the video file
-                const videoFile = findLargestVideoFile(currentTorrent.files);
-                if (videoFile) {
-                    startProgressiveStreaming(videoFile);
-                }
-            }
-            
-            // Update peer count in video overlay if it exists
-            const peerCountElement = document.getElementById('peer-count');
-            if (peerCountElement) {
-                peerCountElement.textContent = `${peers} peers`;
-            }
-            
-            // Update progress indicator with streaming status
-            if (streamingStarted) {
-                updateProgressIndicators('Streaming', progress + '%', speed, peers);
-            }
-            
-            // Update download percentage in loading screen
-            const downloadPercent = document.getElementById('download-percent');
-            const downloadDetails = document.getElementById('download-details');
-            
-            if (downloadPercent) {
-                downloadPercent.textContent = progress + '%';
-            }
-            
-            if (downloadDetails) {
-                downloadDetails.textContent = `${speed} • ${peers} peers • ${formatBytes(currentTorrent.downloaded)}/${formatBytes(currentTorrent.length)}`;
-            }
-        });
-        
-        currentTorrent.on('wire', () => {
-            console.log('Connected to new peer, total peers:', currentTorrent.numPeers);
-        });
-        
-        currentTorrent.on('error', (err) => {
-            console.error('Torrent error:', err);
-            updateTorrentStatus('Torrent error: ' + err.message, 'text-red-400');
-            showNotification('Torrent streaming failed: ' + err.message, 'error');
-            showWebTorrentFallback();
-        });
-        
-        // Set timeout for torrent loading
-        setTimeout(() => {
-            if (currentTorrent && !currentTorrent.ready) {
-                console.log('Torrent loading timeout, showing fallback');
-                updateTorrentStatus('Loading timeout - Using fallback', 'text-yellow-400');
-                showWebTorrentFallback();
-            }
-        }, 15000); // 15 second timeout
-        
-    } catch (error) {
-        console.error('WebTorrent error:', error);
-        updateTorrentStatus('WebTorrent failed - Using fallback', 'text-red-400');
-        showNotification('WebTorrent streaming failed. Using fallback options.', 'error');
-        showWebTorrentFallback();
-    }
-    
-    function createStreamingInterface(sessionId, streamingUrls) {
-        videoPlayerElement.innerHTML = `
-            <div class="w-full h-full bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 rounded-xl overflow-hidden" style="min-height: 500px;">
-                
-                <!-- Header -->
-                <div class="bg-black bg-opacity-50 p-4 text-white">
-                    <div class="flex justify-between items-center">
-                        <div>
-                            <h3 class="text-lg font-bold">AniFlix Python Torrent Streaming</h3>
-                            <p class="text-sm text-gray-300">Session: ${sessionId.substring(0, 8)}...</p>
-                        </div>
-                        <div class="text-green-400 text-sm">
-                            <span class="text-green-400">● </span>Active
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Main Content -->
-                <div class="p-6 text-center text-white">
-                    <div class="text-6xl mb-4">🚀</div>
-                    <h4 class="text-xl font-bold mb-4">Choose Your Streaming Service</h4>
-                    <p class="text-gray-300 mb-6">Select your preferred torrent streaming platform:</p>
-                    
-                    <!-- Streaming Options -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-4xl mx-auto">
-                        
-                        <!-- WebTor.io Option -->
-                        <div class="bg-black bg-opacity-30 p-4 rounded-lg border border-purple-500">
-                            <div class="text-purple-400 text-2xl mb-2">🌐</div>
-                            <h5 class="font-semibold mb-2">WebTor.io</h5>
-                            <p class="text-sm text-gray-400 mb-4">Professional streaming with controls</p>
-                            <button onclick="streamWithService('${sessionId}', 'webtor', '${streamingUrls.webtor}')" 
-                                    class="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded transition-colors">
-                                Stream Now
-                            </button>
-                        </div>
-                        
-                        <!-- Instant.io Option -->
-                        <div class="bg-black bg-opacity-30 p-4 rounded-lg border border-blue-500">
-                            <div class="text-blue-400 text-2xl mb-2">⚡</div>
-                            <h5 class="font-semibold mb-2">Instant.io</h5>
-                            <p class="text-sm text-gray-400 mb-4">Fast P2P streaming</p>
-                            <button onclick="streamWithService('${sessionId}', 'instant', '${streamingUrls.instant}')" 
-                                    class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded transition-colors">
-                                Stream Now
-                            </button>
-                        </div>
-                        
-                        <!-- BTorrent Option -->
-                        <div class="bg-black bg-opacity-30 p-4 rounded-lg border border-green-500">
-                            <div class="text-green-400 text-2xl mb-2">🔥</div>
-                            <h5 class="font-semibold mb-2">BTorrent</h5>
-                            <p class="text-sm text-gray-400 mb-4">Web-based torrent player</p>
-                            <button onclick="streamWithService('${sessionId}', 'btorrent', '${streamingUrls.btorrent}')" 
-                                    class="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded transition-colors">
-                                Stream Now
-                            </button>
-                        </div>
-                        
-                        <!-- Proxy Stream Option -->
-                        <div class="bg-black bg-opacity-30 p-4 rounded-lg border border-yellow-500">
-                            <div class="text-yellow-400 text-2xl mb-2">🎬</div>
-                            <h5 class="font-semibold mb-2">AniFlix Proxy</h5>
-                            <p class="text-sm text-gray-400 mb-4">Stream through our proxy</p>
-                            <button onclick="streamWithProxy('${sessionId}')" 
-                                    class="w-full bg-yellow-600 hover:bg-yellow-700 text-white py-2 px-4 rounded transition-colors">
-                                Stream Here
-                            </button>
-                        </div>
-                        
-                    </div>
-                    
-                    <!-- Additional Options -->
-                    <div class="mt-6 space-y-2">
-                        <button onclick="copyTorrentLink()" 
-                                class="bg-gray-600 hover:bg-gray-700 text-white py-2 px-6 rounded transition-colors">
-                            📋 Copy Magnet Link
-                        </button>
-                        <button onclick="refreshTorrentSession('${sessionId}')" 
-                                class="bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-6 rounded transition-colors ml-2">
-                            🔄 Refresh Session
-                        </button>
-                    </div>
-                    
-                    <p class="text-xs text-gray-400 mt-4">
-                        Powered by AniFlix Python Torrent Streaming Engine
-                    </p>
-                </div>
-            </div>
-        `;
-    }
-    
-    function updateProgressIndicators(status, progress, speed, service) {
-        const progressBar = document.getElementById('torrent-progress');
-        const downloadedSpan = document.getElementById('torrent-downloaded');
-        const speedSpan = document.getElementById('torrent-speed');
-        const peersSpan = document.getElementById('torrent-peers');
-        
-        if (progressBar) progressBar.style.width = progress;
-        if (downloadedSpan) downloadedSpan.textContent = `Status: ${status}`;
-        if (speedSpan) speedSpan.textContent = `Speed: ${speed}`;
-        if (peersSpan) peersSpan.textContent = `Service: ${service}`;
-    }
-    
-    function showFallbackInterface() {
-        console.log('Showing fallback interface');
-        updateTorrentStatus('Fallback options available', 'text-blue-400');
-        
-        videoPlayerElement.innerHTML = `
-            <div class="w-full h-full bg-gradient-to-br from-red-900 to-orange-900 rounded-xl flex items-center justify-center p-8" style="min-height: 500px;">
-                <div class="text-center text-white max-w-md">
-                    <div class="text-6xl mb-4">⚠️</div>
-                    <h3 class="text-xl font-bold mb-4">Fallback Streaming</h3>
-                    <p class="mb-6 text-gray-300">Python streaming unavailable. Using external services:</p>
-                    
-                    <div class="space-y-3">
-                        <button onclick="openWebtorIo()" 
-                                class="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 px-6 rounded-lg transition-colors font-semibold">
-                            🌐 WebTor.io
-                        </button>
-                        <button onclick="openInstantIo()" 
-                                class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-lg transition-colors font-semibold">
-                            ⚡ Instant.io
-                        </button>
-                        <button onclick="openBTorrent()" 
-                                class="w-full bg-green-600 hover:bg-green-700 text-white py-3 px-6 rounded-lg transition-colors font-semibold">
-                            🔥 BTorrent
-                        </button>
-                        <button onclick="copyTorrentLink()" 
-                                class="w-full bg-gray-600 hover:bg-gray-700 text-white py-3 px-6 rounded-lg transition-colors font-semibold">
-                            📋 Copy Magnet Link
-                        </button>
-                    </div>
-                </div>
-            </div>
-        `;
-    }
-    
-    // Re-enable button
-    setTimeout(() => {
-        if (startBtn) startBtn.disabled = false;
-    }, 3000);
-}
-
-// Helper functions for WebTorrent
-function findLargestVideoFile(files) {
-    const videoExtensions = ['.mp4', '.mkv', '.avi', '.mov', '.wmv', '.flv', '.webm', '.m4v'];
-    let largestFile = null;
-    let largestSize = 0;
-    
-    files.forEach(file => {
-        const extension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
-        if (videoExtensions.includes(extension) && file.length > largestSize) {
-            largestSize = file.length;
-            largestFile = file;
+    player.on('timeupdate', function() {
+        const currentTime = player.currentTime();
+        if (currentTime >= maxTimeInSeconds) {
+            player.pause();
+            document.getElementById('upgrade-overlay').classList.remove('hidden');
         }
     });
-    
-    return largestFile;
 }
 
-function formatBytes(bytes) {
-    if (bytes === 0) return '0 B';
-    const k = 1024;
-    const sizes = ['B', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+function saveWatchProgress(episodeId, watchTime) {
+    fetch('/save-watch-progress', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            episode_id: episodeId,
+            watch_time: watchTime
+        })
+    }).catch(error => {
+        console.error('Error saving watch progress:', error);
+    });
 }
 
-function showWebTorrentFallback() {
-    const videoPlayerElement = document.getElementById('torrent-video-player');
-    
-    videoPlayerElement.innerHTML = `
-        <div class="w-full h-full bg-gradient-to-br from-purple-900 to-blue-900 rounded-xl flex items-center justify-center p-8" style="min-height: 400px;">
-            <div class="text-center text-white max-w-md">
-                <div class="text-6xl mb-4">🌐</div>
-                <h3 class="text-xl font-bold mb-4">External Streaming Services</h3>
-                <p class="mb-6 text-gray-300">Use these external services for torrent streaming:</p>
-                
-                <div class="space-y-3">
-                    <button onclick="openWebtorIo()" 
-                            class="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 px-6 rounded-lg transition-colors font-semibold">
-                        🌐 WebTor.io
-                    </button>
-                    <button onclick="openInstantIo()" 
-                            class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-lg transition-colors font-semibold">
-                        ⚡ Instant.io
-                    </button>
-                    <button onclick="openBTorrent()" 
-                            class="w-full bg-green-600 hover:bg-green-700 text-white py-3 px-6 rounded-lg transition-colors font-semibold">
-                        🔥 BTorrent
-                    </button>
-                    <button onclick="copyTorrentLink()" 
-                            class="w-full bg-gray-600 hover:bg-gray-700 text-white py-3 px-6 rounded-lg transition-colors font-semibold">
-                        📋 Copy Magnet Link
-                    </button>
-                </div>
-                
-                <p class="text-xs text-gray-400 mt-4">
-                    External services will open in new tabs
-                </p>
-            </div>
-        </div>
-    `;
-}
-
-function stopTorrentStreaming() {
-    console.log('Stopping torrent streaming');
-    
-    if (currentTorrent) {
-        currentTorrent.destroy();
-        currentTorrent = null;
+function restartVideo() {
+    if (player) {
+        player.currentTime(0);
+        player.play();
     }
-    
-    if (webTorrentClient) {
-        webTorrentClient.destroy();
-        webTorrentClient = null;
-    }
-    
-    // Reset UI
-    updateTorrentStatus('Streaming stopped', 'text-gray-400');
-    updateProgressIndicators('Stopped', '0%', '0 KB/s', '0');
-    
-    // Show default message
-    document.getElementById('torrent-default-message').classList.remove('hidden');
-    document.getElementById('torrent-video-container').classList.add('hidden');
-    document.getElementById('torrent-actions').classList.add('hidden');
-    
-    showNotification('Torrent streaming stopped', 'info');
+    document.getElementById('upgrade-overlay').classList.add('hidden');
 }
 
-// New helper functions
-function refreshTorrentPlayer() {
-    console.log('Refreshing torrent player');
-    const iframe = document.getElementById('webtor-iframe');
-    if (iframe) {
-        iframe.src = iframe.src;
-        showNotification('Player refreshed', 'info');
-    }
-}
-
-function openAlternativeTorrent() {
-    const services = [
-        { name: 'Instant.io', url: `https://instant.io/#${encodeURIComponent(currentTorrentUrl)}` },
-        { name: 'BTorrent', url: `https://btorrent.xyz/#${encodeURIComponent(currentTorrentUrl)}` },
-        { name: 'WebTorrent Desktop', url: `https://webtorrent.io/desktop?magnet=${encodeURIComponent(currentTorrentUrl)}` }
-    ];
-    
-    const randomService = services[Math.floor(Math.random() * services.length)];
-    window.open(randomService.url, '_blank');
-    showNotification(`Opening ${randomService.name}...`, 'success');
-}
-
-function openBTorrent() {
-    window.open(`https://btorrent.xyz/#${encodeURIComponent(currentTorrentUrl)}`, '_blank');
-    showNotification('Opening BTorrent...', 'success');
-}
-
-// New Python API streaming functions
-function streamWithService(sessionId, service, streamingUrl) {
-    console.log(`Streaming with ${service}:`, streamingUrl);
-    
-    // Open in new tab
-    window.open(streamingUrl, '_blank');
-    showNotification(`Opening ${service} in new tab...`, 'success');
-    
-    // Update status
-    updateTorrentStatus(`Streaming via ${service}`, 'text-green-400');
-    updateProgressIndicators('Streaming', '100%', 'Active', service);
-}
-
-function streamWithProxy(sessionId) {
-    console.log('Streaming with AniFlix proxy:', sessionId);
-    
-    // Open proxy stream in new tab
-    const proxyUrl = `/torrent/proxy/${sessionId}/webtor`;
-    window.open(proxyUrl, '_blank');
-    showNotification('Opening AniFlix proxy stream...', 'success');
-    
-    // Update status
-    updateTorrentStatus('Streaming via AniFlix proxy', 'text-green-400');
-    updateProgressIndicators('Streaming', '100%', 'Active', 'AniFlix Proxy');
-}
-
-async function refreshTorrentSession(sessionId) {
-    console.log('Refreshing torrent session:', sessionId);
-    
-    try {
-        updateTorrentStatus('Refreshing session...', 'text-yellow-400');
-        
-        const response = await fetch(`/torrent/session/${sessionId}`);
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const sessionInfo = await response.json();
-        console.log('Session refreshed:', sessionInfo);
-        
-        if (sessionInfo.error) {
-            throw new Error(sessionInfo.error);
-        }
-        
-        updateTorrentStatus('Session refreshed', 'text-green-400');
-        showNotification('Session refreshed successfully!', 'success');
-        
-        // Update progress indicators
-        updateProgressIndicators(
-            'Refreshed', 
-            '100%', 
-            'Active', 
-            `Age: ${sessionInfo.age_minutes}min`
-        );
-        
-    } catch (error) {
-        console.error('Error refreshing session:', error);
-        updateTorrentStatus('Refresh failed', 'text-red-400');
-        showNotification('Failed to refresh session', 'error');
-    }
-}
-
-async function cleanupOldSessions() {
-    console.log('Cleaning up old torrent sessions...');
-    
-    try {
-        const response = await fetch('/torrent/cleanup', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                'max_age_hours': 1
-            })
+function shareEpisode() {
+    if (navigator.share) {
+        navigator.share({
+            title: '{{ episode.title }} - {{ content.title }}',
+            text: 'Watch {{ episode.title }} on AniFlix',
+            url: window.location.href
         });
-        
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const result = await response.json();
-        console.log('Cleanup result:', result);
-        
-        if (result.success) {
-            showNotification(`Cleaned up ${result.cleaned_sessions} old sessions`, 'info');
-        }
-        
-    } catch (error) {
-        console.error('Error cleaning up sessions:', error);
-    }
-}
-
-// Auto cleanup old sessions every 10 minutes
-setInterval(cleanupOldSessions, 10 * 60 * 1000);
-
-// Simplified client-side only torrent streaming
-
-// External player functions
-function openWebtorIo() {
-    window.open(`https://webtor.io/create?magnet=${encodeURIComponent(currentTorrentUrl)}`, '_blank');
-    showNotification('Opening WebTor.io...', 'success');
-}
-
-function openInstantIo() {
-    window.open(`https://instant.io/#${encodeURIComponent(currentTorrentUrl)}`, '_blank');
-    showNotification('Opening Instant.io...', 'success');
-}
-
-// Switch between different torrent services
-function switchTorrentService() {
-    if (!currentTorrentUrl) {
-        showNotification('No torrent URL available', 'error');
-        return;
-    }
-    
-    const videoPlayerElement = document.getElementById('torrent-video-player');
-    const services = [
-        {
-            name: 'Instant.io',
-            url: `https://instant.io/#${encodeURIComponent(currentTorrentUrl)}`
-        },
-        {
-            name: 'BTorrent',
-            url: `https://btorrent.xyz/#${encodeURIComponent(currentTorrentUrl)}`
-        },
-        {
-            name: 'WebTorrent Desktop',
-            url: `https://webtorrent.io/desktop?magnet=${encodeURIComponent(currentTorrentUrl)}`
-        }
-    ];
-    
-    const randomService = services[Math.floor(Math.random() * services.length)];
-    
-    // Open in new tab for better compatibility
-    window.open(randomService.url, '_blank');
-    showNotification(`Opening ${randomService.name} in new tab...`, 'success');
-}
-
-// Open external torrent player
-function openExternalTorrent() {
-    if (!currentTorrentUrl) {
-        showNotification('No torrent URL available', 'error');
-        return;
-    }
-    
-    // Try to open with system torrent client
-    const link = document.createElement('a');
-    link.href = currentTorrentUrl;
-    link.download = '';
-    link.click();
-    
-    showNotification('Opening with system torrent client...', 'info');
-    
-    // Also provide web alternatives
-    setTimeout(() => {
-        const services = [
-            `https://webtorrent.io/free-torrents?magnet=${encodeURIComponent(currentTorrentUrl)}`,
-            `https://instant.io/#${encodeURIComponent(currentTorrentUrl)}`
-        ];
-        
-        window.open(services[0], '_blank');
-    }, 1000);
-}
-
-// Alternative player function
-function tryAlternativePlayer() {
-    if (!currentTorrentUrl) {
-        showNotification('No torrent URL available', 'error');
-        return;
-    }
-    
-    const videoPlayerElement = document.getElementById('torrent-video-player');
-    const alternatives = [
-        {
-            name: 'Instant.io',
-            embed: `https://instant.io/embed/${encodeURIComponent(currentTorrentUrl)}`,
-            fallback: `https://instant.io/#${encodeURIComponent(currentTorrentUrl)}`
-        },
-        {
-            name: 'BTorrent',
-            embed: null,
-            fallback: `https://btorrent.xyz/#${encodeURIComponent(currentTorrentUrl)}`
-        }
-    ];
-    
-    const randomAlt = alternatives[Math.floor(Math.random() * alternatives.length)];
-    
-    if (randomAlt.embed) {
-        // Try embedded version first
-        videoPlayerElement.innerHTML = `
-            <div class="w-full h-full bg-black rounded-xl overflow-hidden relative">
-                <iframe 
-                    src="${randomAlt.embed}" 
-                    class="w-full h-full border-0"
-                    allow="autoplay; encrypted-media; fullscreen"
-                    allowfullscreen
-                    style="border-radius: 12px;"
-                    onload="showNotification('${randomAlt.name} loaded successfully', 'success')"
-                    onerror="window.open('${randomAlt.fallback}', '_blank')">
-                </iframe>
-                
-                <div class="absolute top-4 right-4 bg-black bg-opacity-75 text-white px-3 py-1 rounded-lg text-sm">
-                    <span class="text-blue-400">● </span>${randomAlt.name}
-                </div>
-            </div>
-        `;
-        updateTorrentStatus(`Trying ${randomAlt.name}...`, 'text-blue-400');
     } else {
-        // Open in new tab
-        window.open(randomAlt.fallback, '_blank');
-        showNotification(`Opening ${randomAlt.name} in new tab...`, 'info');
+        navigator.clipboard.writeText(window.location.href).then(() => {
+            showNotification('Link copied to clipboard!', 'success');
+        });
     }
 }
 
-function openInWebTorrent() {
-    if (!currentTorrentUrl) {
-        showNotification('No torrent URL available', 'error');
-        return;
-    }
-    
-    // Try multiple external services for torrent streaming
-    const services = [
-        { name: 'WebTorrent.io', url: `https://webtorrent.io/free-torrents?magnet=${encodeURIComponent(currentTorrentUrl)}` },
-        { name: 'Instant.io', url: `https://instant.io/#${encodeURIComponent(currentTorrentUrl)}` },
-        { name: 'WebTor.io', url: `https://webtor.io/create?magnet=${encodeURIComponent(currentTorrentUrl)}` }
-    ];
-    
-    // Open the first service
-    const service = services[0];
-    window.open(service.url, '_blank');
-    showNotification(`Opening in ${service.name}...`, 'success');
-    
-    // Show alternative options
-    setTimeout(() => {
-        const alternatives = services.slice(1).map(s => s.name).join(', ');
-        showNotification(`If ${service.name} doesn't work, try: ${alternatives}`, 'info');
-    }, 3000);
+function toggleWatchlist(animeId) {
+    showNotification('Watchlist feature coming soon!', 'info');
 }
 
-function stopTorrentStreaming() {
-    console.log('Stopping torrent streaming...');
-    
-    // Clean up Webtor.io player
-    if (webtorPlayer) {
-        try {
-            webtorPlayer.destroy();
-            console.log('Webtor.io player destroyed');
-        } catch (error) {
-            console.error('Error destroying Webtor.io player:', error);
-        }
-        webtorPlayer = null;
+function rateAnime(animeId) {
+    const rating = prompt('Rate this anime (1-10):');
+    if (rating && rating >= 1 && rating <= 10) {
+        showNotification('Thank you for your rating!', 'success');
+    } else if (rating !== null) {
+        showNotification('Please enter a valid rating between 1 and 10', 'error');
     }
-    
-    // Clear video player
-    const videoPlayerElement = document.getElementById('torrent-video-player');
-    if (videoPlayerElement) {
-        videoPlayerElement.innerHTML = '';
-    }
-    
-    // Reset UI
-    document.getElementById('torrent-default-message').classList.remove('hidden');
-    document.getElementById('torrent-video-container').classList.add('hidden');
-    document.getElementById('torrent-actions').classList.add('hidden');
-    document.getElementById('start-torrent-btn').disabled = false;
-    
-    // Reset progress
-    document.getElementById('torrent-progress').style.width = '0%';
-    document.getElementById('torrent-downloaded').textContent = 'Status: Ready';
-    document.getElementById('torrent-speed').textContent = 'Speed: -';
-    document.getElementById('torrent-peers').textContent = 'Service: -';
-    
-    updateTorrentStatus('Ready to stream', 'text-yellow-400');
-    showNotification('Torrent streaming stopped', 'info');
-}
-
-function openAlternativeStream() {
-    if (!currentTorrentUrl) {
-        showNotification('No torrent URL available', 'error');
-        return;
-    }
-    
-    const alternatives = [
-        `https://webtorrent.io/free-torrents?magnet=${encodeURIComponent(currentTorrentUrl)}`,
-        `https://btorrent.xyz/#${encodeURIComponent(currentTorrentUrl)}`,
-        `https://webtor.io/create?magnet=${encodeURIComponent(currentTorrentUrl)}`
-    ];
-    
-    // Try opening different alternative services
-    const randomService = alternatives[Math.floor(Math.random() * alternatives.length)];
-    window.open(randomService, '_blank');
-    showNotification('Opening alternative streaming service...', 'success');
-}
-
-function updateTorrentStatus(status, colorClass) {
-    const statusElement = document.getElementById('torrent-status-text');
-    statusElement.textContent = status;
-    statusElement.className = colorClass + ' text-sm';
-}
-
-function formatBytes(bytes) {
-    if (bytes === 0) return '0 B';
-    const k = 1024;
-    const sizes = ['B', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
 }
 
 // Initialize default server on page load
@@ -1873,15 +749,10 @@ function initializeApp() {
         switchServer('direct', '{{ episode.video_url|safe }}');
     {% elif episode.server_embed_url %}
         switchServer('embed', '{{ episode.server_embed_url|safe }}');
-    {% elif episode.server_torrent_url %}
-        switchServer('torrent', '{{ episode.server_torrent_url|safe }}');
+    {% elif episode.iqiyi_url %}
+        switchServer('iqiyi', '{{ episode.iqiyi_url|safe }}');
     {% endif %}
 }
-
-// Cleanup when page is unloaded - no longer needed
-window.addEventListener('beforeunload', function() {
-    // No cleanup needed for iframe-based streaming
-});
 
 function showNotification(message, type = 'info') {
     const notification = document.createElement('div');
@@ -1909,6 +780,8 @@ function showNotification(message, type = 'info') {
 // IQiyi integration functions
 async function showIQiyiPlayer(iqiyiUrl) {
     try {
+        console.log('Loading IQiyi player for URL:', iqiyiUrl);
+        
         // Try to extract M3U8 from IQiyi URL
         const response = await fetch('/admin/api/iqiyi/extract', {
             method: 'POST',
@@ -1918,7 +791,12 @@ async function showIQiyiPlayer(iqiyiUrl) {
             body: JSON.stringify({ url: iqiyiUrl })
         });
         
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
         const data = await response.json();
+        console.log('IQiyi extraction response:', data);
         
         if (data.success && data.m3u8_url) {
             // Use extracted M3U8 URL with Video.js
@@ -1928,14 +806,19 @@ async function showIQiyiPlayer(iqiyiUrl) {
             if (data.subtitles && data.subtitles.length > 0) {
                 loadSubtitles(data.subtitles);
             }
+            
+            showNotification('IQiyi M3U8 stream loaded successfully', 'success');
         } else {
+            console.log('M3U8 extraction failed, using iframe fallback');
             // Fallback to embed iframe
             showEmbedPlayer(iqiyiUrl);
+            showNotification('Using IQiyi iframe player', 'info');
         }
     } catch (error) {
         console.error('Error loading IQiyi player:', error);
         // Fallback to iframe
         showEmbedPlayer(iqiyiUrl);
+        showNotification('IQiyi player loaded with iframe fallback', 'info');
     }
 }
 
@@ -1998,5 +881,13 @@ function changeSubtitle(subtitleUrl) {
         showNotification(`Subtitles loaded: ${language}`, 'success');
     }
 }
+
+// Wait for page to load
+document.addEventListener('DOMContentLoaded', function() {
+    // Wait for Video.js to be ready
+    setTimeout(() => {
+        initializeApp();
+    }, 500);
+});
 </script>
 {% endblock %}
