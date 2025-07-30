@@ -757,8 +757,132 @@ function rateAnime(contentId) {
     showNotification('Rating functionality coming soon!', 'info');
 }
 
+// Progressive streaming function
+function startProgressiveStreaming(videoFile) {
+    console.log('Starting progressive streaming for file:', videoFile.name);
+    
+    const videoPlayerElement = document.getElementById('torrent-video-player');
+    
+    // Create video element with progressive streaming setup
+    videoPlayerElement.innerHTML = `
+        <div class="w-full h-full bg-black rounded-xl overflow-hidden relative">
+            <video 
+                controls 
+                autoplay 
+                preload="metadata"
+                class="w-full h-full"
+                style="background: #000;"
+                id="progressive-video">
+                Your browser does not support the video tag.
+            </video>
+            
+            <div class="absolute top-4 left-4 bg-black bg-opacity-75 text-white px-3 py-1 rounded-lg text-sm">
+                <span class="text-green-400">● </span>Progressive Streaming (5%+)
+            </div>
+            
+            <div class="absolute top-4 right-4 bg-black bg-opacity-75 text-white px-3 py-1 rounded-lg text-sm">
+                <span id="peer-count">${currentTorrent.numPeers} peers</span>
+            </div>
+            
+            <div class="absolute bottom-4 left-4 bg-black bg-opacity-75 text-white px-3 py-1 rounded-lg text-sm">
+                <span id="buffer-status">Buffering...</span>
+            </div>
+        </div>
+    `;
+    
+    const videoElement = document.getElementById('progressive-video');
+    
+    // Set up progressive streaming with WebTorrent
+    try {
+        // Use getBlobURL for progressive streaming
+        videoFile.getBlobURL((err, url) => {
+            if (err) {
+                console.error('Progressive streaming getBlobURL error:', err);
+                updateTorrentStatus('Progressive streaming failed', 'text-red-400');
+                showNotification('Progressive streaming failed. Using basic method.', 'error');
+                
+                // Fallback to appendTo method
+                videoFile.appendTo(videoElement, (appendErr) => {
+                    if (appendErr) {
+                        console.error('Fallback appendTo error:', appendErr);
+                        showWebTorrentFallback();
+                    } else {
+                        console.log('Fallback streaming active');
+                        updateTorrentStatus('Fallback streaming active', 'text-yellow-400');
+                    }
+                });
+                return;
+            }
+            
+            // Set video source to blob URL for progressive streaming
+            videoElement.src = url;
+            console.log('Progressive streaming URL set:', url);
+            updateTorrentStatus('Progressive streaming active', 'text-green-400');
+            
+            // Update buffer status
+            const updateBufferStatus = () => {
+                const progress = Math.round(currentTorrent.progress * 100);
+                const downloaded = formatBytes(currentTorrent.downloaded);
+                const total = formatBytes(currentTorrent.length);
+                
+                const bufferElement = document.getElementById('buffer-status');
+                if (bufferElement) {
+                    bufferElement.textContent = `${progress}% (${downloaded}/${total})`;
+                }
+            };
+            
+            // Update buffer status every second
+            const bufferInterval = setInterval(updateBufferStatus, 1000);
+            
+            // Clean up interval when video ends or errors
+            videoElement.addEventListener('ended', () => clearInterval(bufferInterval));
+            videoElement.addEventListener('error', () => clearInterval(bufferInterval));
+            
+            updateBufferStatus(); // Initial update
+        });
+        
+        // Set up video event listeners
+        videoElement.addEventListener('loadstart', () => {
+            console.log('Progressive video loading started');
+            updateTorrentStatus('Progressive video loading...', 'text-blue-400');
+        });
+        
+        videoElement.addEventListener('canplay', () => {
+            console.log('Progressive video can start playing');
+            updateTorrentStatus('Progressive video ready', 'text-green-400');
+            showNotification('Progressive streaming ready! Video will continue downloading while playing.', 'success');
+        });
+        
+        videoElement.addEventListener('waiting', () => {
+            console.log('Progressive video waiting for more data...');
+            updateTorrentStatus('Buffering more data...', 'text-yellow-400');
+        });
+        
+        videoElement.addEventListener('playing', () => {
+            console.log('Progressive video playing');
+            updateTorrentStatus('Progressive streaming playing', 'text-green-400');
+        });
+        
+        videoElement.addEventListener('error', (e) => {
+            console.error('Progressive video error:', e);
+            updateTorrentStatus('Progressive video error', 'text-red-400');
+            showNotification('Progressive streaming error. Using fallback.', 'error');
+            showWebTorrentFallback();
+        });
+        
+    } catch (error) {
+        console.error('Progressive streaming setup error:', error);
+        updateTorrentStatus('Progressive setup failed', 'text-red-400');
+        showWebTorrentFallback();
+    }
+}
+
 let player;
 let episodeData;
+let currentTorrent = null;
+let webTorrentClient = null;
+let currentTorrentUrl = null;
+let streamingStarted = false;
 
 function initializeVideoPlayer(data) {
     episodeData = data;
@@ -977,10 +1101,13 @@ function startTorrentStreaming() {
         return;
     }
     
-    console.log('Starting client-side WebTorrent streaming for:', currentTorrentUrl);
+    console.log('Starting progressive WebTorrent streaming for:', currentTorrentUrl);
+    
+    // Reset streaming flag
+    streamingStarted = false;
     
     // Update UI
-    updateTorrentStatus('Initializing client-side streaming...', 'text-yellow-400');
+    updateTorrentStatus('Initializing progressive streaming...', 'text-yellow-400');
     const startBtn = document.getElementById('start-torrent-btn');
     if (startBtn) startBtn.disabled = true;
     
@@ -996,8 +1123,16 @@ function startTorrentStreaming() {
     // Get video player element
     const videoPlayerElement = document.getElementById('torrent-video-player');
     
-    // Clear previous content
-    videoPlayerElement.innerHTML = '';
+    // Clear previous content and show loading message
+    videoPlayerElement.innerHTML = `
+        <div class="w-full h-full bg-black rounded-xl overflow-hidden relative flex items-center justify-center">
+            <div class="text-center text-white">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
+                <div class="text-lg font-semibold">Connecting to torrent network...</div>
+                <div class="text-sm text-gray-300 mt-2">Progressive streaming will start at 5% download</div>
+            </div>
+        </div>
+    `;
     
     try {
         // Check if WebTorrent is available
@@ -1014,9 +1149,9 @@ function startTorrentStreaming() {
         
         webTorrentClient = new WebTorrent();
         
-        // Add torrent
-        updateTorrentStatus('Loading torrent...', 'text-yellow-400');
-        updateProgressIndicators('Loading', '0%', '0 KB/s', '0');
+        // Add torrent with progressive downloading
+        updateTorrentStatus('Loading torrent for progressive streaming...', 'text-yellow-400');
+        updateProgressIndicators('Connecting', '0%', '0 KB/s', '0');
         
         currentTorrent = webTorrentClient.add(currentTorrentUrl, {
             announce: [
@@ -1027,78 +1162,30 @@ function startTorrentStreaming() {
         });
         
         currentTorrent.on('ready', () => {
-            console.log('Torrent ready:', currentTorrent.name);
-            updateTorrentStatus('Torrent ready - Finding video file...', 'text-green-400');
+            console.log('Torrent ready for progressive streaming:', currentTorrent.name);
+            updateTorrentStatus('Torrent ready - Starting download...', 'text-green-400');
             
             // Find the largest video file
             const videoFile = findLargestVideoFile(currentTorrent.files);
             
             if (videoFile) {
-                console.log('Video file found:', videoFile.name, 'Size:', formatBytes(videoFile.length));
-                updateTorrentStatus('Preparing video stream...', 'text-green-400');
+                console.log('Video file found for progressive streaming:', videoFile.name, 'Size:', formatBytes(videoFile.length));
+                updateTorrentStatus('Video file identified - Downloading...', 'text-blue-400');
+                showNotification('Video file found! Download starting...', 'info');
                 
-                // Create video element with better error handling
+                // Update loading message
                 videoPlayerElement.innerHTML = `
-                    <div class="w-full h-full bg-black rounded-xl overflow-hidden relative">
-                        <video 
-                            controls 
-                            autoplay 
-                            preload="metadata"
-                            class="w-full h-full"
-                            style="background: #000;">
-                            Your browser does not support the video tag.
-                        </video>
-                        
-                        <div class="absolute top-4 left-4 bg-black bg-opacity-75 text-white px-3 py-1 rounded-lg text-sm">
-                            <span class="text-green-400">● </span>WebTorrent Streaming
-                        </div>
-                        
-                        <div class="absolute top-4 right-4 bg-black bg-opacity-75 text-white px-3 py-1 rounded-lg text-sm">
-                            <span id="peer-count">${currentTorrent.numPeers} peers</span>
+                    <div class="w-full h-full bg-black rounded-xl overflow-hidden relative flex items-center justify-center">
+                        <div class="text-center text-white">
+                            <div class="animate-pulse rounded-full h-12 w-12 border-2 border-blue-400 mx-auto mb-4 flex items-center justify-center">
+                                <span class="text-blue-400 text-sm font-bold" id="download-percent">0%</span>
+                            </div>
+                            <div class="text-lg font-semibold">Downloading: ${videoFile.name}</div>
+                            <div class="text-sm text-gray-300 mt-2">Progressive streaming will start at 5%</div>
+                            <div class="text-xs text-gray-400 mt-1" id="download-details">Connecting to peers...</div>
                         </div>
                     </div>
                 `;
-                
-                const videoElement = videoPlayerElement.querySelector('video');
-                
-                videoElement.addEventListener('loadstart', () => {
-                    console.log('Video loading started');
-                    updateTorrentStatus('Video loading...', 'text-blue-400');
-                });
-                
-                videoElement.addEventListener('canplay', () => {
-                    console.log('Video can start playing');
-                    updateTorrentStatus('Video ready to play', 'text-green-400');
-                    showNotification('Video ready! Click play to start streaming.', 'success');
-                });
-                
-                videoElement.addEventListener('error', (e) => {
-                    console.error('Video element error:', e);
-                    updateTorrentStatus('Video playback error', 'text-red-400');
-                    showNotification('Video playback failed. Trying fallback options.', 'error');
-                    showWebTorrentFallback();
-                });
-                
-                try {
-                    // Use appendTo method for better compatibility
-                    videoFile.appendTo(videoElement, (err, elem) => {
-                        if (err) {
-                            console.error('WebTorrent appendTo error:', err);
-                            updateTorrentStatus('Stream setup failed', 'text-red-400');
-                            showNotification('WebTorrent streaming failed. Using fallback.', 'error');
-                            showWebTorrentFallback();
-                            return;
-                        }
-                        
-                        console.log('WebTorrent stream attached successfully');
-                        updateTorrentStatus('Streaming active', 'text-green-400');
-                        showNotification('Real-time torrent streaming active!', 'success');
-                    });
-                } catch (streamError) {
-                    console.error('WebTorrent streaming error:', streamError);
-                    updateTorrentStatus('Streaming failed - Using fallback', 'text-yellow-400');
-                    showWebTorrentFallback();
-                }
                 
             } else {
                 throw new Error('No video file found in torrent');
@@ -1112,10 +1199,41 @@ function startTorrentStreaming() {
             
             updateProgressIndicators('Downloading', progress + '%', speed, peers);
             
+            // Progressive streaming - start streaming when 5% downloaded
+            if (!streamingStarted && progress >= 5) {
+                streamingStarted = true;
+                console.log('5% downloaded, starting progressive streaming...');
+                updateTorrentStatus('Progressive streaming starting (5% downloaded)', 'text-green-400');
+                showNotification('5% downloaded! Starting progressive streaming...', 'success');
+                
+                // Find and start streaming the video file
+                const videoFile = findLargestVideoFile(currentTorrent.files);
+                if (videoFile) {
+                    startProgressiveStreaming(videoFile);
+                }
+            }
+            
             // Update peer count in video overlay if it exists
             const peerCountElement = document.getElementById('peer-count');
             if (peerCountElement) {
                 peerCountElement.textContent = `${peers} peers`;
+            }
+            
+            // Update progress indicator with streaming status
+            if (streamingStarted) {
+                updateProgressIndicators('Streaming', progress + '%', speed, peers);
+            }
+            
+            // Update download percentage in loading screen
+            const downloadPercent = document.getElementById('download-percent');
+            const downloadDetails = document.getElementById('download-details');
+            
+            if (downloadPercent) {
+                downloadPercent.textContent = progress + '%';
+            }
+            
+            if (downloadDetails) {
+                downloadDetails.textContent = `${speed} • ${peers} peers • ${formatBytes(currentTorrent.downloaded)}/${formatBytes(currentTorrent.length)}`;
             }
         });
         
