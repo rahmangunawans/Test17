@@ -202,6 +202,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const studioField = document.querySelector('input[name="studio"]');
     const totalEpisodesField = document.querySelector('input[name="total_episodes"]');
     const statusField = document.querySelector('select[name="status"]');
+    const trailerField = document.querySelector('input[name="trailer_url"]');
     
     // Search function
     function searchAniList() {
@@ -305,6 +306,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (ratingField && anime.rating) ratingField.value = anime.rating;
         if (contentTypeField) contentTypeField.value = anime.content_type || 'anime';
         if (thumbnailField) thumbnailField.value = anime.thumbnail_url || '';
+        if (trailerField) trailerField.value = anime.trailer_url || '';
         if (studioField) studioField.value = anime.studio || '';
         if (totalEpisodesField && anime.total_episodes) totalEpisodesField.value = anime.total_episodes;
         if (statusField) statusField.value = anime.status || 'unknown';

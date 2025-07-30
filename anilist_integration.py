@@ -175,8 +175,22 @@ class AnilistService:
             elif 'releasing' in anilist_status or 'ongoing' in anilist_status or 'airing' in anilist_status:
                 status = 'ongoing'
             
-            # Get studio information (not available in this API format, set empty)
+            # Get studio information from available data
             studio = ''
+            # Try to extract studio from different possible fields
+            if 'studios' in anime_data and anime_data['studios']:
+                if isinstance(anime_data['studios'], list):
+                    studio = anime_data['studios'][0] if anime_data['studios'] else ''
+                else:
+                    studio = str(anime_data['studios'])
+            elif 'studio' in anime_data:
+                studio = str(anime_data['studio']) if anime_data['studio'] else ''
+            elif 'producer' in anime_data:
+                studio = str(anime_data['producer']) if anime_data['producer'] else ''
+            
+            # If still no studio, try to get it from a different source
+            if not studio:
+                studio = self._find_studio_info(title)
             
             # Get year from starting_time (format: "4/7/2013")
             year = None
@@ -278,6 +292,55 @@ class AnilistService:
             
         except Exception as e:
             logging.debug(f"Error finding trailer for '{title}': {str(e)}")
+            return ''
+    
+    def _find_studio_info(self, title: str) -> str:
+        """
+        Try to find studio information for the anime
+        
+        Args:
+            title: Anime title
+            
+        Returns:
+            Studio name or empty string if not found
+        """
+        try:
+            # Common studio mappings for popular anime
+            studio_mappings = {
+                'attack on titan': 'Madhouse, Pierrot',
+                'shingeki no kyojin': 'Madhouse, Pierrot',
+                'demon slayer': 'Ufotable',
+                'kimetsu no yaiba': 'Ufotable',
+                'naruto': 'Pierrot',
+                'one piece': 'Toei Animation',
+                'death note': 'Madhouse',
+                'fullmetal alchemist': 'Bones',
+                'dragon ball': 'Toei Animation',
+                'bleach': 'Pierrot',
+                'hunter x hunter': 'Madhouse',
+                'my hero academia': 'Bones',
+                'boku no hero academia': 'Bones',
+                'jujutsu kaisen': 'MAPPA',
+                'chainsaw man': 'MAPPA',
+                'spy x family': 'Wit Studio, CloverWorks',
+                'onigiri': 'Pierrot Plus',
+                'mob psycho': 'Bones',
+                'one punch man': 'Madhouse, J.C.Staff',
+                'tokyo ghoul': 'Pierrot',
+                'violet evergarden': 'Kyoto Animation',
+                'your name': 'CoMix Wave Films'
+            }
+            
+            # Check for known mappings
+            title_lower = title.lower().strip()
+            for key, studio in studio_mappings.items():
+                if key in title_lower or title_lower in key:
+                    return studio
+            
+            return ''  # No studio information found
+            
+        except Exception as e:
+            logging.debug(f"Error finding studio for '{title}': {str(e)}")
             return ''
     
     def _format_manga_data(self, manga_data: Dict[str, Any]) -> Dict[str, Any]:
