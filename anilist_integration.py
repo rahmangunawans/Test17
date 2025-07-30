@@ -5,6 +5,7 @@ Provides functions to search and retrieve anime/manga data from AniList API
 
 import AnilistPython
 import logging
+import requests
 from typing import Dict, List, Optional, Any
 
 class AnilistService:
@@ -196,6 +197,9 @@ class AnilistService:
             cover_image = anime_data.get('cover_image')
             thumbnail_url = cover_image if cover_image else ''
             
+            # Try to find trailer URL
+            trailer_url = self._find_trailer_url(title)
+            
             return {
                 'title': title,
                 'description': description,
@@ -204,7 +208,7 @@ class AnilistService:
                 'rating': rating,
                 'content_type': content_type,
                 'thumbnail_url': thumbnail_url,
-                'trailer_url': '',  # AniList doesn't provide trailer URLs
+                'trailer_url': trailer_url,
                 'studio': studio,
                 'total_episodes': total_episodes,
                 'status': status,
@@ -215,6 +219,66 @@ class AnilistService:
         except Exception as e:
             logging.error(f"Error formatting anime data: {str(e)}")
             return {}
+    
+    def _find_trailer_url(self, title: str) -> str:
+        """
+        Try to find YouTube trailer URL for the anime using web scraping
+        
+        Args:
+            title: Anime title
+            
+        Returns:
+            YouTube embed URL or empty string if not found
+        """
+        try:
+            import re
+            import urllib.parse
+            
+            # Clean title for search
+            search_title = title.replace(':', '').replace('-', ' ').strip()
+            
+            # Try to search for trailers using multiple approaches
+            search_queries = [
+                f"{search_title} trailer",
+                f"{search_title} official trailer", 
+                f"{search_title} anime trailer",
+                f"{search_title} PV"
+            ]
+            
+            for query in search_queries[:2]:  # Limit to first 2 queries
+                try:
+                    # Create YouTube search URL
+                    encoded_query = urllib.parse.quote_plus(query)
+                    search_url = f"https://www.youtube.com/results?search_query={encoded_query}"
+                    
+                    # Use requests to get search results
+                    headers = {
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+                    }
+                    
+                    response = requests.get(search_url, headers=headers, timeout=5)
+                    
+                    if response.status_code == 200:
+                        # Look for video IDs in the response
+                        video_pattern = r'"videoId":"([a-zA-Z0-9_-]{11})"'
+                        matches = re.findall(video_pattern, response.text)
+                        
+                        if matches:
+                            # Return the first video as embed URL
+                            video_id = matches[0]
+                            return f"https://www.youtube.com/embed/{video_id}"
+                            
+                except Exception as search_error:
+                    logging.debug(f"Trailer search failed for '{query}': {str(search_error)}")
+                    continue
+                    
+            # If web scraping fails, provide a manual search URL that opens in new tab
+            encoded_title = urllib.parse.quote_plus(f"{search_title} trailer")
+            return f"https://www.youtube.com/results?search_query={encoded_title}"
+            
+        except Exception as e:
+            logging.debug(f"Error finding trailer for '{title}': {str(e)}")
+            return ''
     
     def _format_manga_data(self, manga_data: Dict[str, Any]) -> Dict[str, Any]:
         """

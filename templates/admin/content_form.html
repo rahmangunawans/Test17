@@ -280,9 +280,11 @@ document.addEventListener('DOMContentLoaded', function() {
                             </span>
                             ${anime.year ? `<span class="text-gray-400 text-sm">${anime.year}</span>` : ''}
                             ${anime.rating ? `<span class="text-yellow-400 text-sm">★ ${anime.rating}</span>` : ''}
+                            ${anime.trailer_url ? `<span class="text-red-400 text-xs"><i class="fas fa-play"></i> Trailer</span>` : ''}
                         </div>
                         <p class="text-gray-300 text-sm mb-2">${anime.genre || 'No genres'}</p>
                         <p class="text-gray-400 text-xs line-clamp-2">${anime.description ? anime.description.substring(0, 150) + '...' : 'No description'}</p>
+                        ${anime.total_episodes ? `<p class="text-blue-400 text-xs mt-1">${anime.total_episodes} episodes • ${anime.status}</p>` : ''}
                     </div>
                 </div>
             `;
