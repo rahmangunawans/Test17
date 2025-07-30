@@ -85,38 +85,62 @@ class AnimeDataService:
     def _search_myanimelist(self, query: str, limit: int = 10) -> List[Dict[str, Any]]:
         """Search anime using MyAnimeList (Jikan v4) API"""
         try:
+            # Clean and prepare query
+            if not query or not query.strip():
+                logging.warning("Empty query provided to MyAnimeList search")
+                return []
+                
+            clean_query = query.strip()
+            
             # Make direct HTTP request to Jikan v4 API
-            import requests
             url = f"{self.mal_base_url}/anime"
             params = {
-                'q': query,
+                'q': clean_query,
                 'limit': min(limit, 25),  # API max is 25
-                'sfw': True
+                'order_by': 'popularity',
+                'sort': 'desc'
             }
             
-            response = requests.get(url, params=params, timeout=10)
+            headers = {
+                'User-Agent': 'AniFlix/1.0 (contact@aniflix.com)'
+            }
+            
+            logging.info(f"Searching MyAnimeList for: '{clean_query}' with params: {params}")
+            
+            response = requests.get(url, params=params, headers=headers, timeout=15)
+            
+            logging.info(f"MyAnimeList API response: {response.status_code}")
             
             if response.status_code == 429:  # Rate limited
-                time.sleep(1)
-                response = requests.get(url, params=params, timeout=10)
+                logging.warning("MyAnimeList API rate limited, waiting 2 seconds...")
+                time.sleep(2)
+                response = requests.get(url, params=params, headers=headers, timeout=15)
             
             if response.status_code != 200:
-                logging.error(f"MyAnimeList API error: {response.status_code}")
+                logging.error(f"MyAnimeList API error: {response.status_code}, Response: {response.text[:200]}")
                 return []
             
             search_results = response.json()
             
             if not search_results or 'data' not in search_results:
+                logging.warning(f"No data found in MyAnimeList response for query: '{clean_query}'")
                 return []
             
+            data_results = search_results['data']
+            logging.info(f"Found {len(data_results)} results from MyAnimeList")
+            
             results = []
-            for anime_data in search_results['data'][:limit]:
+            for anime_data in data_results[:limit]:
                 formatted_result = self._format_myanimelist_data(anime_data)
                 if formatted_result:
                     results.append(formatted_result)
             
+            logging.info(f"Successfully formatted {len(results)} MyAnimeList results")
             return results
             
+        except requests.exceptions.RequestException as e:
+            logging.error(f"Network error searching MyAnimeList for '{query}': {str(e)}")
+            return []
         except Exception as e:
             logging.error(f"Error searching anime on MyAnimeList '{query}': {str(e)}")
             return []
