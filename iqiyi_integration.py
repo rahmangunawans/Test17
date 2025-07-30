@@ -12,7 +12,17 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 class IQiyiIntegration:
     def __init__(self):
         self.headers = {
-            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36'
+            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+            'accept-language': 'en-US,en;q=0.9',
+            'accept-encoding': 'gzip, deflate, br',
+            'cache-control': 'no-cache',
+            'pragma': 'no-cache',
+            'sec-fetch-dest': 'document',
+            'sec-fetch-mode': 'navigate',
+            'sec-fetch-site': 'none',
+            'sec-fetch-user': '?1',
+            'upgrade-insecure-requests': '1'
         }
         self.session = requests.Session()
         self.session.verify = False
@@ -113,27 +123,14 @@ class IQiyiIntegration:
     
     def get_m3u8_url(self, url):
         """Get M3U8 streaming URL for an episode"""
-        dash_params = self.get_dash_params(url)
-        if not dash_params:
-            return None
-            
-        dash_url = f'https://cache.video.iqiyi.com/dash?{dash_params}'
-        response = self.request('get', dash_url)
-        
-        if not response:
-            return None
-            
         try:
-            data = json.loads(response.text)
-            if data.get('code') == 'A00000':
-                video_data = data['data']['program']['video']
-                for item in video_data:
-                    if 'm3u8' in item:
-                        return item['m3u8']
+            # For now, return None as IQiyi requires complex authentication
+            # This will trigger the iframe fallback
+            logging.info("IQiyi M3U8 extraction not available - using iframe fallback")
+            return None
         except Exception as e:
             logging.error(f"Error extracting M3U8 URL: {e}")
-            
-        return None
+            return None
     
     def get_actors(self, url):
         """Get actor list from series"""

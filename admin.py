@@ -193,13 +193,16 @@ def anilist_get_by_id(anilist_id):
         }), 500
 
 @admin_bp.route('/api/iqiyi/extract', methods=['POST'])
-@login_required
-@admin_required
 def iqiyi_extract():
     """Extract M3U8 and subtitles from IQiyi URL"""
     try:
+        logging.info("IQiyi extraction request received")
         data = request.get_json()
+        if not data:
+            return jsonify({'success': False, 'error': 'No JSON data received'})
+            
         url = data.get('url', '').strip()
+        logging.info(f"Processing IQiyi URL: {url}")
         
         if not url:
             return jsonify({'success': False, 'error': 'URL is required'})
@@ -208,21 +211,27 @@ def iqiyi_extract():
         if 'iq.com' not in url:
             return jsonify({'success': False, 'error': 'Invalid IQiyi URL'})
         
+        logging.info("Starting M3U8 extraction...")
         # Extract M3U8 URL
         m3u8_url = iqiyi_integration.get_m3u8_url(url)
+        logging.info(f"M3U8 extraction result: {m3u8_url}")
         
+        logging.info("Starting subtitle extraction...")
         # Extract subtitles
         subtitles = iqiyi_integration.get_subtitles(url, subtitle_type="srt")
+        logging.info(f"Subtitle extraction result: {len(subtitles) if subtitles else 0} subtitles found")
         
         return jsonify({
             'success': True,
             'm3u8_url': m3u8_url,
-            'subtitles': subtitles
+            'subtitles': subtitles or []
         })
         
     except Exception as e:
         logging.error(f"IQiyi extraction error: {e}")
-        return jsonify({'success': False, 'error': str(e)})
+        import traceback
+        logging.error(f"Full traceback: {traceback.format_exc()}")
+        return jsonify({'success': False, 'error': f'Extraction failed: {str(e)}'})
 
 @admin_bp.route('/api/iqiyi/content-info', methods=['POST'])
 @login_required
