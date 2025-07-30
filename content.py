@@ -106,6 +106,15 @@ def anime_redirect(content_id):
 
 
 
+@content_bp.route('/watch/<int:content_id>/<int:episode_number>')
+@login_required
+def watch_content_episode(content_id, episode_number):
+    """Watch episode by content ID and episode number"""
+    content = Content.query.get_or_404(content_id)
+    episode = Episode.query.filter_by(content_id=content_id, episode_number=episode_number).first_or_404()
+    
+    return redirect(url_for('content.watch_episode', episode_id=episode.id))
+
 @content_bp.route('/watch/<int:episode_id>')
 @login_required
 def watch_episode(episode_id):

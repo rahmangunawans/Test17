@@ -3,12 +3,61 @@
 {% block title %}{{ episode.title }} - {{ content.title }} - AniFlix{% endblock %}
 
 {% block head %}
-<!-- Video.js CSS and JS with integrity checks -->
+<!-- Video.js CSS and JS with fallback -->
 <link href="https://vjs.zencdn.net/8.8.0/video-js.css" rel="stylesheet">
-<script src="https://vjs.zencdn.net/8.8.0/video.min.js" onload="console.log('Video.js loaded successfully')" onerror="console.error('Video.js failed to load')"></script>
+<script>
+// Ensure Video.js loads properly
+function loadVideoJS() {
+    return new Promise((resolve, reject) => {
+        if (window.videojs) {
+            resolve();
+            return;
+        }
+        
+        const script = document.createElement('script');
+        script.src = 'https://vjs.zencdn.net/8.8.0/video.min.js';
+        script.onload = () => {
+            console.log('Video.js loaded successfully');
+            resolve();
+        };
+        script.onerror = () => {
+            console.error('Video.js failed to load');
+            reject(new Error('Video.js load failed'));
+        };
+        document.head.appendChild(script);
+    });
+}
+
+// Load Video.js immediately
+loadVideoJS().catch(console.error);
+</script>
 
 <!-- WebTorrent for real-time browser streaming -->
-<script src="https://cdn.jsdelivr.net/npm/webtorrent@latest/webtorrent.min.js" onload="console.log('WebTorrent loaded successfully')" onerror="console.error('WebTorrent failed to load')"></script>
+<script>
+function loadWebTorrent() {
+    return new Promise((resolve, reject) => {
+        if (window.WebTorrent) {
+            resolve();
+            return;
+        }
+        
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/webtorrent@latest/webtorrent.min.js';
+        script.onload = () => {
+            console.log('WebTorrent loaded successfully');
+            resolve();
+        };
+        script.onerror = () => {
+            console.error('WebTorrent failed to load');
+            reject(new Error('WebTorrent load failed'));
+        };
+        document.head.appendChild(script);
+    });
+}
+
+// Load WebTorrent immediately
+loadWebTorrent().catch(console.error);
+</script>
 
 <!-- Webtor.io fallback -->
 <script>
@@ -674,28 +723,29 @@ document.addEventListener('DOMContentLoaded', function() {
         watchTime: {{ watch_history.watch_time if watch_history else 0 }}
     };
     
-    // Initialize with a small delay to ensure DOM is ready
-    setTimeout(() => {
-        // Try to initialize Video.js if available
-        if (typeof videojs !== 'undefined') {
+    // Initialize with proper library loading
+    setTimeout(async () => {
+        try {
+            // Ensure Video.js is loaded
+            await loadVideoJS();
             console.log('Video.js is available, initializing...');
             initializeVideoPlayer(videoData);
-        } else {
-            console.warn('Video.js not loaded, using fallback video player');
-            // Set up basic video player functionality
+        } catch (error) {
+            console.warn('Video.js not available, using fallback video player');
             episodeData = videoData;
+        }
+        
+        try {
+            // Ensure WebTorrent is loaded
+            await loadWebTorrent();
+            console.log('WebTorrent is ready for streaming');
+        } catch (error) {
+            console.warn('WebTorrent not available, will use external services');
         }
         
         // Initialize the app regardless of library availability
         initializeApp();
-        
-        // Show notification about torrent streaming
-        setTimeout(() => {
-            if (typeof WebTorrent === 'undefined' && !window.webTorrentLoaded) {
-                console.log('WebTorrent not available, will use embedded streaming services');
-            }
-        }, 2000);
-    }, 500);
+    }, 1000);
 });
 
 let player;
@@ -705,6 +755,12 @@ function initializeVideoPlayer(data) {
     episodeData = data;
     
     try {
+        // Wait for videojs to be available
+        if (typeof videojs === 'undefined') {
+            console.error('Video.js not loaded');
+            return;
+        }
+        
         player = videojs('video-player', {
             fluid: true,
             responsive: true,
@@ -969,24 +1025,71 @@ async function startTorrentStreaming() {
             const videoFile = findLargestVideoFile(currentTorrent.files);
             
             if (videoFile) {
-                console.log('Video file found:', videoFile.name);
-                updateTorrentStatus('Streaming video file...', 'text-green-400');
+                console.log('Video file found:', videoFile.name, 'Size:', formatBytes(videoFile.length));
+                updateTorrentStatus('Preparing video stream...', 'text-green-400');
                 
-                // Create video element and stream
+                // Create video element with better error handling
                 videoPlayerElement.innerHTML = `
-                    <video controls autoplay class="w-full h-full rounded-xl bg-black">
-                        <source src="" type="video/mp4">
-                        Your browser does not support the video tag.
-                    </video>
+                    <div class="w-full h-full bg-black rounded-xl overflow-hidden relative">
+                        <video 
+                            controls 
+                            autoplay 
+                            preload="metadata"
+                            class="w-full h-full"
+                            style="background: #000;">
+                            Your browser does not support the video tag.
+                        </video>
+                        
+                        <div class="absolute top-4 left-4 bg-black bg-opacity-75 text-white px-3 py-1 rounded-lg text-sm">
+                            <span class="text-green-400">● </span>WebTorrent Streaming
+                        </div>
+                        
+                        <div class="absolute top-4 right-4 bg-black bg-opacity-75 text-white px-3 py-1 rounded-lg text-sm">
+                            <span id="peer-count">${currentTorrent.numPeers} peers</span>
+                        </div>
+                    </div>
                 `;
                 
                 const videoElement = videoPlayerElement.querySelector('video');
                 
-                // Stream the file to video element
-                videoFile.streamTo(videoElement);
+                videoElement.addEventListener('loadstart', () => {
+                    console.log('Video loading started');
+                    updateTorrentStatus('Video loading...', 'text-blue-400');
+                });
                 
-                showNotification('Torrent streaming started successfully!', 'success');
-                updateProgressIndicators('Streaming', '100%', 'WebTorrent', currentTorrent.numPeers);
+                videoElement.addEventListener('canplay', () => {
+                    console.log('Video can start playing');
+                    updateTorrentStatus('Video ready to play', 'text-green-400');
+                    showNotification('Video ready! Click play to start streaming.', 'success');
+                });
+                
+                videoElement.addEventListener('error', (e) => {
+                    console.error('Video element error:', e);
+                    updateTorrentStatus('Video playback error', 'text-red-400');
+                    showNotification('Video playback failed. Trying fallback options.', 'error');
+                    showWebTorrentFallback();
+                });
+                
+                try {
+                    // Use appendTo method for better compatibility
+                    videoFile.appendTo(videoElement, (err, elem) => {
+                        if (err) {
+                            console.error('WebTorrent appendTo error:', err);
+                            updateTorrentStatus('Stream setup failed', 'text-red-400');
+                            showNotification('WebTorrent streaming failed. Using fallback.', 'error');
+                            showWebTorrentFallback();
+                            return;
+                        }
+                        
+                        console.log('WebTorrent stream attached successfully');
+                        updateTorrentStatus('Streaming active', 'text-green-400');
+                        showNotification('Real-time torrent streaming active!', 'success');
+                    });
+                } catch (streamError) {
+                    console.error('WebTorrent streaming error:', streamError);
+                    updateTorrentStatus('Streaming failed - Using fallback', 'text-yellow-400');
+                    showWebTorrentFallback();
+                }
                 
             } else {
                 throw new Error('No video file found in torrent');
@@ -999,6 +1102,16 @@ async function startTorrentStreaming() {
             const peers = currentTorrent.numPeers;
             
             updateProgressIndicators('Downloading', progress + '%', speed, peers);
+            
+            // Update peer count in video overlay if it exists
+            const peerCountElement = document.getElementById('peer-count');
+            if (peerCountElement) {
+                peerCountElement.textContent = `${peers} peers`;
+            }
+        });
+        
+        currentTorrent.on('wire', () => {
+            console.log('Connected to new peer, total peers:', currentTorrent.numPeers);
         });
         
         currentTorrent.on('error', (err) => {
