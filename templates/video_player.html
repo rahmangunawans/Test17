@@ -734,18 +734,16 @@ function rateAnime(animeId) {
 // Initialize default server on page load
 function initializeApp() {
     // Find the first available server and switch to it
-    const serverOptions = [
-        {% if episode.server_m3u8_url %}
-        {type: 'm3u8', url: '{{ episode.server_m3u8_url|safe }}'},
-        {% endif %}
-        {% if episode.video_url %}
-        {type: 'direct', url: '{{ episode.video_url|safe }}'},
-        {% endif %}
-        {% if episode.server_embed_url %}
-        {type: 'embed', url: '{{ episode.server_embed_url|safe }}'},
-        {% endif %}
-
-    ];
+    const serverOptions = [];
+    {% if episode.server_m3u8_url %}
+    serverOptions.push({type: 'm3u8', url: '{{ episode.server_m3u8_url|safe }}'});
+    {% endif %}
+    {% if episode.video_url %}
+    serverOptions.push({type: 'direct', url: '{{ episode.video_url|safe }}'});
+    {% endif %}
+    {% if episode.server_embed_url %}
+    serverOptions.push({type: 'embed', url: '{{ episode.server_embed_url|safe }}'});
+    {% endif %}
     
     if (serverOptions.length > 0) {
         const firstServer = serverOptions[0];
