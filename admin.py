@@ -915,8 +915,9 @@ def extract_dash_url():
         if result['success']:
             return jsonify({
                 "success": True,
-                "m3u8_url": result['m3u8_url'],
-                "message": "M3U8 URL extracted successfully",
+                "m3u8_content": result.get('m3u8_content'),
+                "m3u8_url": result.get('m3u8_url'),  # For backward compatibility
+                "message": "M3U8 content extracted successfully",
                 "total_segments": result.get('total_segments', 0)
             })
         else:
