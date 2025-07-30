@@ -265,9 +265,11 @@ class AnimeDataService:
             elif 'producer' in anime_data:
                 studio = str(anime_data['producer']) if anime_data['producer'] else ''
             
-            # If still no studio, try to get it from a different source
+            # If still no studio, try to get it from GraphQL API first, then fallback to mapping
             if not studio:
-                studio = self._find_studio_info(title)
+                studio = self._get_studio_from_graphql(title)
+                if not studio:
+                    studio = self._find_studio_info(title)
             
             # Get year from starting_time (format: "4/7/2013")
             year = None
@@ -373,6 +375,57 @@ class AnimeDataService:
             
         except Exception as e:
             logging.debug(f"Error finding trailer for '{title}': {str(e)}")
+            return ''
+    
+    def _get_studio_from_graphql(self, title: str) -> str:
+        """
+        Get studio information directly from AniList GraphQL API
+        
+        Args:
+            title: Anime title to search for
+            
+        Returns:
+            Studio name or empty string if not found
+        """
+        try:
+            import requests
+            
+            # GraphQL query to get anime with studio information
+            query = """
+            query ($search: String) {
+                Media(search: $search, type: ANIME) {
+                    studios(isMain: true) {
+                        nodes {
+                            name
+                        }
+                    }
+                }
+            }
+            """
+            
+            url = 'https://graphql.anilist.co'
+            variables = {'search': title}
+            
+            response = requests.post(url, json={'query': query, 'variables': variables}, timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                if 'data' in data and data['data']['Media']:
+                    media = data['data']['Media']
+                    studios = media.get('studios', {}).get('nodes', [])
+                    
+                    if studios:
+                        studio_names = [studio['name'] for studio in studios]
+                        studio_name = ', '.join(studio_names)
+                        logging.info(f"Found studio from GraphQL for '{title}': {studio_name}")
+                        return studio_name
+            
+            logging.info(f"No studio found from GraphQL for '{title}'")
+            return ''
+            
+        except Exception as e:
+            logging.error(f"Error getting studio from GraphQL for '{title}': {str(e)}")
             return ''
     
     def _find_studio_info(self, title: str) -> str:
