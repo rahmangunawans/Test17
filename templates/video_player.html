@@ -530,10 +530,10 @@ loadVideoJS().catch(console.error);
 <script>
 let player;
 let episodeData = {
-    id: {{ episode.id }},
-    watchTime: {{ watch_time }},
+    id: {{ episode.id or 0 }},
+    watchTime: {{ watch_time or 0 }},
     canWatchFull: {{ 'true' if can_watch_full else 'false' }},
-    maxWatchTime: {{ max_watch_time if max_watch_time else 'null' }}
+    maxWatchTime: {{ max_watch_time or 'null' }}
 };
 
 // Server switching functionality
@@ -627,19 +627,8 @@ function showEmbedPlayer(url) {
 
 
 function loadSubtitles() {
-    // Check if episode has subtitles
-    {% if episode.subtitle_urls %}
-    try {
-        const subtitles = JSON.parse('{{ episode.subtitle_urls|safe }}');
-        if (subtitles && subtitles.length > 0) {
-            console.log('Available subtitles:', subtitles);
-            // Display subtitle options (can be enhanced further)
-            showNotification(subtitles.length + ' subtitle(s) available', 'info');
-        }
-    } catch (e) {
-        console.error('Error parsing subtitles:', e);
-    }
-    {% endif %}
+    // Subtitle functionality placeholder
+    console.log('Subtitle loading ready');
 }
 
 function setupPlayerEvents(player, data) {
@@ -735,6 +724,8 @@ function rateAnime(animeId) {
 function initializeApp() {
     // Find the first available server and switch to it
     const serverOptions = [];
+    
+    // Add available servers
     {% if episode.server_m3u8_url %}
     serverOptions.push({type: 'm3u8', url: '{{ episode.server_m3u8_url|safe }}'});
     {% endif %}
