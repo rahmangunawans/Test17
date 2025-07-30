@@ -283,6 +283,8 @@ function showNotification(message, type = 'info') {
 
 // Initialize existing subtitles on page load
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM Content Loaded - Episode Form');
+    
     const existingSubtitles = document.getElementById('subtitle_urls').value;
     if (existingSubtitles) {
         try {
@@ -293,18 +295,28 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // Add click event listener for IQiyi extraction button
-    const extractBtn = document.getElementById('extract-iqiyi-btn');
-    if (extractBtn) {
+    // Wait a bit for the DOM to fully render
+    setTimeout(function() {
+        // Add click event listener for IQiyi extraction button
+        const extractBtn = document.getElementById('extract-iqiyi-btn');
+        console.log('Looking for extract button with ID: extract-iqiyi-btn');
         console.log('Found extract button:', extractBtn);
-        extractBtn.addEventListener('click', function(event) {
-            console.log('Extract button clicked!');
-            extractIqiyiData(event);
-        });
-        console.log('IQiyi extraction button event listener added');
-    } else {
-        console.error('Extract button not found!');
-    }
+        
+        if (extractBtn) {
+            extractBtn.addEventListener('click', function(event) {
+                console.log('Extract button clicked!');
+                event.preventDefault();
+                extractIqiyiData(event);
+            });
+            console.log('IQiyi extraction button event listener added successfully');
+        } else {
+            console.error('Extract button not found! Available buttons:');
+            const allButtons = document.querySelectorAll('button');
+            allButtons.forEach((btn, index) => {
+                console.log(`Button ${index}:`, btn.textContent.trim(), 'ID:', btn.id, 'Element:', btn);
+            });
+        }
+    }, 500);
 });
 </script>
 {% endblock %}
