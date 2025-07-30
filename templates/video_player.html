@@ -213,7 +213,14 @@ loadVideoJS().catch(console.error);
                         </button>
                         {% endif %}
                         
-
+                        {% if episode.iqiyi_url %}
+                        <button onclick="switchServer('iqiyi', '{{ episode.iqiyi_url }}')" 
+                                id="server-iqiyi"
+                                class="server-btn flex items-center px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-medium transition-all duration-200">
+                            <i class="fas fa-external-link-alt mr-2"></i>
+                            Server 3 (IQiyi)
+                        </button>
+                        {% endif %}
                         
 
                         
@@ -589,7 +596,10 @@ function switchServer(serverType, serverUrl) {
             showNotification('Switched to Embed Server', 'success');
             break;
             
-
+        case 'iqiyi':
+            showEmbedPlayer(serverUrl);
+            showNotification('Switched to IQiyi Server', 'success');
+            break;
             
         default:
             showNotification('Unknown server type', 'error');
