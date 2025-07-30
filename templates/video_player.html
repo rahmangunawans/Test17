@@ -636,17 +636,28 @@ async function showVideoPlayer(url, type = 'video/mp4') {
         
         console.log('Initializing Video.js player with:', { url, type });
         
+        // Check if video element exists
+        if (!videoElement) {
+            throw new Error('Video element not found');
+        }
+        
+        // Reset video element to ensure clean state
+        videoElement.innerHTML = '';
+        videoElement.classList.add('video-js');
+        
         // Create new Video.js player
-        player = videojs('video-player', {
+        player = videojs(videoElement, {
             fluid: true,
             responsive: true,
             playbackRates: [0.5, 1, 1.25, 1.5, 2],
             controls: true,
             preload: 'metadata',
+            techOrder: ['html5'],
             html5: {
                 hls: {
                     enableLowInitialPlaylist: true,
-                    smoothQualityChange: true
+                    smoothQualityChange: true,
+                    overrideNative: true
                 }
             }
         });
@@ -712,14 +723,23 @@ async function extractAndPlayDash(dashUrl) {
         const result = await response.json();
         
         if (result.success && result.m3u8_content) {
+            console.log('M3U8 extraction successful:', {
+                segments: result.total_segments,
+                contentLength: result.m3u8_content.length,
+                firstLine: result.m3u8_content.split('\n')[0]
+            });
+            
             // Create blob URL from M3U8 content
             const blob = new Blob([result.m3u8_content], { type: 'application/vnd.apple.mpegurl' });
             const m3u8Url = URL.createObjectURL(blob);
+            
+            console.log('Created blob URL:', m3u8Url);
             
             // Use Video.js to play the M3U8 playlist
             showVideoPlayer(m3u8Url, 'application/x-mpegURL');
             showNotification(`M3U8 playlist loaded with ${result.total_segments || 0} segments`, 'success');
         } else {
+            console.error('M3U8 extraction failed:', result);
             // Fallback to iframe if extraction fails
             showEmbedPlayer(dashUrl);
             showNotification('Using fallback IQiyi player', 'warning');
