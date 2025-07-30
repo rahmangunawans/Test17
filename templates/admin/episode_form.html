@@ -279,6 +279,10 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('Error parsing existing subtitles:', e);
         }
     }
+    
+    // Make function globally available
+    window.extractIqiyiData = extractIqiyiData;
+    console.log('IQiyi extraction function loaded');
 });
 </script>
 {% endblock %}

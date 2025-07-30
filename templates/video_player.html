@@ -743,15 +743,25 @@ function rateAnime(animeId) {
 // Initialize default server on page load
 function initializeApp() {
     // Find the first available server and switch to it
-    {% if episode.server_m3u8_url %}
-        switchServer('m3u8', '{{ episode.server_m3u8_url|safe }}');
-    {% elif episode.video_url %}
-        switchServer('direct', '{{ episode.video_url|safe }}');
-    {% elif episode.server_embed_url %}
-        switchServer('embed', '{{ episode.server_embed_url|safe }}');
-    {% elif episode.iqiyi_url %}
-        switchServer('iqiyi', '{{ episode.iqiyi_url|safe }}');
-    {% endif %}
+    const serverOptions = [
+        {% if episode.server_m3u8_url %}
+        {type: 'm3u8', url: '{{ episode.server_m3u8_url|safe }}'},
+        {% endif %}
+        {% if episode.video_url %}
+        {type: 'direct', url: '{{ episode.video_url|safe }}'},
+        {% endif %}
+        {% if episode.server_embed_url %}
+        {type: 'embed', url: '{{ episode.server_embed_url|safe }}'},
+        {% endif %}
+        {% if episode.iqiyi_url %}
+        {type: 'iqiyi', url: '{{ episode.iqiyi_url|safe }}'},
+        {% endif %}
+    ];
+    
+    if (serverOptions.length > 0) {
+        const firstServer = serverOptions[0];
+        switchServer(firstServer.type, firstServer.url);
+    }
 }
 
 function showNotification(message, type = 'info') {
