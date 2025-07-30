@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from flask_login import login_required, current_user
 from functools import wraps
 from models import db, Content, Episode, User, WatchHistory, Notification, SystemSettings
+from iqiyi_integration import IQiyiAPI
 from notifications import create_notification, notify_admin_message, notify_new_episode, notify_new_content
 from werkzeug.security import generate_password_hash
 from sqlalchemy import text, inspect
@@ -285,7 +286,9 @@ def add_episode(content_id):
                 thumbnail_url=request.form.get('thumbnail_url', ''),
                 description=request.form.get('description', ''),
                 server_m3u8_url=request.form.get('server_m3u8_url', ''),
-                server_embed_url=request.form.get('server_embed_url', '')
+                server_embed_url=request.form.get('server_embed_url', ''),
+                iqiyi_url=request.form.get('iqiyi_url', ''),
+                subtitle_urls=request.form.get('subtitle_urls', '')
             )
             db.session.add(episode)
             db.session.commit()
@@ -317,6 +320,8 @@ def edit_episode(episode_id):
             episode.description = request.form.get('description', '')
             episode.server_m3u8_url = request.form.get('server_m3u8_url', '')
             episode.server_embed_url = request.form.get('server_embed_url', '')
+            episode.iqiyi_url = request.form.get('iqiyi_url', '')
+            episode.subtitle_urls = request.form.get('subtitle_urls', '')
             
             db.session.commit()
             flash(f'Episode {episode.episode_number} updated successfully!', 'success')
@@ -741,6 +746,62 @@ def test_notification_disabled():
         flash('Failed to send test notification.', 'error')
         
     return redirect(url_for('admin.admin_dashboard'))
+
+# IQiyi API endpoint for extraction
+@admin_bp.route('/api/iqiyi/extract', methods=['POST'])
+@admin_required
+def iqiyi_extract_api():
+    """API endpoint for extracting IQiyi video data"""
+    try:
+        data = request.get_json()
+        iqiyi_url = data.get('url')
+        
+        if not iqiyi_url:
+            return jsonify({
+                'success': False,
+                'error': 'No URL provided'
+            }), 400
+        
+        # Initialize IQiyi API
+        iqiyi_api = IQiyiAPI()
+        
+        # Extract video information
+        result = iqiyi_api.extract_video_info(iqiyi_url)
+        
+        if result['success']:
+            # Also get subtitle information
+            subtitle_info = iqiyi_api.get_subtitle_info(iqiyi_url)
+            
+            # Combine results
+            response_data = {
+                'success': True,
+                'video_id': result.get('video_id'),
+                'title': result.get('title'),
+                'thumbnail': result.get('thumbnail'),
+                'm3u8_url': result.get('m3u8_url'),
+                'dash_url': result.get('dash_url'),
+                'iframe_url': result.get('iframe_url'),
+                'enhanced_iframe': result.get('enhanced_iframe'),
+                'extraction_method': result.get('extraction_method'),
+                'subtitles': subtitle_info.get('subtitles', [])
+            }
+            
+            logging.info(f"IQiyi extraction successful: {result.get('extraction_method')}")
+            return jsonify(response_data)
+        else:
+            logging.error(f"IQiyi extraction failed: {result.get('error')}")
+            return jsonify({
+                'success': False,
+                'error': result.get('error', 'Unknown error occurred'),
+                'iframe_url': iqiyi_url  # Always provide fallback
+            }), 400
+            
+    except Exception as e:
+        logging.error(f"IQiyi API error: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': f'Server error: {str(e)}'
+        }), 500
 
 @admin_bp.route('/system-settings')
 @admin_required

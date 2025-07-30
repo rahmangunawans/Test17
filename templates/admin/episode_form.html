@@ -78,6 +78,25 @@
                             <p class="text-xs text-gray-400 mt-1">Embed iframe URL for external player</p>
                         </div>
                         
+                        <!-- Server 3: IQiyi URL -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">
+                                <i class="fas fa-globe mr-1 text-purple-500"></i>
+                                Server 3 - IQiyi URL
+                            </label>
+                            <div class="flex space-x-2">
+                                <input type="url" name="iqiyi_url" 
+                                       value="{{ episode.iqiyi_url if episode else '' }}"
+                                       class="flex-1 px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-red-500"
+                                       placeholder="https://www.iq.com/play/video-episode">
+                                <button type="button" id="extract-iqiyi-btn"
+                                        class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors">
+                                    <i class="fas fa-magic mr-1"></i>Extract
+                                </button>
+                            </div>
+                            <p class="text-xs text-gray-400 mt-1">IQiyi video URL with M3U8 extraction</p>
+                        </div>
+                        
 
                         
                         <!-- Legacy Video URL (for backwards compatibility) -->
@@ -103,6 +122,23 @@
                            placeholder="https://example.com/thumbnail.jpg">
                 </div>
                 
+                <!-- Subtitle URLs (Auto-filled from IQiyi extraction) -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-2">
+                        <i class="fas fa-closed-captioning mr-1 text-blue-400"></i>
+                        Subtitle URLs (JSON)
+                    </label>
+                    <textarea name="subtitle_urls" id="subtitle_urls" rows="3"
+                              class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-red-500 font-mono text-sm"
+                              placeholder='[{"language": "English", "url": "https://example.com/subtitle.vtt"}]'>{{ episode.subtitle_urls if episode else '' }}</textarea>
+                    <p class="text-xs text-gray-400 mt-1">JSON array of subtitle objects (auto-filled from IQiyi extraction)</p>
+                    
+                    <!-- Subtitle Preview Container -->
+                    <div id="subtitle-container" class="mt-3 space-y-2">
+                        <!-- Subtitles will be displayed here -->
+                    </div>
+                </div>
+                
                 <div>
                     <label class="block text-sm font-medium text-gray-300 mb-2">Description</label>
                     <textarea name="description" rows="4"
@@ -126,4 +162,136 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// IQiyi extraction functionality
+async function extractIqiyiData(event) {
+    const iqiyiUrl = document.querySelector('input[name="iqiyi_url"]').value;
+    
+    if (!iqiyiUrl) {
+        showNotification('Please enter an IQiyi URL first', 'error');
+        return;
+    }
+    
+    const button = event.target;
+    const originalText = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Extracting...';
+    button.disabled = true;
+    
+    try {
+        const response = await fetch('/admin/api/iqiyi/extract', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ url: iqiyiUrl })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            // Update M3U8 URL if extracted
+            if (data.m3u8_url) {
+                document.querySelector('input[name="server_m3u8_url"]').value = data.m3u8_url;
+                showNotification('M3U8 URL extracted successfully!', 'success');
+            }
+            
+            // Update subtitles
+            if (data.subtitles && data.subtitles.length > 0) {
+                updateSubtitlesDisplay(data.subtitles);
+                document.getElementById('subtitle_urls').value = JSON.stringify(data.subtitles);
+                showNotification(`Found ${data.subtitles.length} subtitle(s)!`, 'success');
+            }
+            
+            if (!data.m3u8_url && (!data.subtitles || data.subtitles.length === 0)) {
+                showNotification('IQiyi URL verified! Video will use iframe player as fallback.', 'success');
+            }
+        } else {
+            showNotification(data.error || 'Failed to extract IQiyi data', 'error');
+        }
+    } catch (error) {
+        console.error('Error extracting IQiyi data:', error);
+        showNotification('Error extracting IQiyi data', 'error');
+    } finally {
+        button.innerHTML = originalText;
+        button.disabled = false;
+    }
+}
+
+function updateSubtitlesDisplay(subtitles) {
+    const container = document.getElementById('subtitle-container');
+    
+    if (subtitles.length === 0) {
+        container.innerHTML = `
+            <div class="text-sm text-gray-400 p-3 bg-gray-800 rounded-lg">
+                No subtitles found.
+            </div>
+        `;
+        return;
+    }
+    
+    container.innerHTML = subtitles.map((subtitle, index) => `
+        <div class="p-3 bg-gray-800 rounded-lg border border-gray-600">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <i class="fas fa-closed-captioning text-blue-400"></i>
+                    <span class="text-white font-medium">${subtitle.language}</span>
+                </div>
+                ${subtitle.url ? `<a href="${subtitle.url}" target="_blank" 
+                   class="px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded">
+                    <i class="fas fa-external-link-alt mr-1"></i>Preview
+                </a>` : '<span class="text-gray-400 text-xs">No URL</span>'}
+            </div>
+            ${subtitle.url ? `<div class="mt-2 text-xs text-gray-400 break-all">
+                ${subtitle.url}
+            </div>` : ''}
+        </div>
+    `).join('');
+}
+
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = `fixed top-4 right-4 z-50 px-6 py-3 rounded-xl text-white font-medium transition-all duration-300 transform translate-x-full ${
+        type === 'success' ? 'bg-green-500' : 
+        type === 'error' ? 'bg-red-500' : 
+        'bg-blue-500'
+    }`;
+    notification.textContent = message;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.classList.remove('translate-x-full');
+    }, 100);
+    
+    setTimeout(() => {
+        notification.classList.add('translate-x-full');
+        setTimeout(() => {
+            document.body.removeChild(notification);
+        }, 300);
+    }, 3000);
+}
+
+// Initialize page
+document.addEventListener('DOMContentLoaded', function() {
+    // Add click event listener for IQiyi extraction button
+    const extractBtn = document.getElementById('extract-iqiyi-btn');
+    if (extractBtn) {
+        extractBtn.addEventListener('click', extractIqiyiData);
+    }
+    
+    // Initialize existing subtitles display
+    const existingSubtitles = document.getElementById('subtitle_urls').value;
+    if (existingSubtitles) {
+        try {
+            const subtitles = JSON.parse(existingSubtitles);
+            updateSubtitlesDisplay(subtitles);
+        } catch (e) {
+            console.error('Error parsing existing subtitles:', e);
+        }
+    }
+});
+</script>
 {% endblock %}

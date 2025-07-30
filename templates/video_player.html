@@ -213,7 +213,14 @@ loadVideoJS().catch(console.error);
                         </button>
                         {% endif %}
                         
-
+                        {% if episode.iqiyi_url %}
+                        <button onclick="switchServer('iqiyi', '{{ episode.iqiyi_url }}')" 
+                                id="server-iqiyi"
+                                class="server-btn flex items-center px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-medium transition-all duration-200">
+                            <i class="fas fa-globe mr-2"></i>
+                            Server 3 (IQiyi)
+                        </button>
+                        {% endif %}
                         
                         {% if episode.video_url %}
                         <button onclick="switchServer('direct', '{{ episode.video_url }}')" 
@@ -587,6 +594,10 @@ function switchServer(serverType, serverUrl) {
             showNotification('Switched to Embed Server', 'success');
             break;
             
+        case 'iqiyi':
+            showIqiyiPlayer(serverUrl);
+            showNotification('Switched to IQiyi Server', 'success');
+            break;
 
     }
 }
@@ -620,6 +631,42 @@ function showEmbedPlayer(url) {
     
     embedPlayer.src = url;
     embedContainer.classList.remove('hidden');
+}
+
+function showIqiyiPlayer(url) {
+    const embedContainer = document.getElementById('embed-container');
+    const embedPlayer = document.getElementById('embed-player');
+    
+    // Enhanced IQiyi URL with better embedding parameters
+    let iqiyiUrl = url;
+    if (url.includes('iq.com')) {
+        // Add embedding parameters if not already present
+        if (!url.includes('autoplay=1')) {
+            iqiyiUrl += (url.includes('?') ? '&' : '?') + 'autoplay=1&controls=1&embedded=1';
+        }
+    }
+    
+    embedPlayer.src = iqiyiUrl;
+    embedContainer.classList.remove('hidden');
+    
+    // Load subtitles if available
+    loadSubtitles();
+}
+
+function loadSubtitles() {
+    // Check if episode has subtitles
+    {% if episode.subtitle_urls %}
+    try {
+        const subtitles = JSON.parse('{{ episode.subtitle_urls|safe }}');
+        if (subtitles && subtitles.length > 0) {
+            console.log('Available subtitles:', subtitles);
+            // Display subtitle options (can be enhanced further)
+            showNotification(`${subtitles.length} subtitle(s) available`, 'info');
+        }
+    } catch (e) {
+        console.error('Error parsing subtitles:', e);
+    }
+    {% endif %}
 }
 
 function setupPlayerEvents(player, data) {
@@ -724,7 +771,9 @@ function initializeApp() {
         {% if episode.server_embed_url %}
         {type: 'embed', url: '{{ episode.server_embed_url|safe }}'},
         {% endif %}
-
+        {% if episode.iqiyi_url %}
+        {type: 'iqiyi', url: '{{ episode.iqiyi_url|safe }}'},
+        {% endif %}
     ];
     
     if (serverOptions.length > 0) {
