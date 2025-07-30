@@ -76,7 +76,6 @@ class Episode(db.Model):
     # Multiple streaming servers
     server_m3u8_url = db.Column(db.String(500))  # M3U8 streaming URL
     server_embed_url = db.Column(db.String(500))  # Embed iframe URL
-    dash_url = db.Column(db.String(500))  # IQiyi DASH URL for M3U8 extraction
     subtitle_urls = db.Column(db.Text)  # JSON string for subtitle URLs
     
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -182,12 +181,11 @@ class SystemSettings(db.Model):
                 setting.description = description
             setting.updated_at = datetime.utcnow()
         else:
-            setting = SystemSettings(
-                setting_key=key,
-                setting_value=value,
-                setting_type=setting_type,
-                description=description
-            )
+            setting = SystemSettings()
+            setting.setting_key = key
+            setting.setting_value = value
+            setting.setting_type = setting_type
+            setting.description = description
             db.session.add(setting)
         db.session.commit()
         return setting
