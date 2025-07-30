@@ -574,7 +574,7 @@ class AnimeDataService:
 
     def _get_character_overview_anilist(self, anime_data: Dict[str, Any], title: str, content_type: str) -> str:
         """
-        Get character overview information from AniList data
+        Get character overview information from AniList data with detailed character profiles
         
         Args:
             anime_data: Raw anime data from AniList
@@ -582,54 +582,86 @@ class AnimeDataService:
             content_type: Type of content (anime, movie, donghua)
             
         Returns:
-            Character overview string with main character information
+            Character overview string with detailed character information including photos, names, voice actors, and descriptions
         """
         try:
-            # Try to get character information if available
-            characters_info = []
+            characters_overview = []
             
             # AniList API might have character data in different formats
             if 'characters' in anime_data and anime_data['characters']:
                 characters = anime_data['characters']
                 if isinstance(characters, list):
-                    for char in characters[:5]:  # Limit to top 5 characters
+                    for i, char in enumerate(characters[:4]):  # Limit to top 4 characters
                         if isinstance(char, dict):
                             char_name = char.get('name', {}).get('full', '') or char.get('name', '')
-                            char_role = char.get('role', '')
+                            char_role = char.get('role', 'Main Character')
+                            char_image = char.get('image', {}).get('large', '') if isinstance(char.get('image'), dict) else ''
+                            
+                            # Get voice actor information if available
+                            voice_actor = 'Unknown Voice Actor'
+                            if 'voice_actors' in char and char['voice_actors']:
+                                va_data = char['voice_actors'][0] if isinstance(char['voice_actors'], list) else char['voice_actors']
+                                if isinstance(va_data, dict):
+                                    va_name = va_data.get('name', {}).get('full', '') if isinstance(va_data.get('name'), dict) else va_data.get('name', '')
+                                    if va_name:
+                                        voice_actor = va_name
+                            
+                            # Create character description based on role and available info
+                            description = char.get('description', f"Karakter {char_role.lower()} dalam {title}")
+                            if not description or len(description) < 10:
+                                if char_role.lower() == 'main':
+                                    description = f"Protagonis utama dalam cerita {title} dengan peran penting dalam alur cerita."
+                                elif char_role.lower() == 'supporting':
+                                    description = f"Karakter pendukung yang membantu mengembangkan cerita {title}."
+                                else:
+                                    description = f"Karakter penting dalam {title} yang berkontribusi pada perkembangan plot."
+                            
                             if char_name:
-                                role_text = f" ({char_role})" if char_role else ""
-                                characters_info.append(f"{char_name}{role_text}")
+                                character_info = f"""
+**Karakter {i+1}:**
+• Foto: {char_image if char_image else 'Tidak tersedia'}
+• Nama Karakter: {char_name}
+• Pengisi Suara: {voice_actor}
+• Deskripsi: {description[:150]}{'...' if len(description) > 150 else ''}"""
+                                characters_overview.append(character_info)
             
             # If we have character data, format it properly
-            if characters_info:
-                char_list = ", ".join(characters_info)
-                if content_type == 'movie':
-                    return f"Main characters: {char_list}. These characters drive the story and development in this film."
-                else:
-                    return f"Main characters: {char_list}. These characters develop throughout the series with complex relationships and story arcs."
+            if characters_overview:
+                return '\n'.join(characters_overview)
             
-            # Fallback: try to extract character mentions from description
+            # Fallback: try to extract character mentions from description and create basic profiles
             description = anime_data.get('desc', '')
             if description:
-                # Look for character name patterns in description
                 character_mentions = self._extract_character_mentions(description)
                 if character_mentions:
-                    char_list = ", ".join(character_mentions[:3])  # Top 3 mentions
-                    return f"Key characters mentioned: {char_list}. {title} features these characters in important roles throughout the story."
+                    fallback_chars = []
+                    for i, char_name in enumerate(character_mentions[:3]):
+                        fallback_info = f"""
+**Karakter {i+1}:**
+• Foto: Tidak tersedia
+• Nama Karakter: {char_name}
+• Pengisi Suara: Akan diumumkan
+• Deskripsi: Karakter penting dalam {title} yang berperan dalam pengembangan cerita."""
+                        fallback_chars.append(fallback_info)
+                    return '\n'.join(fallback_chars)
             
-            # Final fallback with meaningful content
-            if content_type == 'movie':
-                return f"{title} features a cast of characters whose interactions and development drive the film's narrative forward."
-            else:
-                return f"{title} showcases diverse characters with unique personalities and backgrounds, each contributing to the overall story through their relationships and individual growth arcs."
+            # Final fallback with generic character template
+            generic_overview = f"""
+**Karakter Utama:**
+• Foto: Akan ditambahkan
+• Nama Karakter: Protagonis {title}
+• Pengisi Suara: Akan diumumkan
+• Deskripsi: Karakter utama yang menggerakkan alur cerita dalam {title}."""
+            
+            return generic_overview
                 
         except Exception as e:
             logging.error(f"Error getting character overview for '{title}': {str(e)}")
-            return f"{title} features memorable characters that contribute to an engaging storyline."
+            return f"Informasi karakter untuk {title} akan segera tersedia."
     
     def _get_character_overview_mal(self, anime_data: Dict[str, Any], title: str, content_type: str) -> str:
         """
-        Get character overview information from MyAnimeList data
+        Get character overview information from MyAnimeList data with detailed character profiles
         
         Args:
             anime_data: Raw anime data from MyAnimeList
@@ -637,60 +669,96 @@ class AnimeDataService:
             content_type: Type of content (anime, movie, donghua)
             
         Returns:
-            Character overview string with main character information
+            Character overview string with detailed character information including photos, names, voice actors, and descriptions
         """
         try:
-            # MyAnimeList API structure might have character info
-            characters_info = []
+            characters_overview = []
             
             # Try to get character data from MAL API response
             if 'characters' in anime_data and anime_data['characters']:
                 characters = anime_data['characters']
                 if isinstance(characters, list):
-                    for char in characters[:5]:  # Limit to top 5 characters
+                    for i, char in enumerate(characters[:4]):  # Limit to top 4 characters
                         if isinstance(char, dict):
                             char_name = char.get('name', '')
-                            char_role = char.get('role', '')
+                            char_role = char.get('role', 'Main Character')
+                            char_image = char.get('images', {}).get('jpg', {}).get('image_url', '') if isinstance(char.get('images'), dict) else ''
+                            
+                            # Get voice actor information if available
+                            voice_actor = 'Unknown Voice Actor'
+                            if 'voice_actors' in char and char['voice_actors']:
+                                va_data = char['voice_actors'][0] if isinstance(char['voice_actors'], list) else char['voice_actors']
+                                if isinstance(va_data, dict):
+                                    person = va_data.get('person', {})
+                                    if isinstance(person, dict):
+                                        va_name = person.get('name', '')
+                                        if va_name:
+                                            voice_actor = va_name
+                            
+                            # Create character description
+                            description = f"Karakter {char_role.lower()} dalam {title}"
+                            if char_role.lower() == 'main':
+                                description = f"Protagonis utama dalam cerita {title} dengan peran penting dalam alur cerita."
+                            elif char_role.lower() == 'supporting':
+                                description = f"Karakter pendukung yang membantu mengembangkan cerita {title}."
+                            else:
+                                description = f"Karakter penting dalam {title} yang berkontribusi pada perkembangan plot."
+                            
                             if char_name:
-                                role_text = f" ({char_role})" if char_role else ""
-                                characters_info.append(f"{char_name}{role_text}")
+                                character_info = f"""
+**Karakter {i+1}:**
+• Foto: {char_image if char_image else 'Tidak tersedia'}
+• Nama Karakter: {char_name}
+• Pengisi Suara: {voice_actor}
+• Deskripsi: {description}"""
+                                characters_overview.append(character_info)
             
             # If we have character data, format it properly
-            if characters_info:
-                char_list = ", ".join(characters_info)
-                if content_type == 'movie':
-                    return f"Main characters: {char_list}. These characters are central to the film's plot and emotional impact."
-                else:
-                    return f"Main characters: {char_list}. The series follows these characters through their personal journeys and interconnected storylines."
+            if characters_overview:
+                return '\n'.join(characters_overview)
             
-            # Try to extract from synopsis
+            # Try to extract from synopsis and create character profiles
             synopsis = anime_data.get('synopsis', '')
             if synopsis:
                 character_mentions = self._extract_character_mentions(synopsis)
                 if character_mentions:
-                    char_list = ", ".join(character_mentions[:3])
-                    return f"Featured characters: {char_list}. {title} explores their stories and character development throughout the narrative."
+                    fallback_chars = []
+                    for i, char_name in enumerate(character_mentions[:3]):
+                        fallback_info = f"""
+**Karakter {i+1}:**
+• Foto: Tidak tersedia
+• Nama Karakter: {char_name}
+• Pengisi Suara: Akan diumumkan
+• Deskripsi: Karakter penting dalam {title} yang berperan dalam pengembangan cerita."""
+                        fallback_chars.append(fallback_info)
+                    return '\n'.join(fallback_chars)
             
-            # Get genres to create more specific character description
+            # Get genres to create genre-specific character descriptions
             genres = anime_data.get('genres', [])
             genre_names = [g.get('name', '') for g in genres if isinstance(g, dict)] if genres else []
             
-            # Create genre-specific character descriptions
+            # Create genre-specific character template
             if any(genre in ['Action', 'Adventure', 'Shounen'] for genre in genre_names):
-                return f"{title} features dynamic characters who face challenges and grow stronger through their adventures and battles."
+                character_desc = f"Karakter yang kuat dan berani menghadapi tantangan dalam petualangan {title}."
             elif any(genre in ['Romance', 'Drama', 'Slice of Life'] for genre in genre_names):
-                return f"{title} presents relatable characters dealing with personal relationships, emotions, and everyday life situations."
+                character_desc = f"Karakter yang menghadapi masalah kehidupan sehari-hari dan hubungan personal dalam {title}."
             elif any(genre in ['Fantasy', 'Magic', 'Supernatural'] for genre in genre_names):
-                return f"{title} showcases characters with unique abilities and backgrounds in a world filled with magic and supernatural elements."
+                character_desc = f"Karakter dengan kemampuan khusus dalam dunia fantasi {title}."
             else:
-                if content_type == 'movie':
-                    return f"{title} brings together memorable characters whose individual stories converge in this cinematic experience."
-                else:
-                    return f"{title} features well-developed characters, each with distinct personalities and motivations that drive the series forward."
+                character_desc = f"Karakter utama yang menggerakkan alur cerita dalam {title}."
+            
+            generic_overview = f"""
+**Karakter Utama:**
+• Foto: Akan ditambahkan
+• Nama Karakter: Protagonis {title}
+• Pengisi Suara: Akan diumumkan
+• Deskripsi: {character_desc}"""
+            
+            return generic_overview
                 
         except Exception as e:
             logging.error(f"Error getting MAL character overview for '{title}': {str(e)}")
-            return f"{title} features engaging characters that bring depth and personality to the story."
+            return f"Informasi karakter untuk {title} akan segera tersedia."
     
     def _extract_character_mentions(self, text: str) -> List[str]:
         """

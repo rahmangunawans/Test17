@@ -360,7 +360,17 @@ document.addEventListener('DOMContentLoaded', function() {
         if (contentTypeField) contentTypeField.value = anime.content_type || 'anime';
         if (thumbnailField) thumbnailField.value = anime.thumbnail_url || '';
         if (trailerField) trailerField.value = anime.trailer_url || '';
-        if (studioField) studioField.value = anime.studio || '';
+        // Force studio field update with debugging
+        if (studioField) {
+            console.log('Studio field found:', studioField);
+            console.log('Studio data:', anime.studio);
+            if (anime.studio) {
+                studioField.value = anime.studio;
+                console.log('Studio field set to:', studioField.value);
+            }
+        } else {
+            console.log('Studio field not found!');
+        }
         if (totalEpisodesField && anime.total_episodes) totalEpisodesField.value = anime.total_episodes;
         if (statusField) statusField.value = anime.status || 'unknown';
         
