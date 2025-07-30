@@ -9,8 +9,7 @@ from sqlalchemy.orm import DeclarativeBase
 from werkzeug.middleware.proxy_fix import ProxyFix
 from dotenv import load_dotenv
 
-# Import torrent streaming
-from torrent_streaming import TorrentStreamer, create_torrent_routes
+# Torrent streaming removed - using client-side JavaScript only
 
 # Load environment variables
 load_dotenv()
@@ -484,9 +483,5 @@ def edit_profile():
     
     return render_template('edit_profile.html')
 
-# Initialize torrent streaming routes
-try:
-    create_torrent_routes(app)
-    logging.info("Torrent streaming routes initialized successfully")
-except Exception as e:
-    logging.error(f"Failed to initialize torrent routes: {e}")
+# Torrent streaming now handled by client-side JavaScript only
+logging.info("Using client-side WebTorrent streaming")

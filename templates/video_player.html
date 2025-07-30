@@ -962,16 +962,16 @@ function copyTorrentLink() {
 let webTorrentClient = null;
 let currentTorrent = null;
 
-async function startTorrentStreaming() {
+function startTorrentStreaming() {
     if (!currentTorrentUrl) {
         showNotification('No torrent URL available', 'error');
         return;
     }
     
-    console.log('Starting real-time WebTorrent streaming for:', currentTorrentUrl);
+    console.log('Starting client-side WebTorrent streaming for:', currentTorrentUrl);
     
     // Update UI
-    updateTorrentStatus('Initializing WebTorrent client...', 'text-yellow-400');
+    updateTorrentStatus('Initializing client-side streaming...', 'text-yellow-400');
     const startBtn = document.getElementById('start-torrent-btn');
     if (startBtn) startBtn.disabled = true;
     
@@ -1490,49 +1490,7 @@ async function cleanupOldSessions() {
 // Auto cleanup old sessions every 10 minutes
 setInterval(cleanupOldSessions, 10 * 60 * 1000);
 
-// Test Python torrent API
-async function testPythonTorrentAPI() {
-    console.log('Testing Python torrent API...');
-    
-    try {
-        const testMagnet = "magnet:?xt=urn:btih:TIVVXAOK3HWTVYJJJB3EXPEMAWEIUSGC";
-        
-        const response = await fetch('/torrent/create-session', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                'magnet': testMagnet
-            })
-        });
-        
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const result = await response.json();
-        console.log('API Test Result:', result);
-        
-        if (result.success) {
-            console.log('✅ Python Torrent API is working correctly!');
-            return true;
-        } else {
-            console.log('❌ Python Torrent API test failed:', result.error);
-            return false;
-        }
-        
-    } catch (error) {
-        console.error('❌ Python Torrent API test error:', error);
-        return false;
-    }
-}
-
-// Run API test when page loads
-document.addEventListener('DOMContentLoaded', function() {
-    // Test API after a short delay
-    setTimeout(testPythonTorrentAPI, 2000);
-});
+// Simplified client-side only torrent streaming
 
 // External player functions
 function openWebtorIo() {
