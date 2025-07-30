@@ -27,10 +27,37 @@ def extract_m3u8_from_dash(dash_url):
         response = requests.get(dash_url, headers=headers, timeout=30)
         response.raise_for_status()
         
+        # Check if response is M3U8 playlist content directly
+        content_type = response.headers.get('content-type', '').lower()
+        if 'application/vnd.apple.mpegurl' in content_type or 'text/plain' in content_type:
+            content = response.text
+            if content.startswith('#EXTM3U') or '#EXTINF' in content:
+                logging.info("Response is M3U8 playlist content directly")
+                # Create a temporary M3U8 file URL that can be served
+                temp_m3u8_url = f"data:application/vnd.apple.mpegurl;base64,{content.encode('utf-8').hex()}"
+                return {
+                    'success': True,
+                    'm3u8_url': dash_url,  # Return the original URL which serves M3U8
+                    'total_segments': content.count('#EXTINF'),
+                    'message': 'Direct M3U8 playlist extracted'
+                }
+        
         # Parse the JSON response from IQiyi DASH API
         try:
             data = response.json()
             logging.info("Successfully parsed DASH response as JSON")
+            
+            # Check for dm3u8 field (IQiyi specific)
+            if 'dm3u8' in data:
+                dm3u8_url = data['dm3u8']
+                if dm3u8_url and dm3u8_url.startswith('http'):
+                    logging.info(f"Found dm3u8 URL: {dm3u8_url}")
+                    return {
+                        'success': True,
+                        'm3u8_url': dm3u8_url,
+                        'total_segments': 0,
+                        'message': 'M3U8 URL extracted from dm3u8 field'
+                    }
             
             # First check for direct M3U8 URL in the JSON response
             if 'm3u8' in data:
@@ -49,7 +76,7 @@ def extract_m3u8_from_dash(dash_url):
                 if isinstance(obj, dict):
                     for key, value in obj.items():
                         current_path = f"{path}.{key}" if path else key
-                        if key == 'm3u8' and isinstance(value, str) and value.startswith('http'):
+                        if ('m3u8' in key.lower() or 'hls' in key.lower()) and isinstance(value, str) and value.startswith('http'):
                             logging.info(f"Found M3U8 URL at {current_path}: {value}")
                             return value
                         if isinstance(value, (dict, list)):
