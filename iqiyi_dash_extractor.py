@@ -32,7 +32,49 @@ def extract_m3u8_from_dash(dash_url):
             data = response.json()
             logging.info("Successfully parsed DASH response as JSON")
             
-            # Extract video streaming URLs from IQiyi DASH response
+            # First check for direct M3U8 URL in the JSON response
+            if 'm3u8' in data:
+                m3u8_url = data['m3u8']
+                if m3u8_url and m3u8_url.startswith('http'):
+                    logging.info(f"Found M3U8 URL directly in response: {m3u8_url}")
+                    return {
+                        'success': True,
+                        'm3u8_url': m3u8_url,
+                        'total_segments': 0,
+                        'message': 'M3U8 URL extracted from JSON response'
+                    }
+            
+            # Check for M3U8 URL in nested data structures
+            def find_m3u8_in_data(obj, path=""):
+                if isinstance(obj, dict):
+                    for key, value in obj.items():
+                        current_path = f"{path}.{key}" if path else key
+                        if key == 'm3u8' and isinstance(value, str) and value.startswith('http'):
+                            logging.info(f"Found M3U8 URL at {current_path}: {value}")
+                            return value
+                        if isinstance(value, (dict, list)):
+                            result = find_m3u8_in_data(value, current_path)
+                            if result:
+                                return result
+                elif isinstance(obj, list):
+                    for i, item in enumerate(obj):
+                        current_path = f"{path}[{i}]" if path else f"[{i}]"
+                        if isinstance(item, (dict, list)):
+                            result = find_m3u8_in_data(item, current_path)
+                            if result:
+                                return result
+                return None
+            
+            m3u8_url = find_m3u8_in_data(data)
+            if m3u8_url:
+                return {
+                    'success': True,
+                    'm3u8_url': m3u8_url,
+                    'total_segments': 0,
+                    'message': 'M3U8 URL found in nested JSON data'
+                }
+            
+            # Extract video streaming URLs from IQiyi DASH response (fallback)
             if data.get('data') and data['data'].get('program') and data['data']['program'].get('video'):
                 videos = data['data']['program']['video']
                 logging.info(f"Found {len(videos)} video streams")
