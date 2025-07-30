@@ -10,7 +10,7 @@ from sqlalchemy.orm import DeclarativeBase
 from werkzeug.middleware.proxy_fix import ProxyFix
 from dotenv import load_dotenv
 
-# Torrent streaming removed - using client-side JavaScript only
+
 
 # Load environment variables
 load_dotenv()
@@ -495,5 +495,5 @@ def edit_profile():
     
     return render_template('edit_profile.html')
 
-# Torrent streaming now handled by client-side JavaScript only
-logging.info("Using client-side WebTorrent streaming")
+
+

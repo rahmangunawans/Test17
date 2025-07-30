@@ -6,7 +6,7 @@ from notifications import create_notification, notify_admin_message, notify_new_
 from werkzeug.security import generate_password_hash
 from sqlalchemy import text, inspect
 from anilist_integration import anilist_service
-from iqiyi_integration import iqiyi_integration
+
 import logging
 import json
 
@@ -192,86 +192,7 @@ def anilist_get_by_id(anilist_id):
             'error': 'Failed to get anime data. Please try again.'
         }), 500
 
-@admin_bp.route('/api/iqiyi/extract', methods=['POST'])
-@login_required
-@admin_required
-def iqiyi_extract():
-    """Extract M3U8 and subtitles from IQiyi URL"""
-    try:
-        logging.info("=== IQiyi EXTRACTION ENDPOINT HIT ===")
-        logging.info(f"Request method: {request.method}")
-        logging.info(f"Request content type: {request.content_type}")
-        logging.info(f"Request path: {request.path}")
-        logging.info(f"User: {current_user.email if current_user.is_authenticated else 'Not authenticated'}")
-        logging.info(f"Raw request data: {request.get_data()}")
-        
-        logging.info("IQiyi extraction request received")
-        data = request.get_json()
-        if not data:
-            return jsonify({'success': False, 'error': 'No JSON data received'})
-            
-        url = data.get('url', '').strip()
-        logging.info(f"Processing IQiyi URL: {url}")
-        
-        if not url:
-            return jsonify({'success': False, 'error': 'URL is required'})
-        
-        # Validate IQiyi URL
-        if 'iq.com' not in url:
-            return jsonify({'success': False, 'error': 'Invalid IQiyi URL'})
-        
-        logging.info("Starting M3U8 extraction...")
-        # Extract M3U8 URL
-        m3u8_url = iqiyi_integration.get_m3u8_url(url)
-        logging.info(f"M3U8 extraction result: {m3u8_url}")
-        
-        logging.info("Starting subtitle extraction...")
-        # Extract subtitles
-        subtitles = iqiyi_integration.get_subtitles(url, subtitle_type="srt")
-        logging.info(f"Subtitle extraction result: {len(subtitles) if subtitles else 0} subtitles found")
-        
-        return jsonify({
-            'success': True,
-            'm3u8_url': m3u8_url,
-            'subtitles': subtitles or []
-        })
-        
-    except Exception as e:
-        logging.error(f"IQiyi extraction error: {e}")
-        import traceback
-        logging.error(f"Full traceback: {traceback.format_exc()}")
-        return jsonify({'success': False, 'error': f'Extraction failed: {str(e)}'})
 
-@admin_bp.route('/api/iqiyi/content-info', methods=['POST'])
-@login_required
-@admin_required
-def iqiyi_content_info():
-    """Extract comprehensive content information from IQiyi series URL"""
-    try:
-        data = request.get_json()
-        url = data.get('url', '').strip()
-        
-        if not url:
-            return jsonify({'success': False, 'error': 'URL is required'})
-        
-        # Validate IQiyi URL
-        if 'iq.com' not in url:
-            return jsonify({'success': False, 'error': 'Invalid IQiyi URL'})
-        
-        # Extract content information
-        content_info = iqiyi_integration.extract_content_info(url)
-        
-        if content_info:
-            return jsonify({
-                'success': True,
-                'content_info': content_info
-            })
-        else:
-            return jsonify({'success': False, 'error': 'Failed to extract content information'})
-        
-    except Exception as e:
-        logging.error(f"IQiyi content extraction error: {e}")
-        return jsonify({'success': False, 'error': str(e)})
 
 @admin_bp.route('/admin/content/<int:content_id>/edit', methods=['GET', 'POST'])
 @login_required
@@ -364,10 +285,7 @@ def add_episode(content_id):
                 thumbnail_url=request.form.get('thumbnail_url', ''),
                 description=request.form.get('description', ''),
                 server_m3u8_url=request.form.get('server_m3u8_url', ''),
-                server_embed_url=request.form.get('server_embed_url', ''),
-                server_torrent_url=request.form.get('server_torrent_url', ''),
-                iqiyi_url=request.form.get('iqiyi_url', ''),
-                subtitle_urls=request.form.get('subtitle_urls', '')
+                server_embed_url=request.form.get('server_embed_url', '')
             )
             db.session.add(episode)
             db.session.commit()
@@ -399,9 +317,6 @@ def edit_episode(episode_id):
             episode.description = request.form.get('description', '')
             episode.server_m3u8_url = request.form.get('server_m3u8_url', '')
             episode.server_embed_url = request.form.get('server_embed_url', '')
-            episode.server_torrent_url = request.form.get('server_torrent_url', '')
-            episode.iqiyi_url = request.form.get('iqiyi_url', '')
-            episode.subtitle_urls = request.form.get('subtitle_urls', '')
             
             db.session.commit()
             flash(f'Episode {episode.episode_number} updated successfully!', 'success')
