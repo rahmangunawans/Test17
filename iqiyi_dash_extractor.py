@@ -27,69 +27,103 @@ def extract_m3u8_from_dash(dash_url):
         response = requests.get(dash_url, headers=headers, timeout=30)
         response.raise_for_status()
         
-        # Parse the response to find M3U8 URLs
+        # Parse the JSON response from IQiyi DASH API
+        try:
+            data = response.json()
+            logging.info("Successfully parsed DASH response as JSON")
+            
+            # Extract video streaming URLs from IQiyi DASH response
+            if data.get('data') and data['data'].get('program') and data['data']['program'].get('video'):
+                videos = data['data']['program']['video']
+                logging.info(f"Found {len(videos)} video streams")
+                
+                # Look for the best quality stream
+                best_stream = None
+                best_bitrate = 0
+                
+                for video in videos:
+                    bitrate = video.get('br', 0)
+                    
+                    # Check if this video has streaming data
+                    if video.get('play') and video['play'].get('ts'):
+                        ts_data = video['play']['ts']
+                        if ts_data.get('l'):  # Base URL exists
+                            logging.info(f"Found stream with bitrate {bitrate}")
+                            if bitrate > best_bitrate:
+                                best_stream = video
+                                best_bitrate = bitrate
+                
+                if best_stream:
+                    # Extract streaming information
+                    ts_data = best_stream['play']['ts']
+                    base_url = ts_data['l']
+                    duration = best_stream.get('duration', 0)
+                    segments = duration // 10  # Estimate segments (10 seconds each)
+                    
+                    logging.info(f"Selected stream: bitrate={best_bitrate}, duration={duration}s")
+                    logging.info(f"Base URL: {base_url[:100]}...")
+                    
+                    # For IQiyi, we return the base streaming URL
+                    # The client will handle playback through their player
+                    return {
+                        'success': True,
+                        'm3u8_url': base_url,
+                        'total_segments': segments,
+                        'bitrate': best_bitrate,
+                        'duration': duration,
+                        'message': f'IQiyi stream extracted (bitrate: {best_bitrate})'
+                    }
+            
+            # Fallback: Look for direct M3U8 URLs in the response
+            content = response.text
+            m3u8_patterns = [
+                r'https?://[^"\s]+\.m3u8[^"\s]*',
+                r'"(https?://[^"]+\.m3u8[^"]*)"',
+                r"'(https?://[^']+\.m3u8[^']*)'",
+            ]
+            
+            m3u8_urls = []
+            for pattern in m3u8_patterns:
+                matches = re.findall(pattern, content, re.IGNORECASE)
+                m3u8_urls.extend(matches)
+            
+            if m3u8_urls:
+                unique_urls = list(set(m3u8_urls))
+                best_url = unique_urls[0].strip('"\'')
+                
+                logging.info(f"Fallback: Found M3U8 URL: {best_url}")
+                return {
+                    'success': True,
+                    'm3u8_url': best_url,
+                    'total_segments': 0,
+                    'message': 'M3U8 URL found via fallback method'
+                }
+                
+        except json.JSONDecodeError:
+            logging.warning("Response is not valid JSON, trying text parsing")
+            
+        # Method 2: Text-based parsing for non-JSON responses
         content = response.text
         
-        # Method 1: Look for direct M3U8 URLs in the content
-        m3u8_patterns = [
-            r'https?://[^"\s]+\.m3u8[^"\s]*',
-            r'"(https?://[^"]+\.m3u8[^"]*)"',
-            r"'(https?://[^']+\.m3u8[^']*)'",
+        # Look for JSONP callbacks
+        jsonp_patterns = [
+            r'QZOutputJson\s*=\s*({.+?});',
+            r'callback\s*\(\s*({.+?})\s*\)',
         ]
         
-        m3u8_urls = []
-        for pattern in m3u8_patterns:
-            matches = re.findall(pattern, content, re.IGNORECASE)
-            m3u8_urls.extend(matches)
-        
-        if m3u8_urls:
-            # Remove duplicates and clean URLs
-            unique_urls = list(set(m3u8_urls))
-            best_url = unique_urls[0]  # Take the first one
-            
-            # Clean the URL (remove quotes, etc.)
-            best_url = best_url.strip('"\'')
-            
-            logging.info(f"Found M3U8 URL: {best_url}")
-            
-            # Try to get segment count from M3U8 playlist
-            try:
-                m3u8_response = requests.get(best_url, headers=headers, timeout=15)
-                if m3u8_response.status_code == 200:
-                    segments = len(re.findall(r'#EXTINF:', m3u8_response.text))
-                    logging.info(f"M3U8 playlist has {segments} segments")
-                else:
-                    segments = 0
-            except:
-                segments = 0
-            
-            return {
-                'success': True,
-                'm3u8_url': best_url,
-                'total_segments': segments,
-                'message': 'M3U8 URL extracted successfully'
-            }
-        
-        # Method 2: Look for JSON data containing streaming URLs
-        json_patterns = [
-            r'window\.__INITIAL_STATE__\s*=\s*({.+?});',
-            r'window\.__NUXT__\s*=\s*({.+?});',
-            r'data\s*:\s*({.+?})',
-        ]
-        
-        for pattern in json_patterns:
+        for pattern in jsonp_patterns:
             matches = re.findall(pattern, content, re.DOTALL)
             for match in matches:
                 try:
                     data = json.loads(match)
-                    # Recursively search for M3U8 URLs in JSON
-                    m3u8_url = find_m3u8_in_dict(data)
-                    if m3u8_url:
+                    # Recursively search for streaming URLs
+                    stream_url = find_streaming_url_in_dict(data)
+                    if stream_url:
                         return {
                             'success': True,
-                            'm3u8_url': m3u8_url,
+                            'm3u8_url': stream_url,
                             'total_segments': 0,
-                            'message': 'M3U8 URL found in JSON data'
+                            'message': 'Stream URL found in JSONP data'
                         }
                 except:
                     continue
@@ -117,27 +151,30 @@ def extract_m3u8_from_dash(dash_url):
             'message': 'Unexpected error during extraction'
         }
 
-def find_m3u8_in_dict(data, max_depth=5):
+def find_streaming_url_in_dict(data, max_depth=5):
     """
-    Recursively search for M3U8 URLs in nested dictionary/list structures
+    Recursively search for streaming URLs in nested dictionary/list structures
     """
     if max_depth <= 0:
         return None
         
     if isinstance(data, dict):
         for key, value in data.items():
-            if isinstance(value, str) and '.m3u8' in value and value.startswith('http'):
-                return value
+            # Look for various streaming URL patterns
+            if isinstance(value, str) and value.startswith('http'):
+                if any(ext in value for ext in ['.m3u8', '.ts', 'stream', 'video']):
+                    return value
             elif isinstance(value, (dict, list)):
-                result = find_m3u8_in_dict(value, max_depth - 1)
+                result = find_streaming_url_in_dict(value, max_depth - 1)
                 if result:
                     return result
     elif isinstance(data, list):
         for item in data:
-            if isinstance(item, str) and '.m3u8' in item and item.startswith('http'):
-                return item
+            if isinstance(item, str) and item.startswith('http'):
+                if any(ext in item for ext in ['.m3u8', '.ts', 'stream', 'video']):
+                    return item
             elif isinstance(item, (dict, list)):
-                result = find_m3u8_in_dict(item, max_depth - 1)
+                result = find_streaming_url_in_dict(item, max_depth - 1)
                 if result:
                     return result
     
