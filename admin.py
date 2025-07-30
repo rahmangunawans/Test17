@@ -135,9 +135,10 @@ def add_content():
 @login_required
 @admin_required
 def anilist_search():
-    """API endpoint to search AniList for anime/manga data"""
+    """API endpoint to search AniList or MyAnimeList for anime/manga data"""
     query = request.args.get('q', '').strip()
     search_type = request.args.get('type', 'anime')  # anime or manga
+    source = request.args.get('source', 'anilist').strip()  # anilist or myanimelist
     
     if not query:
         return jsonify({'error': 'Query parameter is required'}), 400
@@ -147,19 +148,20 @@ def anilist_search():
             result = anilist_service.search_manga(query)
             results = [result] if result else []
         else:
-            results = anilist_service.search_anime(query, limit=5)
+            results = anilist_service.search_anime(query, source=source, limit=5)
         
         return jsonify({
             'success': True,
             'results': results,
-            'count': len(results)
+            'count': len(results),
+            'source': source
         })
         
     except Exception as e:
-        logging.error(f"AniList search error: {str(e)}")
+        logging.error(f"Anime search error for {source}: {str(e)}")
         return jsonify({
             'success': False,
-            'error': 'Failed to search AniList. Please try again.'
+            'error': f'Failed to search {source}. Please try again.'
         }), 500
 
 @admin_bp.route('/api/anilist/get/<int:anilist_id>')

@@ -18,17 +18,34 @@
             <p class="text-gray-400">{% if content %}Update content details{% else %}Add new anime, donghua, or movie{% endif %}</p>
         </div>
 
-        <!-- AniList Search Section -->
+        <!-- Anime Data Search Section -->
         <div class="bg-gray-800 rounded-lg p-6 mb-6">
             <h3 class="text-xl font-semibold text-white mb-4">
-                <i class="fas fa-search mr-2"></i>AniList Auto-Fill
+                <i class="fas fa-search mr-2"></i>Auto-Fill from Database
             </h3>
-            <p class="text-gray-400 mb-4">Search AniList to automatically populate content details</p>
+            <p class="text-gray-400 mb-4">Search AniList or MyAnimeList to automatically populate content details</p>
+            
+            <!-- Source Selection -->
+            <div class="flex items-center space-x-4 mb-4">
+                <label class="text-sm font-medium text-gray-300">Data Source:</label>
+                <div class="flex space-x-3">
+                    <label class="flex items-center">
+                        <input type="radio" name="search-source" value="anilist" checked 
+                               class="mr-2 text-red-600 focus:ring-red-500">
+                        <span class="text-white">AniList</span>
+                    </label>
+                    <label class="flex items-center">
+                        <input type="radio" name="search-source" value="myanimelist" 
+                               class="mr-2 text-red-600 focus:ring-red-500">
+                        <span class="text-white">MyAnimeList</span>
+                    </label>
+                </div>
+            </div>
             
             <div class="flex gap-4 mb-4">
                 <div class="flex-1">
                     <input type="text" id="anilist-search" 
-                           placeholder="Search anime/donghua/manga on AniList..."
+                           placeholder="Search anime/donghua/manga..."
                            class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-red-500">
                 </div>
                 <button type="button" id="search-anilist-btn" 
@@ -48,7 +65,7 @@
             <!-- Loading indicator -->
             <div id="search-loading" class="hidden text-center py-4">
                 <i class="fas fa-spinner fa-spin text-red-500 text-2xl"></i>
-                <p class="text-gray-400 mt-2">Searching AniList...</p>
+                <p class="text-gray-400 mt-2">Searching database...</p>
             </div>
         </div>
 
@@ -204,9 +221,17 @@ document.addEventListener('DOMContentLoaded', function() {
     const statusField = document.querySelector('select[name="status"]');
     const trailerField = document.querySelector('input[name="trailer_url"]');
     
+    // Get selected source
+    function getSelectedSource() {
+        const sourceRadio = document.querySelector('input[name="search-source"]:checked');
+        return sourceRadio ? sourceRadio.value : 'anilist';
+    }
+    
     // Search function
     function searchAniList() {
         const query = searchInput.value.trim();
+        const source = getSelectedSource();
+        
         if (!query || query.length < 2) {
             if (query.length > 0 && query.length < 2) {
                 resultsContainer.innerHTML = `
@@ -225,15 +250,19 @@ document.addEventListener('DOMContentLoaded', function() {
         resultsDiv.classList.add('hidden');
         searchBtn.disabled = true;
         
+        // Update loading text based on source
+        const loadingText = loadingDiv.querySelector('p');
+        loadingText.textContent = `Searching ${source === 'anilist' ? 'AniList' : 'MyAnimeList'}...`;
+        
         // Make API request
-        fetch(`/admin/api/anilist/search?q=${encodeURIComponent(query)}`)
+        fetch(`/admin/api/anilist/search?q=${encodeURIComponent(query)}&source=${source}`)
             .then(response => response.json())
             .then(data => {
                 loadingDiv.classList.add('hidden');
                 searchBtn.disabled = false;
                 
                 if (data.success && data.results.length > 0) {
-                    displayResults(data.results);
+                    displayResults(data.results, data.source);
                 } else {
                     resultsContainer.innerHTML = `
                         <div class="text-center py-4">
@@ -261,12 +290,26 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Display search results
-    function displayResults(results) {
+    function displayResults(results, source) {
         resultsContainer.innerHTML = '';
+        
+        // Add source header
+        if (results.length > 0) {
+            const sourceHeader = document.createElement('div');
+            sourceHeader.className = 'mb-3 p-2 bg-gray-700 rounded-lg';
+            sourceHeader.innerHTML = `
+                <div class="flex items-center">
+                    <i class="fas fa-database text-blue-400 mr-2"></i>
+                    <span class="text-white font-medium">Results from ${source === 'anilist' ? 'AniList' : 'MyAnimeList'}</span>
+                    <span class="ml-auto text-gray-400 text-sm">${results.length} result${results.length !== 1 ? 's' : ''}</span>
+                </div>
+            `;
+            resultsContainer.appendChild(sourceHeader);
+        }
         
         results.forEach((anime, index) => {
             const resultDiv = document.createElement('div');
-            resultDiv.className = 'bg-gray-700 rounded-lg p-4 cursor-pointer hover:bg-gray-600 transition-colors';
+            resultDiv.className = 'bg-gray-700 rounded-lg p-4 cursor-pointer hover:bg-gray-600 transition-colors border-l-4 border-transparent hover:border-red-500';
             
             resultDiv.innerHTML = `
                 <div class="flex items-start gap-4">
@@ -282,6 +325,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             ${anime.year ? `<span class="text-gray-400 text-sm">${anime.year}</span>` : ''}
                             ${anime.rating ? `<span class="text-yellow-400 text-sm">★ ${anime.rating}</span>` : ''}
                             ${anime.trailer_url ? `<span class="text-red-400 text-xs"><i class="fas fa-play"></i> Trailer</span>` : ''}
+                            ${anime.studio ? `<span class="text-green-400 text-xs"><i class="fas fa-building"></i> ${anime.studio}</span>` : ''}
                         </div>
                         <p class="text-gray-300 text-sm mb-2">${anime.genre || 'No genres'}</p>
                         <p class="text-gray-400 text-xs line-clamp-2">${anime.description ? anime.description.substring(0, 150) + '...' : 'No description'}</p>
@@ -290,7 +334,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
             `;
             
-            resultDiv.addEventListener('click', () => fillForm(anime));
+            resultDiv.addEventListener('click', () => fillForm(anime, source));
             resultsContainer.appendChild(resultDiv);
         });
         
@@ -298,7 +342,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Fill form with selected anime data
-    function fillForm(anime) {
+    function fillForm(anime, source) {
         if (titleField) titleField.value = anime.title || '';
         if (descriptionField) descriptionField.value = anime.description || '';
         if (genreField) genreField.value = anime.genre || '';
@@ -318,12 +362,13 @@ document.addEventListener('DOMContentLoaded', function() {
         document.querySelector('form').scrollIntoView({ behavior: 'smooth' });
         
         // Show success notification
+        const sourceName = source === 'anilist' ? 'AniList' : 'MyAnimeList';
         const notification = document.createElement('div');
         notification.className = 'fixed top-4 right-4 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg z-50';
         notification.innerHTML = `
             <div class="flex items-center">
                 <i class="fas fa-check-circle mr-2"></i>
-                <span>Form auto-filled from AniList!</span>
+                <span>Form auto-filled from ${sourceName}!</span>
             </div>
         `;
         document.body.appendChild(notification);

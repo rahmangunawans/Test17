@@ -1,34 +1,48 @@
 """
-AniList Integration for AniFlix
-Provides functions to search and retrieve anime/manga data from AniList API
+Anime Data Integration for AniFlix
+Provides functions to search and retrieve anime/manga data from AniList and MyAnimeList APIs
 """
 
 import AnilistPython
 import logging
 import requests
 from typing import Dict, List, Optional, Any
+import time
 
-class AnilistService:
+class AnimeDataService:
     def __init__(self):
-        """Initialize the AniList client"""
+        """Initialize both AniList and MyAnimeList clients"""
+        # Initialize AniList
         try:
             self.anilist = AnilistPython.Anilist()
             logging.info("AniList integration initialized successfully")
         except Exception as e:
             logging.error(f"Failed to initialize AniList integration: {str(e)}")
             self.anilist = None
+        
+        # MyAnimeList will use direct HTTP requests to v4 API
+        self.mal_base_url = "https://api.jikan.moe/v4"
+        logging.info("MyAnimeList (Jikan v4) integration initialized successfully")
     
-    def search_anime(self, query: str, limit: int = 10) -> List[Dict[str, Any]]:
+    def search_anime(self, query: str, source: str = "anilist", limit: int = 10) -> List[Dict[str, Any]]:
         """
-        Search for anime on AniList and return formatted results
+        Search for anime on specified source and return formatted results
         
         Args:
             query: Search query string
+            source: Data source ("anilist" or "myanimelist")
             limit: Maximum number of results to return
         
         Returns:
             List of dictionaries containing anime information
         """
+        if source == "myanimelist":
+            return self._search_myanimelist(query, limit)
+        else:
+            return self._search_anilist(query, limit)
+    
+    def _search_anilist(self, query: str, limit: int = 10) -> List[Dict[str, Any]]:
+        """Search anime using AniList API"""
         if not self.anilist:
             return []
         
@@ -52,20 +66,59 @@ class AnilistService:
                     
                     if anime_data and isinstance(anime_data, dict):
                         # Format the result for our application
-                        formatted_result = self._format_anime_data(anime_data)
+                        formatted_result = self._format_anilist_data(anime_data)
                         if formatted_result and formatted_result not in results:
                             results.append(formatted_result)
                             if len(results) >= limit:
                                 break
                                 
                 except Exception as search_error:
-                    logging.debug(f"Search variation '{search_query}' failed: {str(search_error)}")
+                    logging.debug(f"AniList search variation '{search_query}' failed: {str(search_error)}")
                     continue
             
             return results
             
         except Exception as e:
-            logging.error(f"Error searching anime '{query}': {str(e)}")
+            logging.error(f"Error searching anime on AniList '{query}': {str(e)}")
+            return []
+    
+    def _search_myanimelist(self, query: str, limit: int = 10) -> List[Dict[str, Any]]:
+        """Search anime using MyAnimeList (Jikan v4) API"""
+        try:
+            # Make direct HTTP request to Jikan v4 API
+            import requests
+            url = f"{self.mal_base_url}/anime"
+            params = {
+                'q': query,
+                'limit': min(limit, 25),  # API max is 25
+                'sfw': True
+            }
+            
+            response = requests.get(url, params=params, timeout=10)
+            
+            if response.status_code == 429:  # Rate limited
+                time.sleep(1)
+                response = requests.get(url, params=params, timeout=10)
+            
+            if response.status_code != 200:
+                logging.error(f"MyAnimeList API error: {response.status_code}")
+                return []
+            
+            search_results = response.json()
+            
+            if not search_results or 'data' not in search_results:
+                return []
+            
+            results = []
+            for anime_data in search_results['data'][:limit]:
+                formatted_result = self._format_myanimelist_data(anime_data)
+                if formatted_result:
+                    results.append(formatted_result)
+            
+            return results
+            
+        except Exception as e:
+            logging.error(f"Error searching anime on MyAnimeList '{query}': {str(e)}")
             return []
     
     def search_anime_by_id(self, anilist_id: int) -> Optional[Dict[str, Any]]:
@@ -87,7 +140,7 @@ class AnilistService:
             if not anime_data:
                 return None
             
-            return self._format_anime_data(anime_data)
+            return self._format_anilist_data(anime_data)
             
         except Exception as e:
             logging.error(f"Error getting anime with ID {anilist_id}: {str(e)}")
@@ -118,7 +171,7 @@ class AnilistService:
             logging.error(f"Error searching manga '{query}': {str(e)}")
             return None
     
-    def _format_anime_data(self, anime_data: Any) -> Dict[str, Any]:
+    def _format_anilist_data(self, anime_data: Any) -> Dict[str, Any]:
         """
         Format AniList anime data for our application
         
@@ -343,6 +396,106 @@ class AnilistService:
             logging.debug(f"Error finding studio for '{title}': {str(e)}")
             return ''
     
+    def _format_myanimelist_data(self, anime_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Format MyAnimeList anime data for our application
+        
+        Args:
+            anime_data: Raw anime data from MyAnimeList API
+            
+        Returns:
+            Formatted dictionary for our Content model
+        """
+        try:
+            # Get title (prefer English, fallback to original)
+            title = anime_data.get('title_english') or anime_data.get('title') or 'Unknown Title'
+            
+            # Get content type
+            content_type = 'anime'
+            anime_type = anime_data.get('type', '').lower()
+            if 'movie' in anime_type:
+                content_type = 'movie'
+            
+            # Format genres
+            genres = anime_data.get('genres', [])
+            genre_list = [genre.get('name', '') for genre in genres if isinstance(genre, dict)]
+            genre_str = ', '.join(genre_list) if genre_list else ''
+            
+            # Get description and clean it
+            synopsis = anime_data.get('synopsis', '')
+            description = synopsis.replace('[Written by MAL Rewrite]', '').strip()
+            if len(description) > 1000:
+                description = description[:997] + '...'
+            
+            # Get episodes count
+            episodes = anime_data.get('episodes')
+            total_episodes = episodes if episodes and episodes > 0 else None
+            
+            # Determine status
+            status = 'unknown'
+            mal_status = anime_data.get('status', '').lower()
+            if 'finished' in mal_status or 'completed' in mal_status:
+                status = 'completed'
+            elif 'airing' in mal_status or 'ongoing' in mal_status:
+                status = 'ongoing'
+            
+            # Get studio information
+            studios = anime_data.get('studios', [])
+            studio_list = [studio.get('name', '') for studio in studios if isinstance(studio, dict)]
+            studio = ', '.join(studio_list) if studio_list else ''
+            
+            # If no studio from API, try to get from mapping
+            if not studio:
+                studio = self._find_studio_info(title)
+            
+            # Get year from aired date
+            year = None
+            aired = anime_data.get('aired', {})
+            if aired and 'from' in aired and aired['from']:
+                try:
+                    from datetime import datetime
+                    aired_date = aired['from']
+                    if isinstance(aired_date, str):
+                        year = int(aired_date[:4])
+                    elif isinstance(aired_date, dict) and 'year' in aired_date:
+                        year = aired_date['year']
+                except:
+                    year = None
+            
+            # Get rating
+            score = anime_data.get('score')
+            rating = score if score else None
+            
+            # Get images
+            images = anime_data.get('images', {})
+            jpg_images = images.get('jpg', {}) if images else {}
+            thumbnail_url = jpg_images.get('large_image_url') or jpg_images.get('image_url') or ''
+            
+            # Try to find trailer URL
+            trailer_url = self._find_trailer_url(title)
+            
+            return {
+                'title': title,
+                'description': description,
+                'genre': genre_str,
+                'year': year,
+                'rating': rating,
+                'content_type': content_type,
+                'thumbnail_url': thumbnail_url,
+                'trailer_url': trailer_url,
+                'studio': studio,
+                'total_episodes': total_episodes,
+                'status': status,
+                'anilist_id': None,  # MyAnimeList doesn't provide AniList IDs
+                'anilist_url': '',
+                'mal_id': anime_data.get('mal_id'),
+                'mal_url': anime_data.get('url', '')
+            }
+            
+        except Exception as e:
+            logging.error(f"Error formatting MyAnimeList data: {str(e)}")
+            return {}
+    
     def _format_manga_data(self, manga_data: Dict[str, Any]) -> Dict[str, Any]:
         """
         Format AniList manga data (for donghua source material reference)
@@ -388,4 +541,7 @@ class AnilistService:
             return {}
 
 # Global instance
-anilist_service = AnilistService()
+anime_data_service = AnimeDataService()
+
+# Backward compatibility
+anilist_service = anime_data_service
