@@ -962,8 +962,9 @@
                                     </div>
                                 </div>
                                 
-                                <!-- Professional Subtitle Controls -->
+                                <!-- Professional Video Controls -->
                                 <div class="absolute top-4 right-4 flex gap-3">
+                                    <!-- Subtitle Selector -->
                                     <div class="relative">
                                         <select id="subtitle-selector" 
                                                 class="pointer-events-auto bg-black/70 hover:bg-black/80 backdrop-blur-sm rounded-lg px-4 py-2 text-white text-sm border border-white/20 hover:border-white/40 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500/50">
@@ -972,6 +973,69 @@
                                             <option value="sample-id" data-url="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.vtt" data-lang="Indonesian">Indonesian</option>
                                         </select>
                                     </div>
+
+                                    <!-- VIP Download Menu -->
+                                    {% if current_user.is_authenticated and current_user.subscription_status == 'active' %}
+                                    <div class="relative">
+                                        <button id="download-menu-btn" 
+                                                class="pointer-events-auto bg-black/70 hover:bg-black/80 backdrop-blur-sm rounded-lg px-4 py-2 text-white text-sm border border-white/20 hover:border-white/40 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500/50 flex items-center">
+                                            <i class="fas fa-download mr-2"></i>
+                                            Download
+                                        </button>
+                                        
+                                        <!-- Download Dropdown Menu -->
+                                        <div id="download-menu" class="absolute top-full right-0 mt-2 w-48 bg-black/90 backdrop-blur-md rounded-xl border border-white/20 shadow-2xl hidden z-50">
+                                            <div class="p-2">
+                                                <div class="text-white text-xs font-semibold mb-2 px-2 py-1 bg-red-500/20 rounded">VIP Feature</div>
+                                                
+                                                <!-- Video Download -->
+                                                <button onclick="downloadVideo()" class="w-full flex items-center px-3 py-2 text-white text-sm hover:bg-white/10 rounded-lg transition-all duration-200">
+                                                    <i class="fas fa-video mr-3 text-blue-400"></i>
+                                                    <div class="text-left">
+                                                        <div class="font-medium">Download Video</div>
+                                                        <div class="text-xs text-gray-400">HD Quality</div>
+                                                    </div>
+                                                </button>
+                                                
+                                                <!-- Subtitle Download -->
+                                                <button onclick="downloadSubtitle()" class="w-full flex items-center px-3 py-2 text-white text-sm hover:bg-white/10 rounded-lg transition-all duration-200">
+                                                    <i class="fas fa-closed-captioning mr-3 text-green-400"></i>
+                                                    <div class="text-left">
+                                                        <div class="font-medium">Download Subtitle</div>
+                                                        <div class="text-xs text-gray-400">Multiple Languages</div>
+                                                    </div>
+                                                </button>
+                                                
+                                                <!-- Audio Download -->
+                                                <button onclick="downloadAudio()" class="w-full flex items-center px-3 py-2 text-white text-sm hover:bg-white/10 rounded-lg transition-all duration-200">
+                                                    <i class="fas fa-music mr-3 text-purple-400"></i>
+                                                    <div class="text-left">
+                                                        <div class="font-medium">Download Audio</div>
+                                                        <div class="text-xs text-gray-400">Audio Only</div>
+                                                    </div>
+                                                </button>
+                                                
+                                                <!-- Picture-in-Picture -->
+                                                <button onclick="togglePictureInPicture()" class="w-full flex items-center px-3 py-2 text-white text-sm hover:bg-white/10 rounded-lg transition-all duration-200">
+                                                    <i class="fas fa-clone mr-3 text-orange-400"></i>
+                                                    <div class="text-left">
+                                                        <div class="font-medium">Picture-in-Picture</div>
+                                                        <div class="text-xs text-gray-400">Floating Player</div>
+                                                    </div>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% else %}
+                                    <!-- Non-VIP Download Button (Upgrade Prompt) -->
+                                    <div class="relative">
+                                        <button onclick="showUpgradePrompt()" 
+                                                class="pointer-events-auto bg-red-500/20 hover:bg-red-500/30 backdrop-blur-sm rounded-lg px-4 py-2 text-white text-sm border border-red-500/40 hover:border-red-500/60 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500/50 flex items-center">
+                                            <i class="fas fa-lock mr-2 text-red-400"></i>
+                                            Download (VIP)
+                                        </button>
+                                    </div>
+                                    {% endif %}
                                 </div>
                             </div>
                         </div>

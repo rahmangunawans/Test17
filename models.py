@@ -104,6 +104,22 @@ class Subscription(db.Model):
     
     user = db.relationship('User', backref='subscriptions')
 
+class VipDownload(db.Model):
+    """Track VIP-exclusive downloads for analytics and abuse prevention"""
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    episode_id = db.Column(db.Integer, db.ForeignKey('episode.id'), nullable=False)
+    download_type = db.Column(db.String(20), nullable=False)  # video, subtitle, audio
+    server_type = db.Column(db.String(20))  # m3u8, embed, iqiyi, direct
+    language = db.Column(db.String(10))  # For subtitle downloads
+    ip_address = db.Column(db.String(45))
+    user_agent = db.Column(db.String(500))
+    download_timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    user = db.relationship('User', backref='vip_downloads')
+    episode = db.relationship('Episode', backref='vip_downloads')
+
 class Notification(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)  # None for global notifications
