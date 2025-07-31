@@ -55,6 +55,7 @@ video::-webkit-media-controls-timeline::-webkit-slider-thumb {
     background: #1e293b;
     border-radius: 8px;
     overflow: hidden;
+    aspect-ratio: 16/9;
 }
 
 .plyr {
@@ -62,6 +63,34 @@ video::-webkit-media-controls-timeline::-webkit-slider-thumb {
     height: 100%;
     border-radius: 8px;
     background: #000000;
+}
+
+/* Ensure video displays properly */
+video {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    background: #000;
+}
+
+/* Fix for video not showing */
+.plyr__video-wrapper,
+.plyr__video-wrapper video {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+/* Force video to be visible */
+.plyr video {
+    opacity: 1 !important;
+    visibility: visible !important;
+    display: block !important;
+}
+
+/* Prevent black box issue */
+.plyr__video-wrapper {
+    background: transparent !important;
 }
 
 /* Plyr custom colors to match AniFlix theme */
@@ -190,14 +219,15 @@ video::-webkit-media-controls-timeline::-webkit-slider-thumb {
                 </div>
 
                 <!-- Plyr Video Player -->
-                <div class="aspect-video bg-slate-800 rounded-lg overflow-hidden mb-6">
+                <div class="w-full bg-slate-800 rounded-lg overflow-hidden mb-6" style="aspect-ratio: 16/9;">
                     <div id="video-container" class="w-full h-full relative">
                         <video 
                             id="player"
-                            class="w-full h-full bg-black" 
+                            class="w-full h-full object-cover" 
                             controls
                             crossorigin 
                             playsinline
+                            preload="metadata"
                             poster="{{ episode.thumbnail_url or content.thumbnail_url or '/static/images/default-poster.jpg' }}">
                         
                             <!-- Default M3U8 source -->
@@ -561,11 +591,24 @@ function initializePlayer() {
                     'mute', 'volume', 'captions', 'settings', 'pip', 'airplay', 'fullscreen'
                 ],
                 settings: ['captions', 'quality', 'speed'],
-                quality: { default: 720, options: [4320, 2880, 2160, 1440, 1080, 720, 576, 480, 360, 240] }
+                quality: { default: 720, options: [4320, 2880, 2160, 1440, 1080, 720, 576, 480, 360, 240] },
+                ratio: '16:9',
+                fullscreen: { enabled: true, fallback: true, iosNative: true }
             });
             
             window.player = player;
             window.hls = hls;
+            
+            // Force video to be visible after Plyr initialization
+            setTimeout(() => {
+                const plyrVideo = document.querySelector('.plyr video, .plyr__video-wrapper video');
+                if (plyrVideo) {
+                    plyrVideo.style.opacity = '1';
+                    plyrVideo.style.visibility = 'visible';
+                    plyrVideo.style.display = 'block';
+                    console.log('✅ Forced video visibility after Plyr init');
+                }
+            }, 500);
             
             console.log('✅ Plyr + HLS.js initialized successfully');
             
@@ -597,9 +640,22 @@ function initializePlayer() {
         // Safari native HLS support
         video.src = defaultSource;
         player = new Plyr(video, {
-            captions: { active: true, update: true, language: 'en' }
+            captions: { active: true, update: true, language: 'en' },
+            ratio: '16:9',
+            fullscreen: { enabled: true, fallback: true, iosNative: true }
         });
         window.player = player;
+        
+        // Force video visibility for Safari
+        setTimeout(() => {
+            const plyrVideo = document.querySelector('.plyr video, .plyr__video-wrapper video');
+            if (plyrVideo) {
+                plyrVideo.style.opacity = '1';
+                plyrVideo.style.visibility = 'visible';
+                plyrVideo.style.display = 'block';
+                console.log('✅ Forced video visibility for Safari');
+            }
+        }, 500);
         console.log('✅ Native HLS player initialized');
         setupWatchRestrictions();
         
