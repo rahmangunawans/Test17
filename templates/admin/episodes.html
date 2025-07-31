@@ -210,15 +210,23 @@
                     
                     <div id="scrapeResults" class="space-y-3"></div>
                     
-                    <div class="flex gap-3 mt-6">
-                        <button onclick="addSelectedEpisodes()" 
-                                class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg">
-                            <i class="fas fa-plus mr-2"></i>Add Selected Episodes
-                        </button>
-                        <button onclick="selectAllEpisodes()" 
-                                class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg">
-                            <i class="fas fa-check-double mr-2"></i>Select All
-                        </button>
+                    <div class="bg-gray-700 p-4 rounded-lg mt-4">
+                        <h5 class="text-white font-medium mb-3">
+                            <i class="fas fa-save mr-2 text-green-400"></i>Simpan Episode ke Database
+                        </h5>
+                        <p class="text-gray-300 text-sm mb-4">
+                            Pilih episode yang ingin ditambahkan ke database, lalu klik tombol "Simpan Episode" di bawah.
+                        </p>
+                        <div class="flex gap-3">
+                            <button onclick="addSelectedEpisodes()" 
+                                    class="px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium text-lg">
+                                <i class="fas fa-save mr-2"></i>Simpan Episode
+                            </button>
+                            <button onclick="selectAllEpisodes()" 
+                                    class="px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg">
+                                <i class="fas fa-check-double mr-2"></i>Pilih Semua
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -368,8 +376,15 @@ async function addSelectedEpisodes() {
     }
 
     showScrapeStatus('Menambahkan episode ke database...', 'info');
+    
+    // Disable button while processing
+    const button = event.target;
+    button.disabled = true;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Saving...';
 
     try {
+        console.log('Sending save request with episodes:', selectedEpisodes.length);
+        
         const response = await fetch('/admin/api/auto-add-episodes', {
             method: 'POST',
             headers: {
@@ -381,7 +396,9 @@ async function addSelectedEpisodes() {
             })
         });
 
+        console.log('Response status:', response.status);
         const result = await response.json();
+        console.log('Response data:', result);
         
         if (result.success) {
             showScrapeStatus(`Berhasil menambahkan ${result.added_count} episode!`, 'success');
@@ -390,9 +407,16 @@ async function addSelectedEpisodes() {
             }, 2000);
         } else {
             showScrapeStatus(`Error: ${result.error}`, 'error');
+            // Re-enable button
+            button.disabled = false;
+            button.innerHTML = '<i class="fas fa-plus mr-2"></i>Add Selected Episodes';
         }
     } catch (error) {
+        console.error('Save error:', error);
         showScrapeStatus(`Network error: ${error.message}`, 'error');
+        // Re-enable button
+        button.disabled = false;
+        button.innerHTML = '<i class="fas fa-plus mr-2"></i>Add Selected Episodes';
     }
 }
 
