@@ -155,8 +155,32 @@ def extract_m3u8_from_dash_url(dash_url):
     # Fetch DASH data
     json_data, text_response = fetcher.fetch_dash_data(dash_url)
     
-    # Method 1: Try to extract from JSON (reference approach)
+    # Check for API errors first
     if json_data:
+        # Handle iQiyi API error responses
+        if json_data.get('code') and str(json_data.get('code')) != '0':
+            error_code = json_data.get('code')
+            error_msg = json_data.get('msg', 'Unknown error')
+            
+            if error_code == 'A00020':
+                logging.error(f"❌ DASH URL expired: {error_msg}")
+                return {
+                    'success': False,
+                    'error': 'DASH URL has expired (Time expired)',
+                    'error_type': 'expired_url',
+                    'suggestion': 'URL needs to be refreshed from iQiyi page',
+                    'api_response': json_data
+                }
+            else:
+                logging.error(f"❌ iQiyi API error: {error_code} - {error_msg}")
+                return {
+                    'success': False,
+                    'error': f'iQiyi API error: {error_msg} (Code: {error_code})',
+                    'error_type': 'api_error',
+                    'api_response': json_data
+                }
+        
+        # Try to extract M3U8 from successful response
         m3u8_content = fetcher.extract_m3u8_from_json(json_data)
         if m3u8_content:
             logging.info("✅ SUCCESS: M3U8 extracted from JSON!")

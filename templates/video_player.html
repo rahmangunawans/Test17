@@ -839,13 +839,16 @@ function extractAndPlayIqiyiM3U8(dashUrl) {
                                 <p class="text-xs text-gray-400">Error: ${data.error || 'Unknown extraction error'}</p>
                             </div>
                             <div class="bg-gray-700 p-3 rounded mb-4">
-                                <p class="text-xs text-gray-300 mb-2">Possible solutions:</p>
+                                <p class="text-xs text-gray-300 mb-2">Troubleshooting:</p>
                                 <ul class="text-xs text-gray-400 text-left space-y-1">
-                                    <li>• Try other servers (M3U8, Embed)</li>
-                                    <li>• URL may require authentication</li>
-                                    <li>• Video content might be region-locked</li>
-                                    <li>• iQiyi has updated their protection</li>
+                                    <li>• iQiyi requires valid authentication/signature</li>
+                                    <li>• DASH URLs expire after a few minutes</li>
+                                    <li>• Try other servers (M3U8, Embed) instead</li>
+                                    <li>• Admin needs to refresh episode URLs</li>
                                 </ul>
+                                <p class="text-xs text-yellow-400 mt-2">
+                                    💡 Server 3 successfully extracts episode ID but needs fresh DASH URL
+                                </p>
                             </div>
                             <div class="space-y-2">
                                 <button onclick="location.reload()" class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 text-sm">
