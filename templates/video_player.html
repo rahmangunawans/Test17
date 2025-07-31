@@ -5,9 +5,82 @@
 {% block head %}
 <!-- Plyr CSS -->
 <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
-<!-- Libraries loaded in correct order -->
-<script src="https://cdn.jsdelivr.net/npm/hls.js@1.4.10/dist/hls.min.js" crossorigin="anonymous"></script>
-<script src="https://cdn.plyr.io/3.7.8/plyr.min.js" crossorigin="anonymous"></script>
+
+<!-- Load libraries with fallbacks -->
+<script>
+// Load HLS.js
+(function() {
+    var script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/hls.js@1.4.10/dist/hls.min.js';
+    script.async = false;
+    script.onload = function() {
+        console.log('✅ HLS.js loaded successfully');
+        window.hlsLoaded = true;
+    };
+    script.onerror = function() {
+        console.error('❌ Failed to load HLS.js');
+        window.hlsLoaded = false;
+    };
+    document.head.appendChild(script);
+})();
+
+// Load Plyr
+(function() {
+    var script = document.createElement('script');
+    script.src = 'https://cdn.plyr.io/3.7.8/plyr.min.js';
+    script.async = false;
+    script.onload = function() {
+        console.log('✅ Plyr loaded successfully');
+        window.plyrLoaded = true;
+    };
+    script.onerror = function() {
+        console.error('❌ Failed to load Plyr');
+        window.plyrLoaded = false;
+    };
+    document.head.appendChild(script);
+})();
+</script>
+
+<!-- Fallback CSS styling for HTML5 video -->
+<style>
+/* Fallback styling when Plyr doesn't load */
+video:not(.plyr__video-embed) {
+    width: 100%;
+    height: auto;
+    background: #000;
+    border-radius: 8px;
+}
+
+/* Enhanced HTML5 video controls styling */
+video::-webkit-media-controls-panel {
+    background-color: rgba(0, 0, 0, 0.8);
+    border-radius: 0 0 8px 8px;
+}
+
+video::-webkit-media-controls-play-button,
+video::-webkit-media-controls-pause-button {
+    background-color: rgba(255, 255, 255, 0.9);
+    border-radius: 50%;
+    filter: invert(0);
+}
+
+video::-webkit-media-controls-current-time-display,
+video::-webkit-media-controls-time-remaining-display {
+    color: #fff;
+    text-shadow: 1px 1px 1px rgba(0,0,0,0.8);
+}
+
+video::-webkit-media-controls-timeline {
+    background-color: rgba(255, 255, 255, 0.3);
+    border-radius: 2px;
+    height: 4px;
+}
+
+video::-webkit-media-controls-timeline::-webkit-slider-thumb {
+    background-color: #ef4444;
+    border-radius: 50%;
+}
+</style>
 
 <style>
 /* Custom Plyr Styling for AniFlix */
@@ -481,21 +554,27 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
     }
 
-    // Check if Plyr is loaded
-    if (typeof Plyr === 'undefined') {
-        console.error('❌ Plyr is not loaded. Retrying in 1 second...');
-        setTimeout(function() {
-            if (typeof Plyr !== 'undefined') {
-                initializePlyr();
-            } else {
-                console.error('❌ Plyr failed to load. Using fallback HTML5 video.');
-                initializeFallbackPlayer();
-            }
-        }, 1000);
-        return;
+    // Wait for libraries to load with timeout
+    let attempts = 0;
+    const maxAttempts = 10;
+    
+    function checkLibraries() {
+        attempts++;
+        console.log(`🔍 Checking libraries... Attempt ${attempts}/${maxAttempts}`);
+        
+        if (typeof Plyr !== 'undefined' && typeof Hls !== 'undefined') {
+            console.log('✅ Both libraries loaded, initializing Plyr player');
+            initializePlyr();
+        } else if (attempts >= maxAttempts) {
+            console.error('❌ Libraries failed to load after maximum attempts. Using fallback.');
+            initializeFallbackPlayer();
+        } else {
+            console.log(`⏳ Libraries not ready yet. Plyr: ${typeof Plyr !== 'undefined'}, HLS: ${typeof Hls !== 'undefined'}`);
+            setTimeout(checkLibraries, 200);
+        }
     }
     
-    initializePlyr();
+    checkLibraries();
 });
 
 function initializePlyr() {
