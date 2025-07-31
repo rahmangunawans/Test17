@@ -3,10 +3,38 @@
 {% block title %}{{ episode.title }} - {{ content.title }}{% endblock %}
 
 {% block head %}
-<!-- Try alternative CDNs for better reliability -->
-<link rel="stylesheet" href="https://unpkg.com/plyr@3.7.8/dist/plyr.css" />
-<script src="https://unpkg.com/hls.js@1.4.10/dist/hls.min.js"></script>
-<script src="https://unpkg.com/plyr@3.7.8/dist/plyr.min.js"></script>
+<!-- Load from jsDelivr CDN with integrity checks -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/plyr@3.7.8/dist/plyr.css" integrity="sha512-sSFdyq4eJiDEKtkBGV9BNh9fqYzGQpGXZlV8rgTVz5vQMsQ6l4cI/O7wSFjxd4PjHM/DmG9BdOYnPXg7yJHqg==" crossorigin="anonymous" />
+<script src="https://cdn.jsdelivr.net/npm/hls.js@1.4.10/dist/hls.min.js" integrity="sha512-Nk6Zng3tJRStdGQoQxcMdKjZdHdR1pHyCtaLzD7+eUIJI6cPfRmWCQqjUYQJe5HxCNO5ydvVGhP3fjCUEFq5Q==" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/plyr@3.7.8/dist/plyr.min.js" integrity="sha512-7qYHnzYQTY/BXFrJXlk4ybTKN+uKiJdAqVUWKP2B9R1qJ/yGhbzw0zJcWYjGYhZvUL9m4DZVOJjT5FLhbI7DQ==" crossorigin="anonymous"></script>
+
+<!-- Alternative: Load via different CDN if jsDelivr fails -->
+<script>
+window.addEventListener('load', function() {
+    if (typeof Plyr === 'undefined') {
+        console.log('🔄 Plyr not loaded, trying alternative CDN...');
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = 'https://unpkg.com/plyr@3.7.8/dist/plyr.css';
+        document.head.appendChild(link);
+        
+        const hlsScript = document.createElement('script');
+        hlsScript.src = 'https://unpkg.com/hls.js@1.4.10/dist/hls.min.js';
+        hlsScript.onload = function() {
+            const plyrScript = document.createElement('script');
+            plyrScript.src = 'https://unpkg.com/plyr@3.7.8/dist/plyr.min.js';
+            plyrScript.onload = function() {
+                console.log('✅ Alternative CDN loaded successfully');
+                if (typeof window.initializePlayerManually === 'function') {
+                    window.initializePlayerManually();
+                }
+            };
+            document.head.appendChild(plyrScript);
+        };
+        document.head.appendChild(hlsScript);
+    }
+});
+</script>
 
 <!-- Fallback CSS styling for HTML5 video -->
 <style>
@@ -511,103 +539,124 @@ console.log('Watch restrictions:', watchRestrictions);
 let player;
 let hls;
 
-// More robust initialization with multiple attempts
+// Enhanced initialization with better error handling
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🎬 Initializing video player...');
     
-    let initAttempts = 0;
-    const maxAttempts = 20;
+    window.initializePlayerManually = function() {
+        initializeVideoPlayer();
+    };
     
-    function tryInitialize() {
-        initAttempts++;
-        console.log(`Attempt ${initAttempts}/${maxAttempts} - Plyr: ${typeof Plyr}, HLS: ${typeof Hls}`);
-        
-        if (typeof Plyr !== 'undefined') {
-            try {
-                // Initialize Plyr with HLS.js support
-                const video = document.querySelector('video');
-                if (!video) {
-                    console.error('❌ Video element not found');
-                    return;
-                }
-                
-                // Set up HLS.js first if available
-                if (typeof Hls !== 'undefined' && Hls.isSupported()) {
-                    const hls = new Hls({
-                        debug: false,
-                        enableWorker: true
-                    });
-                    
-                    // Attach HLS to video element
-                    hls.attachMedia(video);
-                    
-                    // Load default M3U8 if available
-                    {% if episode.server_m3u8_url %}
-                    hls.loadSource('{{ episode.server_m3u8_url }}');
-                    {% endif %}
-                    
-                    window.hls = hls;
-                    console.log('✅ HLS.js initialized');
-                }
-                
-                // Initialize Plyr
-                const player = new Plyr(video, {
-                    captions: { active: true },
-                    controls: [
-                        'play-large',
-                        'play',
-                        'progress', 
-                        'current-time',
-                        'mute',
-                        'volume',
-                        'captions',
-                        'settings',
-                        'pip',
-                        'airplay',
-                        'fullscreen'
-                    ]
-                });
-                
-                window.player = player;
-                console.log('✅ Plyr initialized successfully');
-                
-                // Add event listeners
-                player.on('ready', function() {
-                    console.log('🎬 Player is ready');
-                });
-                
-                return; // Success, exit
-                
-            } catch (error) {
-                console.error('❌ Error initializing Plyr:', error);
-            }
-        }
-        
-        // Retry or fallback
-        if (initAttempts < maxAttempts) {
-            setTimeout(tryInitialize, 250);
-        } else {
-            console.log('⚠️ Using fallback HTML5 video player');
-            const video = document.querySelector('video');
-            if (video) {
-                video.controls = true;
-                
-                // Try to set up HLS.js even without Plyr
-                if (typeof Hls !== 'undefined' && Hls.isSupported()) {
-                    const hls = new Hls();
-                    hls.attachMedia(video);
-                    {% if episode.server_m3u8_url %}
-                    hls.loadSource('{{ episode.server_m3u8_url }}');
-                    {% endif %}
-                    window.hls = hls;
-                }
-            }
-        }
+    // Wait for page to fully load, then try initialization
+    setTimeout(function() {
+        initializeVideoPlayer();
+    }, 1000);
+});
+
+function initializeVideoPlayer() {
+    const video = document.querySelector('video');
+    if (!video) {
+        console.error('❌ Video element not found');
+        return;
     }
     
-    // Start trying to initialize
-    tryInitialize();
-});
+    console.log(`🔍 Checking libraries - Plyr: ${typeof Plyr}, HLS: ${typeof Hls}`);
+    
+    if (typeof Plyr !== 'undefined') {
+        try {
+            console.log('🎬 Initializing Plyr player...');
+            
+            // Set up HLS.js first if available
+            if (typeof Hls !== 'undefined' && Hls.isSupported()) {
+                const hls = new Hls({
+                    debug: false,
+                    enableWorker: true,
+                    lowLatencyMode: true
+                });
+                
+                hls.attachMedia(video);
+                window.hls = hls;
+                
+                // Load default M3U8 if available
+                {% if episode.server_m3u8_url %}
+                hls.loadSource('{{ episode.server_m3u8_url }}');
+                {% endif %}
+                
+                console.log('✅ HLS.js initialized');
+            }
+            
+            // Initialize Plyr with CodePen-style configuration
+            const player = new Plyr(video, {
+                captions: { active: true },
+                controls: [
+                    'play-large',
+                    'play',
+                    'progress', 
+                    'current-time',
+                    'mute',
+                    'volume',
+                    'captions',
+                    'settings',
+                    'pip',
+                    'airplay',
+                    'fullscreen'
+                ],
+                settings: ['captions', 'quality', 'speed'],
+                quality: { default: 720, options: [1080, 720, 576, 480] }
+            });
+            
+            window.player = player;
+            
+            // Event listeners
+            player.on('ready', function() {
+                console.log('🎬 Plyr player is ready');
+            });
+            
+            player.on('loadstart', function() {
+                console.log('📡 Video loading started');
+            });
+            
+            player.on('error', function(error) {
+                console.error('❌ Plyr error:', error);
+            });
+            
+            console.log('✅ Plyr initialized successfully');
+            
+        } catch (error) {
+            console.error('❌ Error initializing Plyr:', error);
+            fallbackToHTML5();
+        }
+    } else {
+        console.log('⚠️ Plyr not available, using HTML5 fallback');
+        fallbackToHTML5();
+    }
+}
+
+function fallbackToHTML5() {
+    const video = document.querySelector('video');
+    if (video) {
+        video.controls = true;
+        
+        // Add enhanced styling for HTML5 video
+        video.style.width = '100%';
+        video.style.height = 'auto';
+        video.style.borderRadius = '8px';
+        video.style.backgroundColor = '#000';
+        
+        // Try to set up HLS.js even without Plyr
+        if (typeof Hls !== 'undefined' && Hls.isSupported()) {
+            const hls = new Hls();
+            hls.attachMedia(video);
+            {% if episode.server_m3u8_url %}
+            hls.loadSource('{{ episode.server_m3u8_url }}');
+            {% endif %}
+            window.hls = hls;
+            console.log('✅ HLS.js initialized for HTML5 fallback');
+        }
+        
+        console.log('✅ HTML5 fallback player ready');
+    }
+}
 
 // Server switching function
 function switchServer(serverType, serverUrl) {
