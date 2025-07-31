@@ -3,8 +3,14 @@
 {% block title %}{{ episode.title }} - {{ content.title }}{% endblock %}
 
 {% block head %}
+<!-- Video.js CSS and JS -->
+<link rel="stylesheet" href="https://vjs.zencdn.net/8.3.0/video-js.css">
+<script src="https://vjs.zencdn.net/8.3.0/video.min.js"></script>
+
 <!-- HLS.js for M3U8 support -->
+<link rel="stylesheet" href="https://code-reserve.web.app/2.0.1/player.css">
 <script src="https://code-reserve.web.app/2.0.1/hls.js" defer></script>
+<script src="https://code-reserve.web.app/2.0.1/player.js" defer></script>
 
 <style>
 /* Clean Simple Video Player */
@@ -23,16 +29,36 @@
     background: #000000;
 }
 
+/* Simple dark controls */
+#video-player::-webkit-media-controls-panel {
+    background: rgba(0, 0, 0, 0.8);
+}
+
+#video-player::-webkit-media-controls-timeline {
+    background: rgba(255, 255, 255, 0.3);
+    height: 4px;
+}
+
+#video-player::-webkit-media-controls-current-time-display,
+#video-player::-webkit-media-controls-time-remaining-display {
+    color: white;
+    font-size: 13px;
+}
+
 .glass-card {
     background: rgba(15, 23, 42, 0.8);
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
+
+.content-bg {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+}
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 pt-32 pb-8">
+<div class="min-h-screen content-bg pt-32 pb-8">
     <div class="container mx-auto px-4">
         <!-- Back Button -->
         <div class="mb-6">
@@ -101,7 +127,7 @@
                     </div>
                 </div>
 
-                <!-- Clean Simple Video Player -->
+                <!-- Clean Video Player -->
                 <div class="video-container aspect-video">
                     <video 
                         id="video-player" 
@@ -112,33 +138,35 @@
                         preload="auto"
                         poster="{{ episode.thumbnail_url or content.thumbnail_url or '/static/images/default-poster.jpg' }}">
                     
-                        <!-- Default M3U8 source -->
-                        {% if episode.server_m3u8_url %}
-                        <source type="application/x-mpegURL" src="{{ episode.server_m3u8_url }}">
-                        {% endif %}
-                        
-                        <!-- Subtitle tracks -->
-                        {% if episode.subtitle_urls %}
-                            {% set subtitle_list = episode.subtitle_urls|from_json if episode.subtitle_urls else [] %}
-                            {% for subtitle in subtitle_list %}
-                            <track
-                                kind="captions"
-                                label="{{ subtitle.language }}"
-                                srclang="{{ subtitle.language_code }}"
-                                src="{{ subtitle.url }}"
-                                {% if loop.first %}default{% endif %}>
-                            {% endfor %}
-                        {% endif %}
+                    <!-- Default M3U8 source -->
+                    {% if episode.server_m3u8_url %}
+                    <source type="application/x-mpegURL" src="{{ episode.server_m3u8_url }}">
+                    {% endif %}
+                    
+                    <!-- Subtitle tracks -->
+                    {% if episode.subtitle_urls %}
+                        {% set subtitle_list = episode.subtitle_urls|from_json if episode.subtitle_urls else [] %}
+                        {% for subtitle in subtitle_list %}
+                        <track
+                            kind="captions"
+                            label="{{ subtitle.language }}"
+                            srclang="{{ subtitle.language_code }}"
+                            src="{{ subtitle.url }}"
+                            {% if loop.first %}default{% endif %}>
+                        {% endfor %}
+                    {% endif %}
                     </video>
 
-                    <!-- VIP Download Button -->
+                    <!-- VIP Download Menu (Only show if user has VIP) -->
                     {% if current_user.is_authenticated and current_user.is_vip_active() %}
                     <div class="absolute top-4 right-4">
-                        <button onclick="alert('VIP download feature')" 
-                                class="bg-red-500/80 hover:bg-red-500/90 backdrop-blur-sm rounded-lg px-4 py-2 text-white text-sm transition-all duration-200 flex items-center">
-                            <i class="fas fa-download mr-2"></i>
-                            Download (VIP)
-                        </button>
+                        <div class="relative">
+                            <button onclick="toggleDownloadMenu()" 
+                                    class="pointer-events-auto bg-red-500/80 hover:bg-red-500/90 backdrop-blur-sm rounded-lg px-4 py-2 text-white text-sm border border-red-500/40 hover:border-red-500/60 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500/50 flex items-center">
+                                <i class="fas fa-download mr-2"></i>
+                                Download (VIP)
+                            </button>
+                        </div>
                     </div>
                     {% endif %}
 
@@ -386,7 +414,7 @@
 </div>
 
 <script>
-// Simple Video Player JavaScript
+// Video Player JavaScript
 console.log('🎬 Page loaded, initializing video player...');
 
 // Available servers data
@@ -405,17 +433,20 @@ const availableServers = [
     {% endif %}
 ];
 
+const episodeSubtitles = {{ episode.subtitle_urls|tojson if episode.subtitle_urls else '[]'|safe }};
 const watchRestrictions = {
     canWatchFull: {{ 'true' if can_watch_full else 'false' }},
     maxWatchTime: {{ max_watch_time if max_watch_time else 'null' }}
 };
 
 console.log('Available servers:', availableServers);
+console.log('Episode subtitles:', episodeSubtitles);
 console.log('Watch restrictions:', watchRestrictions);
 
 // Initialize video player
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🎬 Initializing Simple Video Player...');
+    console.log('🎬 Initializing Professional HTML5 Video Player...');
+    console.log('🎬 Initializing Professional Video Player App...');
     
     const videoPlayer = document.getElementById('video-player');
     if (!videoPlayer) {
@@ -489,7 +520,7 @@ function switchServer(serverType, serverUrl) {
             </iframe>
         `;
     } else if (serverType === 'iqiyi') {
-        // Extract M3U8 from iQiyi and play with HLS.js
+        // Extract M3U8 from iQiyi and play with Video.js
         extractAndPlayIqiyiM3U8(serverUrl);
     } else {
         // Use native HTML5 video for M3U8 and direct videos
@@ -577,6 +608,12 @@ function restartVideo() {
     const videoPlayer = document.getElementById('video-player');
     videoPlayer.currentTime = 0;
     videoPlayer.play();
+}
+
+// Download menu toggle
+function toggleDownloadMenu() {
+    // VIP download functionality would go here
+    alert('Download feature for VIP users');
 }
 </script>
 {% endblock %}
