@@ -616,18 +616,46 @@ function extractAndPlayIqiyiM3U8(iqiyiUrl) {
                     console.log('🎬 Media attached to video element');
                 });
                 
-            } else if (videoPlayer.canPlayType('application/vnd.apple.mpegurl')) {
-                // Native HLS support (Safari)
-                console.log('🎬 Using native HLS support');
-                videoPlayer.src = blobUrl;
-                videoPlayer.load();
-                videoPlayer.play().catch(e => console.log('Autoplay prevented:', e));
             } else {
-                // Fallback
-                console.log('🎬 Using fallback video playback');
-                videoPlayer.src = blobUrl;
-                videoPlayer.load();
-                videoPlayer.play().catch(e => console.log('Autoplay prevented:', e));
+                // Try force HLS.js even if not "supported"
+                console.log('🎬 Forcing HLS.js for iQiyi M3U8...');
+                try {
+                    if (window.hlsPlayer) {
+                        window.hlsPlayer.destroy();
+                    }
+                    
+                    const hls = new Hls({
+                        debug: true,
+                        enableWorker: false,
+                        lowLatencyMode: false
+                    });
+                    
+                    hls.loadSource(blobUrl);
+                    hls.attachMedia(videoPlayer);
+                    window.hlsPlayer = hls;
+                    
+                    hls.on(Hls.Events.MANIFEST_PARSED, function() {
+                        console.log('✅ Forced HLS.js M3U8 loaded successfully');
+                        videoPlayer.play().catch(e => console.log('Autoplay prevented:', e));
+                    });
+                    
+                    hls.on(Hls.Events.ERROR, function(event, data) {
+                        console.error('❌ Forced HLS Error:', event, data);
+                    });
+                } catch (e) {
+                    console.error('❌ HLS.js force failed, trying direct:', e);
+                    // Final fallback - try setting as direct source
+                    videoPlayer.src = blobUrl;
+                    videoPlayer.load();
+                    
+                    videoPlayer.addEventListener('loadstart', () => console.log('🎬 Video load started'));
+                    videoPlayer.addEventListener('loadeddata', () => console.log('🎬 Video data loaded'));
+                    videoPlayer.addEventListener('canplay', () => {
+                        console.log('🎬 Video can play, attempting autoplay');
+                        videoPlayer.play().catch(e => console.log('Autoplay prevented:', e));
+                    });
+                    videoPlayer.addEventListener('error', (e) => console.error('❌ Video error:', e, videoPlayer.error));
+                }
             }
         } else {
             console.error('❌ M3U8 extraction failed:', data.error || 'Unknown error');
