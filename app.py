@@ -106,43 +106,52 @@ app.register_blueprint(notifications_bp, url_prefix='/api')
 # Add API endpoint for M3U8 extraction (accessible from video player)
 @app.route('/api/extract-iqiyi-m3u8', methods=['POST'])
 def extract_iqiyi_m3u8():
-    """Public endpoint for extracting M3U8 from iQiyi DASH URL"""
+    """Public endpoint for extracting M3U8 from iQiyi play URL"""
     try:
-        from iqiyi_m3u8_scraper import IQiyiM3U8Scraper
         import logging
         
         data = request.get_json()
-        dash_url = data.get('dash_url', '').strip()
+        iqiyi_play_url = data.get('iqiyi_play_url', '').strip()
         
-        if not dash_url:
+        if not iqiyi_play_url:
             return jsonify({
                 'success': False,
-                'error': 'DASH URL is required'
+                'error': 'iQiyi play URL is required'
             }), 400
         
-        logging.info(f"Extracting M3U8 from DASH URL: {dash_url[:100]}...")
+        # Validate iQiyi play URL format
+        if 'iq.com/play/' not in iqiyi_play_url:
+            return jsonify({
+                'success': False,
+                'error': 'Invalid iQiyi play URL format'
+            }), 400
         
-        # Extract M3U8 using new scraper
-        scraper = IQiyiM3U8Scraper()
-        m3u8_url = scraper.extract_m3u8_from_dash_url(dash_url)
+        logging.info(f"Extracting M3U8 from iQiyi play URL: {iqiyi_play_url[:100]}...")
         
-        if m3u8_url:
+        # Extract M3U8 using the play URL extractor
+        from iqiyi_play_extractor import extract_m3u8_from_iqiyi_play_url
+        result = extract_m3u8_from_iqiyi_play_url(iqiyi_play_url)
+        
+        if result['success']:
             return jsonify({
                 'success': True,
-                'm3u8_url': m3u8_url,
-                'message': 'M3U8 extracted successfully'
+                'm3u8_content': result['m3u8_content'],
+                'method': result['method'],
+                'episode_info': result.get('episode_info', {}),
+                'message': 'M3U8 berhasil diekstrak dari iQiyi play URL'
             })
         else:
             return jsonify({
                 'success': False,
-                'error': 'Failed to extract M3U8 from DASH URL'
+                'error': result.get('error', 'Failed to extract M3U8 from iQiyi play URL'),
+                'details': 'Periksa apakah URL play iQiyi masih valid dan dapat diakses'
             }), 400
             
     except Exception as e:
-        logging.error(f"M3U8 extraction error: {str(e)}")
+        logging.error(f"iQiyi play M3U8 extraction error: {str(e)}")
         return jsonify({
             'success': False,
-            'error': f'Server error: {str(e)}'
+            'error': f'Error extracting M3U8: {str(e)}'
         }), 500
 
 # Emergency admin access routes (must be after blueprints)
