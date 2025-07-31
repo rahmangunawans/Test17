@@ -669,6 +669,15 @@ def api_scrape_playlist():
                     'technical_error': str(e)
                 })
             else:
+                # Handle JSON parsing errors specifically
+                if 'unexpected token' in error_msg or 'not valid json' in error_msg:
+                    return jsonify({
+                        'success': False,
+                        'error': 'Network error: Unexpected token \'<\', " <"... is not valid JSON',
+                        'suggestion': 'IQiyi is returning HTML instead of JSON. This indicates server-side blocking or rate limiting.',
+                        'technical_error': str(e)
+                    })
+                
                 # Try fallback to basic scraping
                 print(f"⚠️ Full scraping failed: {str(e)}")
                 print("🔄 Attempting fallback to basic scraping...")

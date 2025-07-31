@@ -93,6 +93,16 @@ class IQiyiScraper:
                         continue
                     return None
                 
+                # Additional check for HTML content when expecting JSON
+                if hasattr(response, 'text') and response.text.strip().startswith('<'):
+                    print(f'❌ Response content is HTML, not JSON for {url}')
+                    if 'cache.video.iqiyi.com' in url:  # This is a DASH API request
+                        print('🔄 DASH API is returning HTML - likely blocked or rate limited')
+                        if attempt < max_retries - 1:
+                            time.sleep(5)  # Longer delay for API requests
+                            continue
+                    return None
+                
                 return response
                 
             except requests.exceptions.SSLError as e:
@@ -174,6 +184,11 @@ class IQiyiScraper:
 
         if response:
             try:
+                # Check if response is HTML instead of JSON
+                if response.text.strip().startswith('<'):
+                    print("❌ DASH API returned HTML instead of JSON - likely blocked or rate limited")
+                    return None
+                    
                 data = response.json()
                 if data.get('code') == 'A00000':
                     video = data['data']['program']['video']
@@ -183,6 +198,9 @@ class IQiyiScraper:
                             return item['m3u8']
                 else:
                     print(f"❌ DASH API error: {data.get('msg', 'Unknown error')}")
+            except json.JSONDecodeError as e:
+                print(f"❌ Invalid JSON response from DASH API: {e}")
+                print(f"Response content preview: {response.text[:200]}...")
             except Exception as e:
                 print(f"❌ Error parsing DASH response: {e}")
         return None
