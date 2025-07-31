@@ -46,10 +46,20 @@ class IQiyiScraper:
         """Enhanced request method dengan error handling"""
         try:
             kwargs.setdefault('headers', self.headers)
-            kwargs.setdefault('timeout', 30)
+            kwargs.setdefault('timeout', 15)  # Reduced timeout
+            kwargs.setdefault('verify', False)  # Disable SSL verification
             response = self.session.request(method, url, **kwargs)
             response.raise_for_status()
             return response
+        except requests.exceptions.SSLError as e:
+            print(f'❌ SSL Error for {url}: {str(e)}')
+            return None
+        except requests.exceptions.Timeout as e:
+            print(f'❌ Timeout Error for {url}: {str(e)}')
+            return None
+        except requests.exceptions.ConnectionError as e:
+            print(f'❌ Connection Error for {url}: {str(e)}')
+            return None
         except Exception as e:
             print(f'❌ Error making request to {url}: {str(e)}')
             return None
