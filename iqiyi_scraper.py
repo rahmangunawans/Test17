@@ -257,9 +257,13 @@ class IQiyiScraper:
             print(f"📺 Ditemukan {total_episodes} episode")
             
             # Limit episodes untuk mencegah timeout jika diperlukan
-            process_count = min(total_episodes, max_episodes) if max_episodes else total_episodes
-            if max_episodes and total_episodes > max_episodes:
-                print(f"⚠️ Membatasi processing ke {max_episodes} episode pertama untuk mencegah timeout")
+            if max_episodes is None:
+                process_count = total_episodes
+                print(f"🎯 Processing SEMUA {total_episodes} episode")
+            else:
+                process_count = min(total_episodes, max_episodes)
+                if total_episodes > max_episodes:
+                    print(f"⚠️ Membatasi processing ke {max_episodes} episode pertama untuk mencegah timeout")
 
             for i, episode in enumerate(episode_data[:process_count], 1):
                 episode_title = episode.get('subTitle', f'Episode {i}')
@@ -370,7 +374,7 @@ def scrape_iqiyi_playlist(url: str, max_episodes: int = None) -> dict:
                 'total_episodes': len(episodes_list),
                 'valid_episodes': len([ep for ep in episodes_list if ep['is_valid']]),
                 'episodes': episodes_list,
-                'message': f'Berhasil extract {len(episodes_list)} episode (dibatasi {max_episodes} untuk mencegah timeout)'
+                'message': f'Berhasil extract {len(episodes_list)} episode' + (f' (dibatasi {max_episodes} untuk mencegah timeout)' if max_episodes else ' dari seluruh playlist')
             }
         else:
             return {

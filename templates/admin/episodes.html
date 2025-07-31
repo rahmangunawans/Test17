@@ -312,6 +312,9 @@ async function scrapePlaylist(batchSize = null) {
         
         if (batchSize) {
             requestBody.batch_size = batchSize;
+        } else {
+            // For "ALL episodes" option, set a high number or remove limit
+            requestBody.batch_size = 999; // High number to get all episodes
         }
         
         const response = await fetch('/admin/api/scrape-playlist', {

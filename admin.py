@@ -577,7 +577,12 @@ def api_scrape_playlist():
         
         # Scrape playlist - let user choose batch size
         batch_size = data.get('batch_size', 5)  # Default to 5 if not specified
-        result = scrape_iqiyi_playlist(iqiyi_url, max_episodes=batch_size)
+        
+        # If batch_size is very high (999), scrape ALL episodes
+        if batch_size >= 999:
+            result = scrape_iqiyi_playlist(iqiyi_url, max_episodes=None)  # No limit = ALL episodes
+        else:
+            result = scrape_iqiyi_playlist(iqiyi_url, max_episodes=batch_size)
         
         if result['success']:
             return jsonify({
