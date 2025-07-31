@@ -683,24 +683,22 @@ def api_scrape_playlist():
                 print("🔄 Attempting fallback to basic scraping...")
                 
                 try:
-                    from simple_episode_scraper import scrape_basic_episodes
-                    fallback_result = scrape_basic_episodes(iqiyi_url, max_episodes=batch_size if batch_size < 999 else 15)
+                    from iqiyi_fallback_scraper import scrape_iqiyi_playlist_fallback
+                    fallback_result = scrape_iqiyi_playlist_fallback(iqiyi_url, max_episodes=batch_size if batch_size < 999 else 15)
                     
                     if fallback_result.get('success'):
-                        # Convert basic scraping format to expected format
+                        # Convert fallback scraping format to expected format
                         return jsonify({
                             'success': True,
-                            'playlist_data': {
-                                'episodes': fallback_result['episodes']
-                            },
-                            'message': f"Using basic scraping method - {fallback_result['message']}. Note: M3U8 URLs not available with this method.",
-                            'method': 'fallback_basic_scraping'
+                            'playlist_data': fallback_result,
+                            'message': f"Fallback scraper used - {fallback_result['message']}. Basic episode info extracted successfully.",
+                            'method': 'fallback_scraping'
                         })
                     else:
                         return jsonify({
                             'success': False,
-                            'error': f'Both full and basic scraping failed: {fallback_result.get("error")}',
-                            'suggestion': 'IQiyi servers are completely inaccessible right now.',
+                            'error': f'Both full and fallback scraping failed: {fallback_result.get("error")}',
+                            'suggestion': 'IQiyi servers are completely inaccessible right now. Try again later.',
                             'technical_error': str(e)
                         })
                 except Exception as fallback_error:
