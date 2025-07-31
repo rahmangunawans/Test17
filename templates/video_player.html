@@ -132,7 +132,7 @@
                     </video>
 
                     <!-- VIP Download Button -->
-                    {% if current_user.is_authenticated and current_user.is_vip_active() %}
+                    {% if current_user.is_authenticated and current_user.subscription_tier and current_user.subscription_tier != 'free' %}
                     <div class="absolute top-4 right-4">
                         <button onclick="alert('VIP download feature')" 
                                 class="bg-red-500/80 hover:bg-red-500/90 backdrop-blur-sm rounded-lg px-4 py-2 text-white text-sm transition-all duration-200 flex items-center">

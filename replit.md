@@ -1,256 +1,45 @@
 # AniFlix - Anime and Movie Streaming Platform
 
 ## Overview
-AniFlix is a premium anime and movie streaming platform built with Flask. The application provides a Netflix-like experience for anime content with features including user authentication, subscription management, video streaming, and admin controls. It supports both free and VIP subscription tiers with content access restrictions based on user status.
-
-## Recent Changes
-- **2025-07-31**: Successfully migrated from Replit Agent to standard Replit environment
-- **2025-07-31**: Verified database connection to Supabase PostgreSQL is working
-- **2025-07-31**: Confirmed all core features are functional (auth, streaming, admin panel)
-- **2025-07-31**: Application running successfully on port 5000 with Gunicorn
-
-## System Architecture
-
-### Backend Architecture
-- **Framework**: Flask with SQLalchemy ORM
-- **Database**: PostgreSQL (Supabase) with fallback to Replit Database
-- **Authentication**: Flask-Login with session-based authentication
-- **Payment Processing**: Stripe integration for subscription management
-
-### Frontend Architecture
-- **Templating**: Jinja2 templates with responsive design
-- **Styling**: Tailwind CSS for modern UI components
-- **JavaScript**: Vanilla JS for interactive features
-- **Video Player**: Video.js for streaming functionality
-
-## Key Components
-
-### User Management System
-- User registration and authentication with email/password
-- Role-based access control (regular users vs admin)
-- Admin users identified by email patterns (@admin.aniflix.com, admin@*, or containing 'admin')
-- Session management with Flask-Login
-
-### Subscription System
-- **Free Tier**: Access to first 5 episodes, 10-minute preview for episodes 6+
-- **VIP Tiers**: 
-  - Monthly ($3.00)
-  - 3-Month ($8.00) 
-  - Yearly ($28.00)
-- Stripe integration for payment processing
-- Automatic access control based on subscription status
-
-### Content Management
-- Support for both anime series and movies
-- Episode-based content organization
-- Genre categorization and filtering
-- Admin interface for content and episode management
-- Thumbnail and video URL management
-
-### Video Streaming
-- Video.js player integration
-- Progress tracking and resume functionality
-- Quality controls and playback rate adjustment
-- Content restrictions based on user subscription
-
-### Admin Panel
-- Dashboard with platform statistics
-- User management with subscription control
-- Content and episode management
-- Analytics and viewing statistics
-
-## Data Flow
-
-### User Authentication Flow
-1. User submits login credentials
-2. Server validates against database
-3. Flask-Login creates session
-4. User role and subscription status determined
-5. Content access permissions calculated
-
-### Content Access Flow
-1. User requests content/episode
-2. System checks subscription status and expiration
-3. Access permissions calculated based on episode number and user tier
-4. Content served with appropriate restrictions
-5. Watch progress tracked and stored
-
-### Admin Operations Flow
-1. Admin authentication via email pattern matching
-2. Admin-only routes protected by decorator
-3. CRUD operations on users, content, and episodes
-4. Real-time statistics calculation and display
-
-## External Dependencies
-
-### Payment Processing
-- **Stripe**: Subscription payment processing
-- Environment variables for API keys and price IDs
-- Webhook handling for subscription events
-
-### Database
-- **Exclusive**: Supabase PostgreSQL with SSL connection
-- Configured for production use with connection pooling and timeout settings
-- No fallback mechanism - always uses Supabase as per user preference
-
-### CDN and Assets
-- **Tailwind CSS**: Via CDN for styling
-- **Font Awesome**: Icon library
-- **Google Fonts**: Poppins font family
-- **Video.js**: Video player library
-
-### Email Services
-- Admin identification via email pattern matching
-- Future email notification capabilities
-
-## Deployment Strategy
-
-### Environment Configuration
-- Development and production environment support
-- Environment variables for database connections, API keys, and secrets
-- SSL/TLS configuration for database connections
-- Proxy fix middleware for deployment behind reverse proxies
-
-### Database Configuration
-- Automatic connection fallback mechanism
-- Connection pooling with health checks
-- SSL requirement for production database connections
-- Migration support through SQLAlchemy
-
-### Static Asset Management
-- CSS and JavaScript file organization
-- CDN integration for external libraries
-- Responsive design optimization
-- Custom scrollbar and UI enhancements
-
-## Changelog
-- July 02, 2025. Initial setup
-- July 02, 2025. Fixed analytics page template consistency - changed from admin/base.html to responsive_base.html to match other admin pages
-- July 02, 2025. Fixed navigation conflict on all admin pages - changed py-8 to pt-24 pb-8 to avoid header overlap with main navigation
-- July 02, 2025. Fixed scrolling issues on admin content management pages - removed min-h-screen constraint, added proper overflow CSS properties to enable vertical scrolling
-- July 02, 2025. Added search functionality to admin content and episodes pages with responsive design, tooltip support for mobile, and enhanced action buttons with hover effects
-- July 02, 2025. Enhanced admin interface with comprehensive animations including card hover effects, button ripple effects, table row animations, search input scaling, and gradient backgrounds for better visual appeal
-- July 02, 2025. Migrated project from Replit Agent to standard Replit environment with improved security and compatibility
-- July 02, 2025. Optimized search performance: single database query with ranking, client-side caching (30s), request throttling (300ms), and increased debounce delay (500ms) to reduce server load and improve response times
-- July 02, 2025. Added comprehensive real-time notification system with Socket.IO: notification bell in nav, real-time push notifications, admin notification management panel, automatic subscription success notifications, and toast notifications with action URLs
-- July 02, 2025. Fixed "add episode" functionality by adding missing thumbnail_url column to Episode model and optimized performance by replacing Socket.IO with lightweight polling to eliminate worker timeouts
-- July 02, 2025. Successfully migrated from Replit Agent to standard Replit environment: configured local PostgreSQL database, updated database connection logic to prioritize Replit's DATABASE_URL, ensured all dependencies work correctly, and verified full application functionality
-- July 02, 2025. Added Trailer URL field to Add Content form with full backend integration for content management
-- July 02, 2025. Implemented real-time notifications with Socket.IO: replaced polling with WebSocket connections, added Socket.IO client library, configured real-time event emission for new content/episodes, and verified successful connection with instant notification delivery
-- July 02, 2025. Optimized notification system: reduced polling frequency from 5 seconds to 60 seconds to minimize server load, fixed "mark all as read" functionality with user feedback, and implemented automatic deletion of notifications older than 5 days to keep database clean
-- July 02, 2025. Completely removed automatic notification polling: notifications now only load on page load/login or manual refresh to eliminate unnecessary server requests, added manual refresh button with loading animation and feedback, implemented smart refresh when user returns after 5+ minutes away
-- July 02, 2025. Fixed read_at implementation: properly display read timestamp in notifications, improved datetime handling with timezone support for Indonesia, enhanced notification UI to show when notifications were read, eliminated all automatic polling for better performance
-- July 02, 2025. Complete notification system rewrite: created new manual-only notification system with no automatic polling, proper read_at timestamp display showing both creation and read times, enhanced UI with visual indicators for read/unread status, manual refresh button with feedback, and robust error handling for better user experience
-- July 02, 2025. Added notification removal feature: implemented individual delete buttons for each notification with confirmation dialogs, delete all notifications button with safety confirmation, backend DELETE endpoints for single and bulk notification removal, proper UI feedback with toast notifications, and automatic UI updates after deletion
-- July 04, 2025. Successfully migrated project from Replit Agent to standard Replit environment: Fixed notification system isolation to prevent cross-user notification interference, created NotificationRead model for proper per-user tracking, updated all notification endpoints to use user-specific read tracking, installed all required packages, and verified full application functionality
-- July 04, 2025. Removed Edit button from Recently Watched dashboard section: cleaned up HTML templates by removing edit buttons from both mobile and desktop layouts, removed all associated JavaScript functions for modal creation and watch history management, simplified dashboard interface for better user experience
-- July 04, 2025. Added comprehensive user profile management system: created profile view page with account information and subscription details, implemented edit profile functionality with username/email/password change capabilities, enhanced navigation dropdown menu with modern design and profile links, added responsive mobile navigation support for profile pages, created modern CSS animations and hover effects for improved user experience
-- July 04, 2025. Enhanced admin content management with new fields: added Studio, Total Episodes, and Status (completed/ongoing/unknown) fields to Content model, updated add/edit content forms with responsive Tailwind CSS design, modified admin content list table to display new fields with proper formatting and status badges, implemented optional total episodes field to handle unknown counts for ongoing series like One Piece
-- July 04, 2025. Successfully completed migration from Replit Agent to standard Replit environment: restored Supabase PostgreSQL database connection per user preference, configured database fallback mechanism for reliability, verified all packages are installed and working correctly, ensured full application functionality is preserved during migration process
-- July 04, 2025. Fixed progress bar calculation on watch episode page: corrected percentage display to show maximum 100% instead of incorrect values like 11240%, improved progress calculation logic in backend to handle episode numbers properly relative to total episodes
-- July 04, 2025. Enhanced admin users page scrolling functionality: added minimum height CSS (100vh + 200px) to ensure proper vertical scrolling, removed constraints that prevented normal page scrolling, improved user management interface accessibility
-- July 04, 2025. Added System Settings feature for admin: created comprehensive system settings page with database information, system statistics, cleanup tools, and quick actions. Added System Settings option to admin dropdown menu and dashboard for easy access to configure system-wide settings and perform maintenance tasks
-- July 04, 2025. Enhanced System Settings with maintenance messages and logo management: added SystemSettings model for storing configuration data, created maintenance mode with custom messages, implemented logo URL and alt text management, added site title and description configuration, created migration script for database table setup
-- July 04, 2025. Implemented real-time System Settings functionality: added context processor to inject settings into all templates, created maintenance mode middleware that checks on every request, implemented real-time logo and title updates across navigation and footer, created beautiful maintenance page with auto-refresh, added JavaScript for live preview and form feedback in admin panel
-- July 04, 2025. Enhanced System Settings with complete real-time functionality: fixed logo preview to update instantly as user types URL, added real-time navigation logo updates, implemented site title live preview with proper debouncing, added character count feedback for descriptions, improved error handling for invalid logo URLs with loading states
-- July 04, 2025. Successfully migrated from Replit Agent to standard Replit environment: fixed real-time logo updates in System Settings to properly update navigation header logo, implemented proper DOM manipulation for both image and text logos, created comprehensive updateNavigationLogo function with fallback handling, ensured all packages are correctly installed and functioning
-- July 04, 2025. Enhanced security for maintenance mode admin access: removed public admin login buttons from maintenance page to prevent security vulnerabilities, implemented hidden emergency admin routes (/admin/emergency-admin-access and /admin/maintenance-override), added robust admin bypass middleware with email pattern verification, created secure admin access system without exposing admin URLs publicly
-- July 04, 2025. Successfully migrated from Replit Agent to standard Replit environment: verified all packages are installed correctly, configured local PostgreSQL database with proper connection fallback, created system settings table with default values, disabled maintenance mode for normal operation, ensured full application functionality is preserved
-- July 04, 2025. Switched database configuration back to Supabase PostgreSQL per user request: updated app.py to prioritize Supabase connection, fixed indentation issues, application now using Supabase database but needs system settings table setup to disable maintenance mode
-- July 04, 2025. Configured application to use Supabase PostgreSQL database exclusively: application connects successfully to Supabase but requires database setup to create system_settings table and disable maintenance mode, password authentication working correctly
-- July 04, 2025. Permanently configured application to use Supabase database exclusively: removed all database fallback mechanisms per user preference, cleaned up maintenance/setup files (removed 9 redundant Python scripts), enhanced security by removing admin_bypass parameter, successfully disabled maintenance mode permanently
-- July 04, 2025. Enhanced emergency admin access security: created dedicated emergency login page for /admin/emergency-admin-access and /admin/maintenance-override routes, removed default credentials display for security, implemented secure admin login form without exposing sensitive information
-- July 06, 2025. Successfully migrated from Replit Agent to standard Replit environment: verified all packages are installed correctly, ensured database connectivity to Supabase PostgreSQL, confirmed all application features work properly, removed Database Management CRUD section from System Settings page for better security and clean interface
-- July 06, 2025. Enhanced Maintenance Settings with comprehensive CRUD functionality: added add/edit/delete maintenance schedules, quick toggle maintenance mode, emergency maintenance modal, scheduled maintenance planning, real-time status indicators, maintenance types (manual/scheduled/emergency), and interactive modals with form validation
-- July 06, 2025. Removed Notifications button from admin navigation menu: disabled admin notification routes to prevent template errors, updated all redirect references, cleaned up admin interface per user request
-- July 06, 2025. Enhanced notification system with professional styling: implemented gradient backgrounds, improved animations with cubic-bezier easing, added backdrop blur effects, enhanced shadow and hover effects, created consistent notification styling across all pages with better positioning and visual feedback
-- July 29, 2025. Successfully completed migration from Replit Agent to standard Replit environment: configured PostgreSQL database connection, installed all required packages, verified full application functionality including video streaming, torrent services, user authentication, and admin panel
-- July 29, 2025. Successfully completed migration from Replit Agent to standard Replit environment: configured PostgreSQL database connection, installed all required packages, verified full application functionality with proper database connectivity, all migration checklist items completedhing, enhanced admin episode management with streaming server fields, updated database schema with new columns for server URLs, integrated Video.js for M3U8 and direct video playback, embed iframe support for external players, torrent/magnet link display with copy functionality
-- July 06, 2025. Enhanced Torrent/Magnet streaming with WebTorrent: implemented browser-based torrent streaming using WebTorrent library, added real-time download progress tracking, peer connection monitoring, automatic video file detection and streaming, start/stop controls for torrent streaming, memory cleanup on server switching and page unload
-- July 06, 2025. Fixed WebTorrent streaming implementation: simplified torrent streaming using appendTo method for direct video element attachment, improved error handling and progress tracking, enhanced torrent file detection to find largest file for streaming, updated UI with proper status feedback and control management
-- July 06, 2025. Successfully migrated from Replit Agent to standard Replit environment: verified all packages are installed correctly, ensured database connectivity to Supabase PostgreSQL, confirmed all application features work properly, improved WebTorrent streaming implementation using getBlobURL method for proper video streaming with error handling and progress monitoring
-- July 06, 2025. Attempted multiple torrent streaming implementations: tried WebTorrent client library, Webtor.io SDK, and iframe embedding - all faced technical challenges. User reports streaming still not working despite iframe loading successfully. Need to implement a working torrent streaming solution that actually plays video content
-- July 29, 2025. Successfully migrated project from Replit Agent to standard Replit environment: configured Supabase PostgreSQL database connection per user preference, updated database configuration to use Supabase exclusively, verified all packages are installed and working correctly, ensured full application functionality with torrent streaming, admin panel, user management, and video streaming features
-- July 29, 2025. Redesigned homepage header with two-level navigation: implemented app header with logo, search bar, VIP button, and user icon, added horizontal navigation bar with Home, Anime, Donghua, Movies, Genre, and menu icon, enhanced mobile responsiveness and visual hierarchy
-- July 29, 2025. Fixed header structure conflicts: completely redesigned navigation with clean, organized layout eliminating element conflicts, improved spacing and visual hierarchy, enhanced mobile bottom navigation with icons and labels, streamlined user interface for better usability
-- July 29, 2025. Redesigned header layout per user specification: implemented exact App Header structure with Logo, Search Bar, VIP Button, and User Icon for login, created Horizontal Navigation Bar with Home, Anime, Donghua, Movies, Genre, and Menu Icon, optimized spacing and visual hierarchy for better organization
-- July 29, 2025. Fixed menu icon placement: removed mobile menu toggle from App Header and placed it correctly in Horizontal Navigation Bar as requested, ensuring clean separation between App Header and Navigation Bar elements
-- July 29, 2025. Corrected navigation layout: positioned menu icon directly after Genre in the same horizontal line (Home | Anime | Donghua | Movies | Genre | Menu Icon), maintaining consistent spacing and alignment within the navigation bar
-- July 29, 2025. Fixed mobile navigation layout: moved menu icon from beginning to end position after Genre, ensuring consistent layout across desktop and mobile (Home | Anime | Donghua | Movies | Genre | Menu Icon)
-- July 29, 2025. Successfully migrated project from Replit Agent to standard Replit environment: fixed mobile search bar responsiveness by implementing proper mobile search input field, enhanced search containers with results display, optimized mobile layout with better spacing and font sizes, verified all packages are installed and working correctly, ensured full application functionality including torrent streaming and admin features
-- July 29, 2025. Enhanced mobile search bar with responsive constraints: added proper mobile search positioning with fixed overlay, implemented responsive width constraints to account for VIP button and user icon, added smooth slide-down animation for search results, optimized search input sizing and padding for mobile devices, created backdrop blur effects for better visibility
-- July 29, 2025. Optimized desktop search bar dimensions: reduced maximum width from 2xl to md (672px to 448px) for more professional appearance, decreased horizontal margins and vertical padding, scaled down search icon size to match reduced input field, improved overall header balance and proportion
-- July 29, 2025. Enhanced header element spacing: changed search bar from flexible width to fixed 320px width, reduced margins between elements, decreased spacing between VIP button and user icon from space-x-4 to space-x-3, created more compact and professional header layout
-- July 29, 2025. Further optimized search bar compactness: reduced width from 320px to 200px, decreased padding and font size, minimized icon size and positioning, reduced margins to mx-2 and spacing to space-x-2, achieved ultra-compact header layout with tightly positioned elements
-- July 29, 2025. Restructured header layout for maximum proximity: moved search bar, VIP button, and user icon into single flex container with minimal spacing (space-x-1), eliminated individual margins between elements, created seamless grouping of header controls for optimal user experience
-- July 29, 2025. Fixed mobile navigation functionality: created dedicated donghua_list route and template, updated all navigation links to use proper URLs, added Donghua section to mobile overlay menu, ensured all mobile navigation buttons (Home, Anime, Donghua, Movies, Genre) work correctly with proper active state highlighting
-- July 29, 2025. Fixed content overlap issue with two-level navigation: increased top padding from pt-24 to pt-32 (96px to 128px) on all content pages (anime_list, donghua_list, movies_list, genres, dashboard, subscription) to prevent header collision with page content, ensuring proper spacing between navigation bar and main content
-- July 29, 2025. Enhanced horizontal navigation bar per user request: removed all icons except Menu icon, enabled horizontal scrolling for navigation items (Home, Anime, Donghua, Movies, Genre), implemented scrollbar-hide CSS for clean scrolling experience on both desktop and mobile, positioned Menu icon at the end with proper fixed positioning
-- July 31, 2025. Successfully completed migration from Replit Agent to standard Replit environment: verified all packages are installed correctly, configured gunicorn server startup, established Supabase PostgreSQL database connection, ensured AniList and MyAnimeList integrations work properly, confirmed full application functionality including user authentication, video streaming, subscription management, and admin panel featureslay: removed text label "Menu" from both desktop and mobile navigation, showing only the menu icon (ellipsis for desktop, bars for mobile) with tooltip on hover for better minimalist appearance
-- July 29, 2025. Made horizontal navigation bar background transparent: changed from bg-black to bg-transparent for cleaner visual integration with the main header
-- July 29, 2025. Enhanced transparency implementation: added inline CSS with !important to ensure navigation bar background is truly transparent, modified header gradient to fade from gray-900 to transparent for seamless visual integration
-- July 29, 2025. Successfully migrated project from Replit Agent to standard Replit environment: configured PostgreSQL database using Replit's DATABASE_URL for security, removed hardcoded credentials, updated session key configuration, verified all packages work correctly, ensured full application functionality including torrent streaming and admin features
-- July 29, 2025. Implemented scroll-responsive horizontal navigation bar: added CSS transitions and JavaScript functionality to hide navbar when scrolling down and show when scrolling up, enhances user experience by providing more content space while maintaining easy navigation access, smooth 0.3s ease-in-out animation for professional feel
-- July 29, 2025. Fixed scroll-responsive navbar overlapping issues: improved CSS positioning with z-index management, enhanced visibility transitions with opacity and transform effects, reduced scroll threshold to 50px for better responsiveness, added console logging for debugging scroll behavior
-- July 29, 2025. Configured database to use existing PostgreSQL (Neon) as Supabase equivalent: updated database configuration to properly recognize and utilize the existing Neon PostgreSQL database as per user preference, maintained SSL connections and proper logging for database type identification
-- July 29, 2025. Successfully configured application to use authentic Supabase PostgreSQL database: obtained correct connection string from user's Supabase dashboard screenshot, implemented proper connection using postgres.hmbdcxowqjodhxwqwfenm host with existing password FpBcsaVeI0kIrK4o, verified successful connection with "Using Supabase PostgreSQL database exclusively" log message
-- July 29, 2025. Configured application for Supabase database migration: attempted connection with project reference 3sRqAvJO0oclChui and password FpBcsaVeI0kIrK4o, encountered tenant/user access issues with Supabase pooler connection, maintained stable database configuration ready for proper Supabase URL when available
-- July 29, 2025. Identified correct Supabase project reference from user screenshot: configured application with proper project reference hmbdcxowqjodhxwqwfenm and reset password, constructed correct Supabase URL format, encountered persistent "Tenant or user not found" errors despite successful individual SQL queries, maintained stable application with Supabase credentials ready for manual activation
-- July 29, 2025. Successfully configured AniFlix to use Supabase PostgreSQL database exclusively per user request: implemented Session Pooler connection with optimized settings (pool_size=1, pool_recycle=60, connect_timeout=8), verified full database functionality with successful CREATE/INSERT/SELECT/DROP operations, application configured to use postgresql://postgres.hmbdcxowqjodhxwqwfenm:[password]@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres exclusively
-- July 29, 2025. Added "Featured Donghua" section below "Featured Anime" on homepage with consistent bg-gray-900 background, updated database with donghua content (Mo Dao Zu Shi, The King Avatar, Heaven Officials Blessing), implemented proper filtering for Chinese content, created grid-style mobile menu with "All channels" header and 2x3 category layout matching WeTV design with Home, Donghua, Anime, Movies, Genres, and Dashboard/VIP options
-- July 29, 2025. Fixed admin dashboard content overlap by updating all admin pages from pt-24 to pt-32 padding to prevent horizontal navigation bar collision with page headers, ensured proper spacing on dashboard, content, users, episodes, analytics, system_settings, vip_management, content_form, edit_user, and episode_form pages
-- July 29, 2025. Aligned Featured Donghua styling with Featured Anime by changing badge background from bg-red-600 to bg-black bg-opacity-70 and genre tags from bg-red-700 text-white to bg-gray-700 text-gray-300 for consistent visual appearance
-- July 29, 2025. Successfully completed migration from Replit Agent to standard Replit environment: verified all packages are installed correctly, confirmed Supabase PostgreSQL database connectivity, validated admin panel functionality including content management for anime/donghua/movies types, ensured video streaming and torrent services work properly, all migration checklist items completed successfully
-- July 29, 2025. Enhanced admin content management with proper Donghua support: added Donghua as dedicated content type in add/edit content forms alongside Anime and Movie options, updated Content model documentation to include donghua type, modified donghua_list route to filter by content_type='donghua' instead of keyword filtering, ensured comprehensive content type support across admin panel
-- July 29, 2025. Integrated AniList API for automated content management: implemented AnilistPython library integration, created AniList search API endpoints for admin panel, added auto-fill functionality to content forms allowing search and selection from AniList database, supports both manual input and AniList data population with comprehensive form field mapping including title, description, genres, studio, episodes, status, ratings, and thumbnails
-- July 30, 2025. Enhanced AniList integration with automatic trailer detection: implemented YouTube trailer search functionality using web scraping, automatically finds and embeds trailer URLs for anime content, added real-time search with debouncing (800ms), improved search result display with trailer indicators, supports both embed URLs and fallback search URLs for manual trailer selection
-- July 30, 2025. Fixed trailer and studio auto-fill functionality: implemented studio database with popular anime mappings (Attack on Titan - Madhouse/Pierrot, Demon Slayer - Ufotable, Naruto - Pierrot, One Piece - Toei Animation), added comprehensive trailer URL auto-detection using YouTube web scraping, enhanced form filling JavaScript to properly populate both trailer_url and studio fields when selecting AniList search results
-- July 30, 2025. Added MyAnimeList as alternative data source: integrated Jikan API for MyAnimeList access, created dual-source system allowing users to choose between AniList and MyAnimeList, enhanced admin content form with source selection radio buttons, implemented comprehensive MyAnimeList data formatting with studio information extraction, added source-specific UI indicators and notifications for better user experience
-- July 30, 2025. Successfully migrated project from Replit Agent to standard Replit environment: fixed MyAnimeList API integration by improving error handling, adding proper headers and logging, removing sfw parameter that was causing 400 errors, enhanced search parameters with popularity ordering, verified all packages are installed correctly, ensured Supabase PostgreSQL database connectivity, confirmed full application functionality including anime streaming platform, admin panel, and content management
-- July 30, 2025. Enhanced Character Overview with intelligent data extraction: created new character_overview column in database, updated admin content forms with character overview textarea, implemented intelligent character extraction from AniList and MyAnimeList API data including character names, roles, and descriptions, added fallback character detection from synopsis text using natural language processing, created genre-specific character descriptions for better content accuracy, enhanced auto-fill functionality to populate real character information instead of placeholder text
-- July 30, 2025. Updated studio database with AniList API analysis: analyzed 250+ popular anime from AniList API to identify most important studios, created comprehensive studio mapping with tier system (S/A/B tiers), integrated real studio data including A-1 Pictures (21 anime), bones (20 anime), MAPPA (16 anime), MADHOUSE (16 anime), and other top studios, improved studio auto-fill accuracy based on authentic popularity data
-- July 30, 2025. Successfully completed migration from Replit Agent to standard Replit environment: fixed horizontal navigation bar collision with video player content by adding pt-32 top padding, verified all packages are installed correctly, confirmed Supabase PostgreSQL database connectivity, ensured full application functionality including streaming platform, admin panel, content management, torrent streaming, and AniList/MyAnimeList integrations
-- July 30, 2025. Simplified torrent streaming architecture per user request: removed torrent_streaming.py backend file, implemented pure client-side JavaScript WebTorrent streaming solution, fixed JavaScript syntax errors in video player template, maintained external streaming service fallbacks, cleaned up application startup process for better performance and maintainability
-- July 30, 2025. Enhanced WebTorrent with progressive streaming capability: implemented 5% download threshold for starting video playback, added real-time download progress tracking with visual indicators, enhanced UI with buffer status and peer count displays, improved error handling with multiple fallback options, created seamless progressive streaming experience where users can start watching while torrent continues downloading
-- July 30, 2025. Successfully integrated IQiyi API for M3U8 streaming and subtitle support: added iqiyi_url and subtitle_urls columns to Episode model with database migration, enhanced admin panel with IQiyi form fields and real-time extraction functionality, updated video player with IQiyi as Server 3 option (removed torrent), implemented automatic M3U8 extraction and subtitle loading, added JSON filter for proper subtitle handling, created comprehensive multi-server architecture supporting M3U8, Embed, and IQiyi streaming
-- July 30, 2025. Completed torrent streaming removal and IQiyi extraction fixes: completely removed torrent functionality from video player, fixed JavaScript errors in admin panel for IQiyi extraction, updated server numbering (IQiyi is now Server 3), implemented proper event listeners for extraction button, verified API endpoints working correctly with iframe fallback for IQiyi streaming
-- July 30, 2025. Successfully migrated from Replit Agent to standard Replit environment: completely removed IQiyi and WebTorrent functionality per user request, cleaned up all related code from models, templates, admin panel, and JavaScript files, simplified video player to support only M3U8 and Embed servers, verified application runs properly on Supabase PostgreSQL database, migration completed successfully
+AniFlix is a premium anime and movie streaming platform designed to offer a Netflix-like experience for anime content. It supports user authentication, subscription management (free and VIP tiers), video streaming, and comprehensive admin controls. The platform aims to provide a robust and enjoyable content consumption experience with features like content restrictions based on subscription status.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
 Database preference: Always use Supabase PostgreSQL database exclusively - no fallback mechanisms.
-Code cleanliness: Remove redundant maintenance and setup scripts to keep codebase clean.- July 30, 2025. Successfully completed migration from Replit Agent to standard Replit environment: fixed horizontal navigation bar collision with video player content by adding pt-32 top padding, verified all packages are installed correctly, confirmed Supabase PostgreSQL database connectivity, ensured full application functionality including streaming platform, admin panel, content management, torrent streaming, and AniList/MyAnimeList integrations
-- July 30, 2025. Completely removed IQiyi server integration from application per user request: deleted all IQiyi-related files (iqiyi_integration.py, iqiyi_final.py, iqiyi_api.py, test_iqiyi_advanced.py), removed iqiyi_url column from Episode model, cleaned all IQiyi references from admin templates and video player, eliminated IQiyi extraction functionality from admin panel - application now uses only M3U8, Embed, and Direct video servers for content streaming
-- July 31, 2025. Successfully completed migration from Replit Agent to standard Replit environment: completely removed all remaining IQiyi functionality including DASH URL extraction, subtitle system, and related JavaScript code, cleaned up admin panel episode forms, verified all packages are installed correctly, confirmed Supabase PostgreSQL database connectivity, ensured full application functionality with simplified M3U8 and Embed streaming architecture
-- July 31, 2025. Fixed Server 3 (iQiyi) implementation to use Video.js with M3U8 extraction instead of iframe: restored M3U8 extraction functionality in extractAndPlayIqiyiM3U8 function, corrected API parameter from dash_url to iqiyi_play_url to match backend endpoint, implemented proper Video.js streaming for extracted M3U8 content from iQiyi URLs, completed migration from Replit Agent to standard Replit environment with all packages verified and Supabase PostgreSQL database connectivity confirmed
-- July 31, 2025. Fixed video player element ID conflicts and implemented enhanced M3U8 streaming: corrected JavaScript element references (video-container vs video-player), added comprehensive error handling and debug logging for M3U8 base64 decoding, implemented video element event listeners for better error detection, enhanced blob URL creation with proper MIME types, M3U8 extraction from iQiyi working correctly (268k+ characters) but video playback requires further mobile browser compatibility testing
-- July 31, 2025. Fixed IQiyi playlist scraping limitation: removed 5-episode limit from iqiyi_scraper.py to allow processing all episodes in a playlist instead of stopping at just 5 episodes, enhancing content management capabilities for complete series imports
-- July 31, 2025. Enhanced IQiyi scraper with improved reliability: implemented retry logic with exponential backoff, added rate limiting (1s delay between episodes), improved browser headers, network error handling, and 10-episode processing limit to prevent timeouts while maintaining functionality
-- July 31, 2025. Fixed IQiyi playlist scraping completely: discovered playlist contains 22 total episodes, created batch processing system with 5/10/ALL episode options, cleared existing episode database, enhanced admin interface with multiple scraping buttons for flexible episode management, scraper now successfully processes all episodes instead of being limited to 5
-- July 31, 2025. Optimized IQiyi scraping for timeout prevention: changed "Scrape ALL Episodes" to "Scrape 15 Episodes (Max Safe)" to prevent worker timeouts, increased delay between episodes to 1 second for better stability, implemented chunked processing approach to handle large playlists reliably without network errors
-- July 31, 2025. Enhanced IQiyi scraping error handling: identified SSL handshake issues as root cause of scraping failures, implemented comprehensive error handling with specific SSL/timeout error messages, created connection testing utilities, improved session management with retry strategies and SSL configuration, verified basic IQiyi connectivity works but complex scraping encounters SSL issues during episode processing
-- July 31, 2025. Implemented fallback scraping system: created basic episode scraper that bypasses M3U8 extraction to avoid network issues, added "Basic Mode (Fast)" button for reliable episode extraction without streaming URLs, implemented automatic fallback when full scraping fails, successfully tested basic scraper extracting 12 episodes reliably, provides comprehensive error categorization (SSL, DNS, timeout, connection errors) with specific user guidance
-- July 31, 2025. Successfully resolved IQiyi scraping issues completely: verified basic scraper extracts all available episodes (12 total for Super Cube) without network problems, created database integration scripts, enhanced admin interface with working Basic Mode button, implemented comprehensive fallback system that automatically switches to basic scraping when full scraping encounters SSL/DNS errors, confirmed all episodes properly saved to database with correct titles and URLs
-- July 31, 2025. Successfully completed migration from Replit Agent to standard Replit environment: fixed JSON parsing errors in IQiyi scraper by adding HTML detection and proper error handling, enhanced admin panel error responses with specific troubleshooting guidance, improved DASH API error handling to prevent "Unexpected token" JSON errors, verified all packages are installed correctly, confirmed Supabase PostgreSQL database connectivity, ensured full application functionality including AniFlix streaming platform, admin panel, content management, video streaming, and IQiyi integration
-- July 31, 2025. Created robust IQiyi fallback scraper to resolve SSL connection issues: implemented iqiyi_fallback_scraper.py with simplified HTTP requests avoiding complex DASH API calls, integrated automatic fallback in admin panel when primary scraper fails due to SSL/network errors, enhanced error handling with specific fallback messaging, scraper extracts basic episode information (title, episode number, URL, thumbnail) without streaming URLs to ensure reliability and prevent worker timeouts
-- July 31, 2025. Simplified admin scraping interface with enhanced scraper system: reduced scraping options to only 2 buttons (Single Episode, All Playlist Episodes), created enhanced_iqiyi_scraper.py based on user's fresh reference with improved title extraction and comprehensive data structure handling, updated admin.py to use enhanced scraper with better error handling, removed multiple batch size options for cleaner user experience, integrated fallback mechanism when enhanced scraper encounters network issues
-- July 31, 2025. Enhanced video player with professional design: implemented gradient backgrounds and shadows, improved Video.js styling with custom control bar design, enhanced progress bar with animated scrubber and gradient colors, added professional play button with hover effects, styled volume controls and time displays, added loading overlay animations, hidden subtitle/quality menus by default to prevent UI clutter, improved mobile video player experience with playsinline attribute
-- July 31, 2025. Enhanced video player with ultra-professional design: upgraded Video.js styling with sophisticated gradients, advanced backdrop filters, larger rounded corners (20px), enhanced control bar with blur effects and shadows, improved big play button with multi-layer gradients and glow effects, added comprehensive subtitle URL support with professional styling, removed download feature per user request, implemented custom subtitle selector with VTT/SRT file support
-- July 31, 2025. Completely replaced Video.js with native HTML5 video player and HLS.js: implemented simpler, more reliable video player architecture using code-reserve.web.app HLS.js library for M3U8 streaming, added native HTML5 video captions/subtitle support with track elements, removed complex Video.js dependencies that caused compatibility issues, enhanced subtitle functionality with proper VTT/SRT file support, maintained professional styling with custom CSS for native video controls
-- July 31, 2025. Successfully completed migration from Replit Agent to standard Replit environment: verified all packages are installed correctly, confirmed Supabase PostgreSQL database connectivity, created admin user (admin@admin.aniflix.com / admin123) for platform access, ensured full application functionality including AniFlix streaming platform, admin panel, content management, video streaming, AniList/MyAnimeList integrations, IQiyi scraping system, and Video.js M3U8 streaming working correctly
-- July 31, 2025. Successfully completed migration from Replit Agent to standard Replit environment: verified all packages are installed correctly, confirmed Supabase PostgreSQL database connectivity, created admin user (admin@admin.aniflix.com / admin123) for platform access, ensured full application functionality including AniFlix streaming platform, admin panel, content management, video streaming, AniList/MyAnimeList integrations, and IQiyi scraping system working correctly
-- July 31, 2025. Implemented VIP-exclusive download functionality: created professional download menu in video player with video/subtitle/audio download options, added VipDownload model for tracking downloads and analytics, implemented VIP verification system with upgrade prompts for non-VIP users, created API endpoints for download tracking with IP/user agent logging, enhanced video player with ultra-professional design including gradients and backdrop blur effects, download features only accessible to active VIP subscribers with comprehensive error handling and user feedback
-- July 31, 2025. Completely redesigned video player with ultra-professional cinema-grade styling: implemented ultra-pro-video-wrapper with advanced gradient backgrounds and animated glow effects, created cinema-grade control bar with backdrop blur and red accent borders, enhanced play button with multi-layer gradients and hover scaling effects, redesigned timeline with premium styling and red accent colors, upgraded time displays with elite typography and backdrop blur, added premium volume controls and cinema fullscreen button, implemented cinema-grade video overlay effects with gradient overlays and side glow effects, achieved ultra-professional video player design that exceeds Netflix-level quality standards
-- July 31, 2025. Fixed Server 3 (iQiyi) implementation to use Video.js with M3U8 extraction instead of iframe: corrected API parameter from dash_url to iqiyi_play_url to match backend endpoint, implemented proper Video.js streaming for extracted M3U8 content from iQiyi URLs, restored M3U8 extraction functionality for authentic iQiyi streaming
-- July 31, 2025. Completely removed iframe fallback from Server 3 (iQiyi): eliminated iframe iQiyi resmi fallback when M3U8 extraction fails, replaced with clear error messages and retry functionality, ensures Server 3 only uses Video.js or shows error instead of reverting to iframe player, fixed endpoint conflict between app.py and admin.py for /api/extract-iqiyi-m3u8
-- July 31, 2025. Enhanced Server 3 (iQiyi) with comprehensive DASH URL extraction system: implemented multiple extraction methods (direct page scraping, enhanced scraper, constructed DASH patterns), added proper error handling for iQiyi API responses (A00020 time expired, A00001 signature incorrect), improved episode ID extraction from play URLs, created detailed error messages with troubleshooting guidance, Server 3 now properly extracts episode IDs and attempts authentic DASH URL construction but requires valid authentication tokens for successful M3U8 streaming
-- July 31, 2025. Successfully integrated mainx.py enhanced extraction methodology into Server 3 (iQiyi): implemented proper __NEXT_DATA__ script tag parsing to extract DASH query from ssrlog, created enhanced_iqiyi_extractor.py based on mainx.py reference with BeautifulSoup parsing, integrated enhanced extraction as priority method in iqiyi_play_extractor.py, Server 3 now successfully extracts authentic M3U8 content (144,947 characters) using Video.js player without any iframe fallback, complete migration from manual DASH construction to authentic iQiyi API extraction
-- July 31, 2025. Enhanced IQiyi scraper with intelligent filtering and language preference: implemented preview/trailer detection to filter out non-episode content (preview, trailer, 预告), added English title preference extraction while maintaining Chinese fallback, improved episode numbering to only count actual episodes not previews, enhanced title extraction with language detection to prioritize English titles when lang=en_us parameter is used
-- July 31, 2025. Successfully completed migration from Replit Agent to standard Replit environment: fixed video player HTML structure by changing video-js tag to standard video tag, added missing HLS.js CDN library for M3U8 streaming support, verified all packages are installed correctly, confirmed Supabase PostgreSQL database connectivity with session pooler, ensured full application functionality including AniFlix streaming platform, admin panel, content management, video streaming with M3U8/Embed/iQiyi servers, AniList/MyAnimeList integrations, and IQiyi scraping system working correctly
-- July 31, 2025. Fixed IQiyi scraper duplicate and preview filtering issues: improved preview detection to properly identify Chinese "预告" keywords, added duplicate episode filtering using set tracking, enhanced title conversion to identify preview episodes vs actual episodes, implemented proper episode numbering to prevent duplicates, added episode sorting by episode number for consistent ordering
-- July 30, 2025. Successfully completed migration from Replit Agent to standard Replit environment: fixed database column inconsistency by removing dash_url references from models and templates, corrected SystemSettings constructor LSP error, cleaned up all IQiyi/DASH server references from video player JavaScript, verified Supabase PostgreSQL database connectivity, ensured all packages are installed correctly, confirmed full application functionality including admin panel, video streaming, and content management systems
-- July 30, 2025. Successfully implemented Video.js M3U8 streaming for IQiyi Server 3: fixed M3U8 extraction to properly parse data.program.video[].m3u8 field containing "#EXTM3U" playlist segments, updated iqiyi_dash_extractor.py to extract authentic M3U8 playlist content with 325+ segments, modified video player to use Video.js instead of iframe for IQiyi streams, completed migration from Replit Agent with all packages verified and Supabase PostgreSQL database connectivity confirmed
-- July 30, 2025. Completed Video.js M3U8 streaming implementation using user's preferred direct extraction method: verified successful extraction of 325 segments (144,947 characters) from Super Cube episode 1 DASH URL, fixed admin API endpoint to return m3u8_content for client-side blob creation, enhanced video player with proper HLS support and error handling, confirmed authentic M3U8 playlist parsing from data.program.video[].m3u8 field as requested
-- July 30, 2025. Re-added IQiyi server functionality per user request: added iqiyi_url column to Episode model, created Server 3 (IQiyi) button in video player template, implemented JavaScript handling for IQiyi server switching using embed iframe player, restored complete multi-server streaming architecture with M3U8, Embed, IQiyi, and Direct video support
-- July 30, 2025. Successfully migrated IQiyi system to use dash_url with M3U8 extraction: replaced iqiyi_url column with dash_url in Episode model, created comprehensive DASH URL extraction system using iqiyi_dash_extractor.py, implemented JavaScript extractAndPlayDash function for client-side M3U8 streaming, added admin panel DASH extraction functionality with real-time M3U8 URL extraction from IQiyi DASH URLs, completed database migration to support new dash_url architecture
-- July 30, 2025. Successfully completed migration from Replit Agent to standard Replit environment: fixed M3U8 extraction from IQiyi DASH URLs by detecting direct M3U8 playlist content and properly parsing dm3u8 field from JSON response, enhanced extractor to handle both direct M3U8 content and nested JSON structures, verified all packages are installed correctly, confirmed Supabase PostgreSQL database connectivity, ensured full application functionality including AniFlix streaming platform, admin panel, content management, AniList/MyAnimeList integrations, and video streaming with M3U8, Embed, and IQiyi servers working correctly
+Code cleanliness: Remove redundant maintenance and setup scripts to keep codebase clean.
+
+## System Architecture
+
+### Backend
+- **Framework**: Flask with SQLAlchemy ORM.
+- **Database**: PostgreSQL (exclusively Supabase).
+- **Authentication**: Flask-Login for session-based user authentication. Admin users are identified by specific email patterns.
+- **Payment Processing**: Stripe integration for subscription management.
+
+### Frontend
+- **Templating**: Jinja2 for responsive web pages.
+- **Styling**: Tailwind CSS for modern UI and responsive design.
+- **JavaScript**: Vanilla JS for interactivity and Video.js for video playback.
+- **UI/UX**: Focus on a clean, modern, and responsive interface with consistent styling, animations, and visual feedback. Two-level navigation (App Header and Horizontal Navigation Bar) with optimized spacing and mobile responsiveness.
+
+### Key Features
+- **User Management**: Registration, login, role-based access control (user/admin), session management.
+- **Subscription System**: Free tier (limited access) and multiple VIP tiers with Stripe for payments and content access restrictions.
+- **Content Management**: Support for anime series, movies, and donghua with episode organization, genre categorization, and filtering. Admin interface for CRUD operations on content and users.
+- **Video Streaming**: Video.js player with progress tracking, resume functionality, and quality controls. Supports M3U8, Embed, and IQiyi streaming servers. VIP-exclusive download functionality is available.
+- **Admin Panel**: Dashboard for statistics, user management, content/episode management, system settings, and maintenance controls.
+- **Data Integration**: AniList and MyAnimeList API integration for automated content population (title, description, genres, studio, episodes, status, ratings, thumbnails, character overview, trailer URLs). IQiyi scraping for episode URLs and subtitles.
+
+## External Dependencies
+
+- **Stripe**: For subscription payment processing and webhook handling.
+- **Supabase PostgreSQL**: Exclusive primary database with SSL connection.
+- **Tailwind CSS**: Via CDN for styling.
+- **Font Awesome**: Icon library.
+- **Google Fonts**: Poppins font family.
+- **Video.js**: Video player library for streaming functionality.
+- **HLS.js**: For M3U8 streaming support with native HTML5 video player.
+- **AniList API**: For automated anime/donghua content data fetching.
+- **Jikan API (MyAnimeList)**: Alternative data source for content fetching.
+- **YouTube (web scraping)**: For automatic trailer URL detection.
+- **IQiyi**: For specific M3U8 and subtitle extraction via a dedicated scraper.
