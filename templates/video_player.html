@@ -81,14 +81,171 @@
 }
 
 #video-player.video-professional:hover {
-    border-color: rgba(239, 68, 68, 0.3);
+    border-color: rgba(239, 68, 68, 0.4);
     box-shadow: 
-        0 48px 100px rgba(0, 0, 0, 0.8),
-        0 24px 50px rgba(0, 0, 0, 0.6),
+        0 60px 120px rgba(0, 0, 0, 0.9),
+        0 32px 64px rgba(0, 0, 0, 0.7),
+        0 16px 32px rgba(0, 0, 0, 0.5),
+        inset 0 3px 0 rgba(255, 255, 255, 0.2),
+        inset 0 0 120px rgba(239, 68, 68, 0.15),
+        0 0 80px rgba(239, 68, 68, 0.3);
+    transform: translateY(-3px) scale(1.01);
+}
+
+/* Ultra-Professional Video.js Control Bar */
+#video-player.video-professional::-webkit-media-controls-enclosure {
+    background: linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.95) 60%, rgba(0,0,0,0.98) 100%);
+    border-radius: 0 0 24px 24px;
+    backdrop-filter: blur(25px);
+    border-top: 2px solid rgba(239, 68, 68, 0.2);
+    box-shadow: 
+        0 -15px 40px rgba(0, 0, 0, 0.6),
+        inset 0 2px 8px rgba(255, 255, 255, 0.1);
+}
+
+/* Enhanced Progress Timeline */
+#video-player.video-professional::-webkit-media-controls-timeline {
+    background: linear-gradient(90deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.2));
+    border-radius: 12px;
+    height: 10px;
+    border: 2px solid rgba(239, 68, 68, 0.15);
+    box-shadow: 
+        inset 0 3px 8px rgba(0, 0, 0, 0.4),
+        0 2px 10px rgba(239, 68, 68, 0.2);
+    position: relative;
+    overflow: hidden;
+}
+
+#video-player.video-professional::-webkit-media-controls-timeline:hover {
+    height: 12px;
+    border-color: rgba(239, 68, 68, 0.4);
+    box-shadow: 
+        inset 0 3px 8px rgba(0, 0, 0, 0.5),
+        0 4px 15px rgba(239, 68, 68, 0.4);
+    background: linear-gradient(90deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.25));
+}
+
+/* Professional Current Progress */
+#video-player.video-professional::-webkit-media-controls-current-time-display {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(220, 38, 38, 0.3));
+    color: white;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    text-shadow: 0 3px 6px rgba(0, 0, 0, 0.8);
+    border-radius: 12px;
+    padding: 6px 12px;
+    margin: 0 8px;
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    box-shadow: 
+        0 6px 20px rgba(239, 68, 68, 0.3),
+        inset 0 1px 3px rgba(255, 255, 255, 0.2);
+}
+
+#video-player.video-professional::-webkit-media-controls-time-remaining-display {
+    background: linear-gradient(135deg, rgba(100, 116, 139, 0.3), rgba(71, 85, 105, 0.4));
+    color: rgba(255, 255, 255, 0.9);
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.7);
+    border-radius: 10px;
+    padding: 5px 10px;
+    margin: 0 6px;
+    backdrop-filter: blur(6px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 
+        0 4px 12px rgba(0, 0, 0, 0.3),
+        inset 0 1px 2px rgba(255, 255, 255, 0.15);
+}
+
+/* Ultra-Professional Button Styling */
+#video-player.video-professional::-webkit-media-controls-play-button {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.4), rgba(220, 38, 38, 0.3));
+    color: white;
+    border-radius: 16px;
+    border: 2px solid rgba(239, 68, 68, 0.5);
+    backdrop-filter: blur(12px);
+    box-shadow: 
+        0 8px 25px rgba(239, 68, 68, 0.4),
+        inset 0 2px 4px rgba(255, 255, 255, 0.2);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    width: 50px;
+    height: 38px;
+    margin: 0 6px;
+}
+
+#video-player.video-professional::-webkit-media-controls-play-button:hover {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.6), rgba(220, 38, 38, 0.5));
+    border-color: rgba(239, 68, 68, 0.7);
+    box-shadow: 
+        0 12px 35px rgba(239, 68, 68, 0.5),
+        inset 0 2px 6px rgba(255, 255, 255, 0.25);
+    transform: scale(1.08) translateY(-2px);
+}
+
+#video-player.video-professional::-webkit-media-controls-mute-button,
+#video-player.video-professional::-webkit-media-controls-fullscreen-button {
+    background: linear-gradient(135deg, rgba(100, 116, 139, 0.3), rgba(71, 85, 105, 0.4));
+    color: white;
+    border-radius: 14px;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    box-shadow: 
+        0 6px 20px rgba(0, 0, 0, 0.3),
+        inset 0 2px 4px rgba(255, 255, 255, 0.15);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    width: 44px;
+    height: 36px;
+    margin: 0 4px;
+}
+
+#video-player.video-professional::-webkit-media-controls-mute-button:hover,
+#video-player.video-professional::-webkit-media-controls-fullscreen-button:hover {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.4), rgba(220, 38, 38, 0.3));
+    border-color: rgba(239, 68, 68, 0.4);
+    box-shadow: 
+        0 8px 25px rgba(239, 68, 68, 0.3),
+        inset 0 2px 6px rgba(255, 255, 255, 0.2);
+    transform: scale(1.05) translateY(-1px);
+}
+
+/* Professional Volume Control */
+#video-player.video-professional::-webkit-media-controls-volume-slider {
+    background: linear-gradient(90deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.2));
+    border-radius: 8px;
+    height: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* Professional Video Container Styling */
+.video-player-container {
+    position: relative;
+    border-radius: 28px;
+    overflow: hidden;
+    background: linear-gradient(145deg, rgba(0,0,0,0.95) 0%, rgba(15,23,42,0.95) 50%, rgba(30,41,59,0.95) 100%);
+    border: 3px solid rgba(239, 68, 68, 0.25);
+    padding: 12px;
+    box-shadow: 
+        0 40px 80px rgba(0, 0, 0, 0.7),
+        0 20px 40px rgba(0, 0, 0, 0.5),
+        0 10px 20px rgba(0, 0, 0, 0.3),
+        0 0 120px rgba(239, 68, 68, 0.15),
+        inset 0 3px 6px rgba(255, 255, 255, 0.1);
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.video-player-container:hover {
+    border-color: rgba(239, 68, 68, 0.4);
+    box-shadow: 
+        0 50px 100px rgba(0, 0, 0, 0.8),
+        0 25px 50px rgba(0, 0, 0, 0.6),
         0 12px 25px rgba(0, 0, 0, 0.4),
-        inset 0 2px 0 rgba(255, 255, 255, 0.15),
-        inset 0 0 100px rgba(239, 68, 68, 0.1),
-        0 0 50px rgba(239, 68, 68, 0.2);
+        0 0 150px rgba(239, 68, 68, 0.25),
+        inset 0 4px 8px rgba(255, 255, 255, 0.15);
+    transform: translateY(-4px) scale(1.005);
 }
 
 .video-js .vjs-big-play-button {
@@ -515,10 +672,21 @@
 }
 
 /* Improved server button animations */
+/* Ultra-Professional Server Button Styling */
 .server-btn {
     position: relative;
     overflow: hidden;
-    transition: all 0.3s ease;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(15px);
+    border: 2px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 
+        0 8px 25px rgba(0, 0, 0, 0.4),
+        inset 0 1px 3px rgba(255, 255, 255, 0.1);
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.9), rgba(30, 41, 59, 0.8)) !important;
+    font-weight: 600 !important;
+    border-radius: 16px !important;
+    padding: 12px 20px !important;
+    margin: 0 6px !important;
 }
 
 .server-btn:before {
@@ -528,12 +696,29 @@
     left: -100%;
     width: 100%;
     height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-    transition: left 0.5s;
+    background: linear-gradient(90deg, transparent, rgba(239, 68, 68, 0.4), transparent);
+    transition: left 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: -1;
+}
+
+.server-btn:hover {
+    border-color: rgba(239, 68, 68, 0.5) !important;
+    box-shadow: 
+        0 15px 40px rgba(239, 68, 68, 0.4),
+        inset 0 2px 6px rgba(255, 255, 255, 0.2) !important;
+    transform: translateY(-3px) scale(1.05);
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.3), rgba(220, 38, 38, 0.4)) !important;
 }
 
 .server-btn:hover:before {
     left: 100%;
+}
+
+.server-btn:active {
+    transform: translateY(-1px) scale(1.02);
+    box-shadow: 
+        0 8px 20px rgba(239, 68, 68, 0.3),
+        inset 0 1px 3px rgba(255, 255, 255, 0.15) !important;
 }
 
 /* Progress bar enhancements */
@@ -671,10 +856,12 @@
                 </div>
 
                 <!-- Ultra-Professional Video Player -->
-                <div class="relative rounded-3xl overflow-hidden bg-gradient-to-br from-black via-gray-900 to-gray-800 shadow-2xl border-2 border-gray-700/50 backdrop-blur-sm">
-                    <div class="aspect-video relative bg-gradient-to-br from-black via-gray-900 to-gray-800 p-2">
-                        <!-- Professional Player Frame -->
-                        <div class="w-full h-full rounded-2xl overflow-hidden bg-gradient-to-br from-gray-900 to-black shadow-inner border border-gray-600/30">
+                <div class="video-player-container relative">
+                    <div class="aspect-video relative">
+                        <!-- Professional Player Inner Frame -->
+                        <div class="w-full h-full rounded-2xl overflow-hidden bg-gradient-to-br from-black via-slate-900 to-slate-800 shadow-inner border-2 border-slate-600/40 relative">
+                            <!-- Premium Glow Effect -->
+                            <div class="absolute inset-0 bg-gradient-to-br from-red-500/5 via-transparent to-purple-500/5 rounded-2xl"></div>
                         <div id="video-container" class="w-full h-full relative">
                             <!-- Professional HLS Video Player -->
                             <video 
