@@ -10,7 +10,7 @@ from anilist_integration import anilist_service
 import logging
 import json
 from iqiyi_scraper import scrape_iqiyi_episode, scrape_iqiyi_playlist
-from iqiyi_dash_extractor import extract_m3u8_from_dash_url
+from iqiyi_m3u8_scraper import IQiyiM3U8Scraper
 
 admin_bp = Blueprint('admin', __name__)
 
@@ -1278,8 +1278,10 @@ def extract_dash_m3u8():
         
         logging.info(f"Extracting M3U8 from DASH URL: {dash_url[:100]}...")
         
-        # Extract M3U8 using the extractor
-        result = extract_m3u8_from_dash_url(dash_url)
+        # Extract M3U8 using new scraper
+        scraper = IQiyiM3U8Scraper()
+        m3u8_url = scraper.extract_m3u8_from_dash_url(dash_url)
+        result = {'success': bool(m3u8_url), 'm3u8_content': m3u8_url, 'method': 'new_scraper'}
         
         if result['success']:
             return jsonify({

@@ -103,6 +103,48 @@ app.register_blueprint(subscription_bp, url_prefix='/subscription')
 app.register_blueprint(admin_bp, url_prefix='/admin')
 app.register_blueprint(notifications_bp, url_prefix='/api')
 
+# Add API endpoint for M3U8 extraction (accessible from video player)
+@app.route('/api/extract-iqiyi-m3u8', methods=['POST'])
+def extract_iqiyi_m3u8():
+    """Public endpoint for extracting M3U8 from iQiyi DASH URL"""
+    try:
+        from iqiyi_m3u8_scraper import IQiyiM3U8Scraper
+        import logging
+        
+        data = request.get_json()
+        dash_url = data.get('dash_url', '').strip()
+        
+        if not dash_url:
+            return jsonify({
+                'success': False,
+                'error': 'DASH URL is required'
+            }), 400
+        
+        logging.info(f"Extracting M3U8 from DASH URL: {dash_url[:100]}...")
+        
+        # Extract M3U8 using new scraper
+        scraper = IQiyiM3U8Scraper()
+        m3u8_url = scraper.extract_m3u8_from_dash_url(dash_url)
+        
+        if m3u8_url:
+            return jsonify({
+                'success': True,
+                'm3u8_url': m3u8_url,
+                'message': 'M3U8 extracted successfully'
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': 'Failed to extract M3U8 from DASH URL'
+            }), 400
+            
+    except Exception as e:
+        logging.error(f"M3U8 extraction error: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': f'Server error: {str(e)}'
+        }), 500
+
 # Emergency admin access routes (must be after blueprints)
 @app.route('/emergency-admin-access')
 def emergency_admin_access():

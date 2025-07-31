@@ -577,10 +577,14 @@ function switchServer(serverType, serverUrl) {
             break;
             
         case 'iqiyi':
-            // Use demo M3U8 URL for iQiyi server
-            const iqiyiM3u8Url = 'https://bitdash-a.akamaihd.net/content/sintel/hls/playlist.m3u8';
-            showVideoPlayer(iqiyiM3u8Url, 'application/x-mpegURL');
-            showNotification('Loading iQiyi M3U8 stream...', 'info');
+            if (!serverUrl || serverUrl === 'None' || serverUrl === '') {
+                showNotification('IQiyi URL not available for this episode', 'error');
+                return;
+            }
+            
+            // Extract and play M3U8 from iQiyi DASH URL
+            extractAndPlayIqiyiM3U8(serverUrl);
+            showNotification('Extracting M3U8 from iQiyi...', 'info');
             break;
             
         default:
@@ -676,22 +680,40 @@ function showEmbedPlayer(url) {
     embedContainer.classList.remove('hidden');
 }
 
-function showIqiyiPlayer(url) {
-    document.getElementById('video-player').classList.add('hidden');
+function extractAndPlayIqiyiM3U8(dashUrl) {
+    console.log('Extracting M3U8 from iQiyi DASH URL:', dashUrl);
     
-    const embedContainer = document.getElementById('embed-container');
-    const iframe = document.getElementById('embed-player');
-    
-    // Use iQiyi URL directly in iframe like in the CodePen example
-    iframe.src = url;
-    iframe.setAttribute('allowfullscreen', 'true');
-    iframe.setAttribute('webkitallowfullscreen', 'true');
-    iframe.setAttribute('mozallowfullscreen', 'true');
-    iframe.setAttribute('allow', 'autoplay; fullscreen; picture-in-picture');
-    
-    embedContainer.classList.remove('hidden');
-    
-    console.log('Loading iQiyi player with URL:', url);
+    // Call backend API to extract M3U8
+    fetch('/api/extract-iqiyi-m3u8', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            dash_url: dashUrl
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success && data.m3u8_url) {
+            console.log('✅ M3U8 extracted successfully:', data.m3u8_url);
+            showVideoPlayer(data.m3u8_url, 'application/x-mpegURL');
+            showNotification('M3U8 extracted and loaded successfully!', 'success');
+        } else {
+            console.error('❌ Failed to extract M3U8:', data.error);
+            // Fallback to demo M3U8 for testing
+            const fallbackUrl = 'https://bitdash-a.akamaihd.net/content/sintel/hls/playlist.m3u8';
+            showVideoPlayer(fallbackUrl, 'application/x-mpegURL');
+            showNotification('Using fallback M3U8 stream', 'warning');
+        }
+    })
+    .catch(error => {
+        console.error('❌ API call failed:', error);
+        // Fallback to demo M3U8
+        const fallbackUrl = 'https://bitdash-a.akamaihd.net/content/sintel/hls/playlist.m3u8';
+        showVideoPlayer(fallbackUrl, 'application/x-mpegURL');
+        showNotification('Using fallback M3U8 stream', 'warning');
+    });
 }
 
 
