@@ -275,7 +275,7 @@ class IQiyiScraper:
 
                 # Add delay between requests untuk mencegah rate limiting
                 if i > 1:
-                    time.sleep(1)  # 1 second delay between episodes
+                    time.sleep(0.5)  # Reduced delay to 0.5 seconds
                 
                 print(f"🎬 Processing episode {i}/{process_count}: {episode_title}")
                 
@@ -342,7 +342,7 @@ def scrape_iqiyi_episode(url: str) -> dict:
             'error': str(e)
         }
 
-def scrape_iqiyi_playlist(url: str, max_episodes: int = 10) -> dict:
+def scrape_iqiyi_playlist(url: str, max_episodes: int = None) -> dict:
     """
     Function untuk scraping playlist IQiyi dengan batasan episode untuk mencegah timeout
     Return: dict dengan episode data

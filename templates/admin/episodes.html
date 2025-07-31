@@ -190,9 +190,17 @@
                                 class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg">
                             <i class="fas fa-play mr-2"></i>Scrape Single Episode
                         </button>
-                        <button onclick="scrapePlaylist()" 
+                        <button onclick="scrapePlaylist(5)" 
                                 class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg">
-                            <i class="fas fa-list mr-2"></i>Scrape Playlist (up to 10 episodes)
+                            <i class="fas fa-list mr-2"></i>Scrape Playlist (5 episodes)
+                        </button>
+                        <button onclick="scrapePlaylist(10)" 
+                                class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg">
+                            <i class="fas fa-list mr-2"></i>Scrape Playlist (10 episodes)
+                        </button>
+                        <button onclick="scrapePlaylist()" 
+                                class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg">
+                            <i class="fas fa-infinity mr-2"></i>Scrape ALL Episodes
                         </button>
                     </div>
                     
@@ -287,22 +295,31 @@ async function scrapeSingleEpisode() {
     }
 }
 
-async function scrapePlaylist() {
+async function scrapePlaylist(batchSize = null) {
     const url = document.getElementById('iqiyiUrl').value.trim();
     if (!url) {
         showScrapeStatus('Masukkan URL IQiyi terlebih dahulu', 'error');
         return;
     }
 
-    showScrapeStatus('Scraping playlist (ini mungkin memakan waktu)...', 'info');
+    const batchText = batchSize ? `${batchSize} episodes` : 'ALL episodes';
+    showScrapeStatus(`Scraping playlist (${batchText}) - ini mungkin memakan waktu...`, 'info');
     
     try {
+        const requestBody = {
+            iqiyi_url: url
+        };
+        
+        if (batchSize) {
+            requestBody.batch_size = batchSize;
+        }
+        
         const response = await fetch('/admin/api/scrape-playlist', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ iqiyi_url: url })
+            body: JSON.stringify(requestBody)
         });
 
         const result = await response.json();

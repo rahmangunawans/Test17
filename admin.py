@@ -575,8 +575,9 @@ def api_scrape_playlist():
         # Import scraping functions
         from iqiyi_scraper import scrape_iqiyi_playlist
         
-        # Scrape playlist dengan limit untuk mencegah timeout
-        result = scrape_iqiyi_playlist(iqiyi_url, max_episodes=10)
+        # Scrape playlist - let user choose batch size
+        batch_size = data.get('batch_size', 5)  # Default to 5 if not specified
+        result = scrape_iqiyi_playlist(iqiyi_url, max_episodes=batch_size)
         
         if result['success']:
             return jsonify({
