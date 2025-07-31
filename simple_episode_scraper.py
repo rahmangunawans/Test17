@@ -43,9 +43,31 @@ def scrape_basic_episodes(playlist_url: str, max_episodes: int = 5) -> Dict:
         # Extract episodes using regex patterns
         episodes = []
         
-        # Pattern 1: Direct episode links
-        episode_pattern = r'href="([^"]*episode[^"]*)"[^>]*>([^<]*(?:Episode|episode|集)[^<]*)</a>'
-        matches = re.findall(episode_pattern, content, re.IGNORECASE)
+        # Pattern 1: Multiple episode link patterns
+        patterns = [
+            r'href="([^"]*episode[^"]*)"[^>]*>([^<]*(?:Episode|episode|集)[^<]*)</a>',
+            r'href="([^"]*super-cube[^"]*)"[^>]*>([^<]*(?:Episode|episode|集|第)[^<]*)</a>',
+            r'data-link="([^"]*super-cube[^"]*)"[^>]*>([^<]*(?:Episode|episode|集|第)[^<]*)',
+            r'"url":"([^"]*super-cube[^"]*)".*?"title":"([^"]*)"'
+        ]
+        
+        all_matches = []
+        for pattern in patterns:
+            matches = re.findall(pattern, content, re.IGNORECASE)
+            all_matches.extend(matches)
+        
+        # Also try to find more episodes by scanning the entire page
+        super_cube_links = re.findall(r'href="([^"]*super-cube[^"]*)"', content, re.IGNORECASE)
+        for link in super_cube_links:
+            if 'episode' in link.lower() or 'play' in link.lower():
+                # Extract episode number
+                ep_match = re.search(r'episode[_-]?(\d+)', link, re.IGNORECASE)
+                if ep_match:
+                    episode_num = ep_match.group(1)
+                    title = f"Super Cube Episode {episode_num}"
+                    all_matches.append((link, title))
+        
+        matches = all_matches
         
         for i, (url, title) in enumerate(matches[:max_episodes], 1):
             # Clean up URL
