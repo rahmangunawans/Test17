@@ -102,45 +102,48 @@
                 </div>
 
                 <!-- Clean Simple Video Player -->
-                <div class="video-container aspect-video">
-                    <video 
-                        id="video-player" 
-                        class="w-full h-full" 
-                        controls 
-                        crossorigin 
-                        playsinline
-                        preload="auto"
-                        poster="{{ episode.thumbnail_url or content.thumbnail_url or '/static/images/default-poster.jpg' }}">
-                    
-                        <!-- Default M3U8 source -->
-                        {% if episode.server_m3u8_url %}
-                        <source type="application/x-mpegURL" src="{{ episode.server_m3u8_url }}">
-                        {% endif %}
+                <div class="aspect-video bg-slate-800 rounded-lg overflow-hidden mb-6">
+                    <div id="video-container" class="w-full h-full relative">
+                        <video 
+                            id="video-player" 
+                            class="w-full h-full bg-black" 
+                            controls 
+                            crossorigin 
+                            playsinline
+                            preload="auto"
+                            poster="{{ episode.thumbnail_url or content.thumbnail_url or '/static/images/default-poster.jpg' }}">
                         
-                        <!-- Subtitle tracks -->
-                        {% if episode.subtitle_urls %}
-                            {% set subtitle_list = episode.subtitle_urls|from_json if episode.subtitle_urls else [] %}
-                            {% for subtitle in subtitle_list %}
-                            <track
-                                kind="captions"
-                                label="{{ subtitle.language }}"
-                                srclang="{{ subtitle.language_code }}"
-                                src="{{ subtitle.url }}"
-                                {% if loop.first %}default{% endif %}>
-                            {% endfor %}
-                        {% endif %}
-                    </video>
+                            <!-- Default M3U8 source -->
+                            {% if episode.server_m3u8_url %}
+                            <source type="application/x-mpegURL" src="{{ episode.server_m3u8_url }}">
+                            {% endif %}
+                            
+                            <!-- Subtitle tracks -->
+                            {% if episode.subtitle_urls %}
+                                {% set subtitle_list = episode.subtitle_urls|from_json if episode.subtitle_urls else [] %}
+                                {% for subtitle in subtitle_list %}
+                                <track
+                                    kind="captions"
+                                    label="{{ subtitle.language }}"
+                                    srclang="{{ subtitle.language_code }}"
+                                    src="{{ subtitle.url }}"
+                                    {% if loop.first %}default{% endif %}>
+                                {% endfor %}
+                            {% endif %}
+                        </video>
 
-                    <!-- VIP Download Button -->
-                    {% if current_user.is_authenticated and current_user.is_vip() %}
-                    <div class="absolute top-4 right-4">
-                        <button onclick="alert('VIP download feature')" 
-                                class="bg-red-500/80 hover:bg-red-500/90 backdrop-blur-sm rounded-lg px-4 py-2 text-white text-sm transition-all duration-200 flex items-center">
-                            <i class="fas fa-download mr-2"></i>
-                            Download (VIP)
-                        </button>
+                        <!-- VIP Download Button -->
+                        {% if current_user.is_authenticated and current_user.is_vip() %}
+                        <div class="absolute top-4 right-4">
+                            <button onclick="alert('VIP download feature')" 
+                                    class="bg-red-500/80 hover:bg-red-500/90 backdrop-blur-sm rounded-lg px-4 py-2 text-white text-sm transition-all duration-200 flex items-center">
+                                <i class="fas fa-download mr-2"></i>
+                                Download (VIP)
+                            </button>
+                        </div>
+                        {% endif %}
                     </div>
-                    {% endif %}
+                </div>
 
                     <!-- Time Limit Overlay for Free Users -->
                     {% if not can_watch_full and max_watch_time %}
@@ -461,12 +464,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Server switching function
 function switchServer(serverType, serverUrl) {
-    const videoPlayer = document.getElementById('video-player');
-    if (!videoPlayer) {
-        console.error('Video player not found');
+    const videoContainer = document.getElementById('video-container');
+    if (!videoContainer) {
+        console.error('Video container not found');
         return;
     }
-    const videoContainer = videoPlayer.parentElement;
     
     // Clear all server button active states
     document.querySelectorAll('.server-btn').forEach(btn => {
@@ -489,27 +491,25 @@ function switchServer(serverType, serverUrl) {
     
     if (serverType === 'embed') {
         // Replace video with iframe for embed
-        if (videoContainer) {
-            videoContainer.innerHTML = `
-                <iframe 
-                    src="${serverUrl}" 
-                    class="w-full h-full rounded-lg" 
-                    frameborder="0" 
-                    allowfullscreen>
-                </iframe>
-            `;
-        }
+        videoContainer.innerHTML = `
+            <iframe 
+                src="${serverUrl}" 
+                class="w-full h-full" 
+                frameborder="0" 
+                allowfullscreen>
+            </iframe>
+        `;
     } else if (serverType === 'iqiyi') {
         // Extract M3U8 from iQiyi and play with HLS.js
         extractAndPlayIqiyiM3U8(serverUrl);
     } else {
         // Use native HTML5 video for M3U8 and direct videos
-        if (videoContainer && videoContainer.querySelector('iframe')) {
+        if (videoContainer.querySelector('iframe')) {
             // Restore video element if iframe was used
             videoContainer.innerHTML = `
                 <video 
                     id="video-player" 
-                    class="w-full h-full" 
+                    class="w-full h-full bg-black" 
                     controls 
                     crossorigin 
                     playsinline
