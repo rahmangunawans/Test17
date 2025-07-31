@@ -348,6 +348,42 @@ def delete_episode(episode_id):
     
     return redirect(url_for('admin.manage_episodes', content_id=content_id))
 
+@admin_bp.route('/episodes/bulk-delete', methods=['POST'])
+@login_required
+@admin_required
+def bulk_delete_episodes():
+    try:
+        data = request.get_json()
+        episode_ids = data.get('episode_ids', [])
+        
+        if not episode_ids:
+            return jsonify({
+                'success': False,
+                'error': 'Tidak ada episode yang dipilih'
+            }), 400
+        
+        # Delete associated watch history for all episodes
+        WatchHistory.query.filter(WatchHistory.episode_id.in_(episode_ids)).delete(synchronize_session=False)
+        
+        # Delete episodes
+        deleted_count = Episode.query.filter(Episode.id.in_(episode_ids)).delete(synchronize_session=False)
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'deleted_count': deleted_count,
+            'message': f'Berhasil menghapus {deleted_count} episode'
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        logging.error(f"Bulk delete episodes error: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': f'Error menghapus episode: {str(e)}'
+        }), 500
+
 @admin_bp.route('/users')
 @login_required
 @admin_required
