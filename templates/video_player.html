@@ -25,80 +25,142 @@
     overflow: hidden;
     box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
     font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+}
+
+.video-js video {
+    border-radius: 16px;
+    outline: none;
 }
 
 .video-js .vjs-control-bar {
     background: linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.95) 100%);
     backdrop-filter: blur(16px);
     border-radius: 0 0 16px 16px;
-    padding: 12px 24px;
-    height: 70px;
+    padding: 16px 24px;
+    height: 80px;
     display: flex;
     align-items: center;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.3);
 }
 
 .video-js .vjs-big-play-button {
-    width: 90px;
-    height: 90px;
+    width: 100px;
+    height: 100px;
     border-radius: 50%;
-    background: rgba(239, 68, 68, 0.9);
-    border: 4px solid rgba(255, 255, 255, 0.8);
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    border: 4px solid rgba(255, 255, 255, 0.9);
     backdrop-filter: blur(12px);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    font-size: 32px;
+    font-size: 36px;
+    box-shadow: 0 10px 30px rgba(239, 68, 68, 0.4);
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
 }
 
 .video-js .vjs-big-play-button:hover {
-    background: rgba(239, 68, 68, 1);
+    background: linear-gradient(135deg, #f87171 0%, #ef4444 100%);
     border-color: white;
-    transform: scale(1.1);
+    transform: translate(-50%, -50%) scale(1.1);
+    box-shadow: 0 15px 40px rgba(239, 68, 68, 0.6);
 }
 
 .video-js .vjs-play-control,
 .video-js .vjs-volume-control,
 .video-js .vjs-fullscreen-control {
     color: white;
-    background: transparent;
-    border: none;
-    padding: 8px;
-    border-radius: 8px;
-    transition: all 0.2s;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 12px;
+    border-radius: 12px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(8px);
+    font-size: 18px;
+    margin: 0 4px;
 }
 
 .video-js .vjs-play-control:hover,
 .video-js .vjs-volume-control:hover,
 .video-js .vjs-fullscreen-control:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(239, 68, 68, 0.2);
     color: #ef4444;
+    border-color: rgba(239, 68, 68, 0.4);
+    transform: scale(1.05);
+    box-shadow: 0 5px 15px rgba(239, 68, 68, 0.3);
+}
+
+.video-js .vjs-volume-panel {
+    margin: 0 8px;
+}
+
+.video-js .vjs-volume-bar {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    height: 6px;
+}
+
+.video-js .vjs-volume-level {
+    background: linear-gradient(90deg, #ef4444, #f87171);
+    border-radius: 6px;
 }
 
 .video-js .vjs-progress-control {
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 8px;
-    height: 8px;
-    margin: 0 16px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 10px;
+    height: 10px;
+    margin: 0 20px;
+    flex-grow: 1;
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .video-js .vjs-progress-holder {
-    border-radius: 8px;
-    height: 8px;
+    border-radius: 10px;
+    height: 10px;
+    overflow: hidden;
 }
 
 .video-js .vjs-play-progress {
-    background: linear-gradient(90deg, #ef4444, #dc2626);
-    border-radius: 8px;
+    background: linear-gradient(90deg, #ef4444, #f87171, #dc2626);
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+    position: relative;
+}
+
+.video-js .vjs-play-progress:before {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 50%;
+    width: 16px;
+    height: 16px;
+    background: #ef4444;
+    border-radius: 50%;
+    transform: translateY(-50%);
+    box-shadow: 0 0 15px rgba(239, 68, 68, 0.8);
+    border: 2px solid white;
 }
 
 .video-js .vjs-load-progress {
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.25);
+    border-radius: 10px;
 }
 
 .video-js .vjs-time-control {
     color: white;
-    font-weight: 500;
-    font-size: 14px;
-    padding: 0 8px;
+    font-weight: 600;
+    font-size: 15px;
+    padding: 0 12px;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+.video-js .vjs-current-time {
+    color: #ef4444;
+}
+
+.video-js .vjs-duration {
+    color: rgba(255, 255, 255, 0.8);
 }
 
 /* Professional Subtitle Styling */
@@ -402,8 +464,8 @@
                 </div>
 
                 <!-- Professional Video Player -->
-                <div class="relative rounded-2xl overflow-hidden bg-gradient-to-br from-slate-800 to-slate-900 shadow-2xl">
-                    <div class="aspect-video relative">
+                <div class="relative rounded-2xl overflow-hidden bg-gradient-to-br from-slate-800 to-slate-900 shadow-2xl border border-slate-600/30">
+                    <div class="aspect-video relative bg-gradient-to-br from-slate-800 via-slate-900 to-black">
                         <div id="video-container" class="w-full h-full relative">
                             <!-- Professional Video.js Player -->
                             <video
@@ -412,12 +474,21 @@
                                 controls
                                 preload="auto"
                                 data-setup="{}"
-                                poster="{{ content.thumbnail_url }}">
+                                poster="{{ content.thumbnail_url }}"
+                                playsinline>
                                 <p class="vjs-no-js text-white p-8">
                                     To view this video please enable JavaScript, and consider upgrading to a web browser that
                                     <a href="https://videojs.com/html5-video-support/" target="_blank">supports HTML5 video</a>.
                                 </p>
                             </video>
+                            
+                            <!-- Loading Overlay -->
+                            <div id="video-loading" class="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-slate-800/90 to-slate-900/90 backdrop-blur-sm hidden">
+                                <div class="text-center text-white">
+                                    <div class="animate-spin w-12 h-12 border-4 border-red-500 border-t-transparent rounded-full mx-auto mb-4"></div>
+                                    <p class="text-lg font-medium">Loading video...</p>
+                                </div>
+                            </div>
                             
                             <!-- Embed Player (for embed URLs) -->
                             <div id="embed-container" class="w-full h-full hidden">
