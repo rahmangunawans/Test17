@@ -3,22 +3,14 @@
 {% block title %}{{ episode.title }} - {{ content.title }} - AniFlix{% endblock %}
 
 {% block head %}
-<!-- Professional Video.js Player with HLS and Subtitle Support -->
-<link href="https://vjs.zencdn.net/8.12.0/video-js.css" rel="stylesheet">
-<script src="https://vjs.zencdn.net/8.12.0/video.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@videojs/http-streaming@3.0.2/dist/videojs-http-streaming.min.js"></script>
-<!-- HLS.js for M3U8 streaming support -->
-<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-
-<!-- Video.js Plugins for Professional Features -->
-<script src="https://cdn.jsdelivr.net/npm/videojs-hotkeys@0.2.28/videojs.hotkeys.min.js"></script>
-
-<!-- Professional Video Player Implementation -->
-<script src="{{ url_for('static', filename='js/professional-video-player.js') }}"></script>
+<!-- Professional M3U8 Player with HLS.js and Captions -->
+<link rel="stylesheet" href="https://code-reserve.web.app/2.0.1/player.css">
+<script src="https://code-reserve.web.app/2.0.1/hls.js" defer></script>
+<script src="https://code-reserve.web.app/2.0.1/player.js" defer></script>
 
 <style>
-/* Ultra Professional Video.js Player Styling */
-.video-js {
+/* Professional Native HTML5 Video Player Styling */
+#player {
     width: 100% !important;
     height: 100% !important;
     border-radius: 20px;
@@ -31,26 +23,34 @@
     background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
     border: 1px solid rgba(255, 255, 255, 0.1);
     position: relative;
-}
-
-.video-js video {
-    border-radius: 16px;
     outline: none;
 }
 
-.video-js .vjs-control-bar {
+/* Professional HTML5 Video Controls */
+#player::-webkit-media-controls-panel {
     background: linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.98) 100%);
-    backdrop-filter: blur(20px) saturate(180%);
     border-radius: 0 0 20px 20px;
-    padding: 20px 32px;
-    height: 90px;
-    display: flex;
-    align-items: center;
-    border-top: 1px solid rgba(255, 255, 255, 0.15);
-    box-shadow: 
-        0 -15px 40px rgba(0, 0, 0, 0.4),
-        inset 0 1px 0 rgba(255, 255, 255, 0.1);
-    position: relative;
+}
+
+#player::-webkit-media-controls-play-button,
+#player::-webkit-media-controls-mute-button,
+#player::-webkit-media-controls-fullscreen-button {
+    background-color: rgba(239, 68, 68, 0.2);
+    border-radius: 8px;
+    color: white;
+}
+
+#player::-webkit-media-controls-timeline {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    height: 6px;
+}
+
+#player::-webkit-media-controls-current-time-display,
+#player::-webkit-media-controls-time-remaining-display {
+    color: white;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 500;
 }
 
 .video-js .vjs-big-play-button {
@@ -584,19 +584,47 @@
                 <div class="relative rounded-2xl overflow-hidden bg-gradient-to-br from-slate-800 to-slate-900 shadow-2xl border border-slate-600/30">
                     <div class="aspect-video relative bg-gradient-to-br from-slate-800 via-slate-900 to-black">
                         <div id="video-container" class="w-full h-full relative">
-                            <!-- Professional Video.js Player -->
-                            <video
-                                id="video-player"
-                                class="video-js vjs-default-skin w-full h-full"
-                                controls
+                            <!-- Professional HLS Video Player -->
+                            <video 
+                                id="player" 
+                                class="w-full h-full rounded-2xl" 
+                                controls 
+                                crossorigin 
+                                playsinline
                                 preload="auto"
-                                data-setup='{"fluid": true, "responsive": true}'
-                                poster="{{ content.thumbnail_url }}"
-                                playsinline>
-                                <p class="vjs-no-js text-white p-8">
-                                    To view this video please enable JavaScript, and consider upgrading to a web browser that
-                                    <a href="https://videojs.com/html5-video-support/" target="_blank">supports HTML5 video</a>.
-                                </p>
+                                poster="{{ episode.thumbnail_url or content.thumbnail_url or '/static/images/default-poster.jpg' }}">
+                                
+                                <!-- Default M3U8 source -->
+                                {% if episode.server_m3u8_url %}
+                                <source type="application/x-mpegURL" src="{{ episode.server_m3u8_url }}">
+                                {% endif %}
+                                
+                                <!-- Subtitle/Caption tracks -->
+                                {% if episode.subtitle_urls %}
+                                    {% set subtitle_list = episode.subtitle_urls|from_json if episode.subtitle_urls else [] %}
+                                    {% for subtitle in subtitle_list %}
+                                    <track
+                                        kind="captions"
+                                        label="{{ subtitle.language }}"
+                                        srclang="{{ subtitle.language_code }}"
+                                        src="{{ subtitle.url }}"
+                                        {% if loop.first %}default{% endif %}>
+                                    {% endfor %}
+                                {% endif %}
+                                
+                                <!-- Sample caption tracks for testing -->
+                                <track
+                                    kind="captions"
+                                    label="English"
+                                    srclang="en"
+                                    src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.vtt"
+                                    default>
+                                <track
+                                    kind="captions"
+                                    label="Indonesian"
+                                    srclang="id"
+                                    src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.vtt">
+                                
                             </video>
                             
                             <!-- Loading Overlay -->
@@ -1652,46 +1680,17 @@ async function extractAndPlayIqiyi(iqiyiPlayUrl) {
     }
 }
 
-// Initialize Video.js Player with Professional Styling
-function initializeVideoJS() {
-    console.log('🎬 Initializing Video.js with professional styling...');
+// Initialize HTML5 Video Player with HLS.js
+function initializeVideoPlayer() {
+    console.log('🎬 Initializing Professional HTML5 Video Player...');
     
-    // Dispose any existing player
-    if (player && typeof player.dispose === 'function') {
-        player.dispose();
-        player = null;
-    }
+    player = document.getElementById('player');
     
-    // Initialize Video.js with professional options and subtitle support
-    player = videojs('video-player', {
-        controls: true,
-        fluid: true,
-        responsive: true,
-        playbackRates: [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2],
-        preload: 'auto',
-        html5: {
-            vhs: {
-                overrideNative: true
-            },
-            nativeTextTracks: false
-        },
-        techOrder: ['html5'],
-        sources: [],
-        textTrackSettings: false,
-        crossOrigin: 'anonymous',
-        tracks: []
-    });
-    
-    // Apply professional styling after initialization
-    player.ready(function() {
-        console.log('✅ Video.js player initialized successfully');
+    if (player) {
+        console.log('✅ HTML5 video player found and ready');
         
-        // Add professional CSS classes
-        player.el().classList.add('vjs-professional');
-        
-        // Enhanced subtitle functionality
-        setupSubtitleSupport(player);
-        setupSubtitleSelector();
+        // Set up video events
+        setupVideoEvents();
         
         // Auto-start with first available server
         if (window.availableServers && window.availableServers.length > 0) {
@@ -1700,9 +1699,41 @@ function initializeVideoJS() {
                 switchServer(firstServer.type, firstServer.url);
             }, 1000);
         }
-    });
+    } else {
+        console.error('❌ Video player element not found');
+    }
     
     return player;
+}
+
+// Setup video player events
+function setupVideoEvents() {
+    if (!player) return;
+    
+    player.addEventListener('loadstart', function() {
+        console.log('Video loading started');
+    });
+    
+    player.addEventListener('canplay', function() {
+        console.log('Video can start playing');
+    });
+    
+    player.addEventListener('error', function(e) {
+        console.error('Video error:', e);
+        showNotification('Video playback error', 'error');
+    });
+    
+    // Track watch progress
+    let lastSavedTime = 0;
+    player.addEventListener('timeupdate', function() {
+        const currentTime = Math.floor(player.currentTime);
+        
+        // Save progress every 10 seconds
+        if (currentTime - lastSavedTime >= 10) {
+            saveWatchProgress(window.episodeData?.id, currentTime * 1000);
+            lastSavedTime = currentTime;
+        }
+    });
 }
 
 // Setup subtitle selector functionality
@@ -1727,16 +1758,12 @@ function setupSubtitleSelector() {
 
 // Wait for page to load
 document.addEventListener('DOMContentLoaded', function() {
-    // Wait for Video.js library to be ready
-    if (typeof videojs !== 'undefined') {
-        setTimeout(() => {
-            initializeVideoJS();
-            initializeApp();
-        }, 500);
-    } else {
-        console.error('Video.js library not loaded');
-        showNotification('Video player library not available', 'error');
-    }
+    console.log('🎬 Page loaded, initializing video player...');
+    
+    setTimeout(() => {
+        initializeVideoPlayer();
+        initializeApp();
+    }, 500);
 });
 </script>
 {% endblock %}

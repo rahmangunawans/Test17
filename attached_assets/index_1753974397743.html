@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>M3U8 Player upto 4K</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://code-reserve.web.app/2.0.1/player.css">
+    <script src="https://code-reserve.web.app/2.0.1/hls.js" defer></script>
+  <script src="https://code-reserve.web.app/2.0.1/player.js" defer></script>
+</head>
+<body>
+  <!-- partial:index.partial.html -->
+
+  <div class="container">
+      <video controls crossorigin playsinline poster="https://code-reserve.web.app/img/BangladeshWinsU19WorldCupforFirstTime.jpg" id="player">
+      <source type="application/x-mpegURL" src="https://fast.wistia.com/embed/medias/aqum1fh7f5.m3u8">
+
+        
+        <!-- Caption files -->
+<track
+    kind="captions"
+    label="English"
+    srclang="en"
+    src="https://code-reserve.web.app/captions/BangladeshWinsU19WorldCupforFirstTime_en.vtt"
+     default/>
+<track
+    kind="captions"
+    label="Bangla"
+    srclang="bn"
+    src="https://code-reserve.web.app/captions/BangladeshWinsU19WorldCupforFirstTime_bn.vtt"
+/>
+
+        
+     
+    </video>
+  </div>
+  <!-- partial -->
+</body>
+</html>
