@@ -5,10 +5,9 @@
 {% block head %}
 <!-- Plyr CSS -->
 <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
-<!-- HLS.js for M3U8 support -->
-<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-<!-- Plyr JavaScript -->
-<script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
+<!-- Libraries loaded in correct order -->
+<script src="https://cdn.jsdelivr.net/npm/hls.js@1.4.10/dist/hls.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.plyr.io/3.7.8/plyr.min.js" crossorigin="anonymous"></script>
 
 <style>
 /* Custom Plyr Styling for AniFlix */
@@ -609,8 +608,8 @@ function initializeFallbackPlayer() {
     const videoElement = document.getElementById('video-player');
     videoElement.controls = true;
     
-    // Initialize HLS.js for fallback
-    if (Hls.isSupported()) {
+    // Check if HLS.js is available
+    if (typeof Hls !== 'undefined' && Hls.isSupported()) {
         hls = new Hls({
             debug: false,
             enableWorker: true,
@@ -626,11 +625,36 @@ function initializeFallbackPlayer() {
         hls.on(Hls.Events.MANIFEST_PARSED, function() {
             console.log('✅ HLS manifest loaded successfully (fallback)');
         });
+        
+        hls.on(Hls.Events.ERROR, function(event, data) {
+            console.error('❌ HLS Error (fallback):', event, data);
+            if (data.fatal) {
+                switch (data.type) {
+                    case Hls.ErrorTypes.NETWORK_ERROR:
+                        console.log('Network error - attempting to recover...');
+                        hls.startLoad();
+                        break;
+                    case Hls.ErrorTypes.MEDIA_ERROR:
+                        console.log('Media error - attempting to recover...');
+                        hls.recoverMediaError();
+                        break;
+                    default:
+                        console.log('Fatal error - destroying HLS instance');
+                        hls.destroy();
+                        break;
+                }
+            }
+        });
         {% endif %}
         
         window.hlsPlayer = hls;
     } else if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
         // Native HLS support (Safari)
+        {% if episode.server_m3u8_url %}
+        videoElement.src = '{{ episode.server_m3u8_url }}';
+        {% endif %}
+    } else {
+        console.log('⚠️ HLS.js not available, using basic video element');
         {% if episode.server_m3u8_url %}
         videoElement.src = '{{ episode.server_m3u8_url }}';
         {% endif %}
