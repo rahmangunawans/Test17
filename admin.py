@@ -525,6 +525,9 @@ def api_scrape_episode():
                 'error': 'URL harus dari domain iq.com'
             }), 400
         
+        # Import scraping functions
+        from iqiyi_scraper import scrape_iqiyi_episode
+        
         # Scrape episode
         result = scrape_iqiyi_episode(iqiyi_url)
         
@@ -569,6 +572,9 @@ def api_scrape_playlist():
                 'error': 'URL harus dari domain iq.com'
             }), 400
         
+        # Import scraping functions
+        from iqiyi_scraper import scrape_iqiyi_playlist
+        
         # Scrape playlist
         result = scrape_iqiyi_playlist(iqiyi_url)
         
@@ -600,6 +606,8 @@ def api_auto_add_episodes():
         data = request.get_json()
         content_id = data.get('content_id')
         episodes_data = data.get('episodes_data', [])
+        
+        logging.info(f"Auto add episodes - Content ID: {content_id}, Episodes count: {len(episodes_data)}")
         
         if not content_id:
             return jsonify({
@@ -635,6 +643,8 @@ def api_auto_add_episodes():
                     continue
                 
                 # Create new episode
+                logging.info(f"Creating episode {episode_data.get('episode_number')}: {episode_data.get('title')}")
+                
                 new_episode = Episode(
                     content_id=content_id,
                     episode_number=episode_data.get('episode_number'),
@@ -670,7 +680,8 @@ def api_auto_add_episodes():
         if added_episodes:
             try:
                 notify_new_episode(content.title, len(added_episodes))
-            except:
+            except Exception as notif_e:
+                logging.error(f"Notification error: {notif_e}")
                 pass  # Ignore notification errors
         
         return jsonify({
@@ -685,6 +696,8 @@ def api_auto_add_episodes():
     except Exception as e:
         db.session.rollback()
         logging.error(f"Error auto adding episodes: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({
             'success': False,
             'error': f'Server error: {str(e)}'
