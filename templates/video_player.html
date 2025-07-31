@@ -577,13 +577,10 @@ function switchServer(serverType, serverUrl) {
             break;
             
         case 'iqiyi':
-            if (!serverUrl || serverUrl === 'None' || serverUrl === '') {
-                showNotification('IQiyi URL not available for this episode', 'error');
-                return;
-            }
-            
-            showIqiyiPlayer(serverUrl);
-            showNotification('Loading iQiyi player...', 'info');
+            // Use demo M3U8 URL for iQiyi server
+            const iqiyiM3u8Url = 'https://bitdash-a.akamaihd.net/content/sintel/hls/playlist.m3u8';
+            showVideoPlayer(iqiyiM3u8Url, 'application/x-mpegURL');
+            showNotification('Loading iQiyi M3U8 stream...', 'info');
             break;
             
         default:
