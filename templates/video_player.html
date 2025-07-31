@@ -824,16 +824,48 @@ function extractAndPlayIqiyiM3U8(dashUrl) {
             showNotification('M3U8 extracted and loaded successfully!', 'success');
         } else {
             console.error('❌ Failed to extract M3U8:', data.error);
-            // Fallback to iframe
-            showEmbedPlayer(dashUrl);
-            showNotification('Using iQiyi iframe fallback', 'warning');
+            // Show error instead of iframe fallback
+            showNotification('❌ Failed to extract M3U8 from iQiyi: ' + data.error, 'error');
+            
+            // Show error message in video container
+            const videoContainer = document.getElementById('video-container');
+            if (videoContainer) {
+                videoContainer.innerHTML = `
+                    <div class="flex items-center justify-center h-64 bg-gray-800 text-white rounded-lg">
+                        <div class="text-center p-4">
+                            <h3 class="text-lg font-semibold mb-2">⚠️ M3U8 Extraction Failed</h3>
+                            <p class="text-gray-300 mb-4">Could not extract streaming URL from iQiyi</p>
+                            <p class="text-sm text-gray-400">${data.error || 'Unknown error'}</p>
+                            <button onclick="location.reload()" class="mt-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">
+                                Try Again
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
         }
     })
     .catch(error => {
         console.error('❌ API call failed:', error);
-        // Fallback to iframe
-        showEmbedPlayer(dashUrl);
-        showNotification('Using iQiyi iframe fallback', 'warning');
+        // Show error instead of iframe fallback
+        showNotification('❌ Network error while extracting M3U8', 'error');
+        
+        // Show error message in video container
+        const videoContainer = document.getElementById('video-container');
+        if (videoContainer) {
+            videoContainer.innerHTML = `
+                <div class="flex items-center justify-center h-64 bg-gray-800 text-white rounded-lg">
+                    <div class="text-center p-4">
+                        <h3 class="text-lg font-semibold mb-2">🌐 Network Error</h3>
+                        <p class="text-gray-300 mb-4">Could not connect to extraction service</p>
+                        <p class="text-sm text-gray-400">${error.message || 'Connection failed'}</p>
+                        <button onclick="location.reload()" class="mt-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">
+                            Try Again
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
     });
 }
 
