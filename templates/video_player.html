@@ -800,28 +800,27 @@ function showEmbedPlayer(url) {
 function extractAndPlayIqiyiM3U8(dashUrl) {
     console.log('Extracting M3U8 from iQiyi DASH URL:', dashUrl);
     
-    // Try iframe fallback approach for iQiyi
-    console.log('Using iQiyi iframe approach instead of M3U8 extraction');
-    showEmbedPlayer(dashUrl);
-    showNotification('Loading iQiyi via iframe player', 'info');
-    return;
-    
-    // Original M3U8 extraction code (commented out due to mobile compatibility issues)
-    /*
+    // Extract M3U8 from iQiyi DASH URL
     fetch('/api/extract-iqiyi-m3u8', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-            dash_url: dashUrl
+            iqiyi_play_url: dashUrl
         })
     })
     .then(response => response.json())
     .then(data => {
-        if (data.success && data.m3u8_url) {
-            console.log('✅ M3U8 extracted successfully:', data.m3u8_url);
-            showVideoPlayer(data.m3u8_url, 'application/x-mpegURL');
+        if (data.success && data.m3u8_content) {
+            console.log('✅ M3U8 extracted successfully, content length:', data.m3u8_content.length);
+            
+            // Create blob URL from M3U8 content
+            const blob = new Blob([data.m3u8_content], { type: 'application/vnd.apple.mpegurl' });
+            const m3u8Url = URL.createObjectURL(blob);
+            
+            console.log('Created M3U8 blob URL:', m3u8Url);
+            showVideoPlayer(m3u8Url, 'application/x-mpegURL');
             showNotification('M3U8 extracted and loaded successfully!', 'success');
         } else {
             console.error('❌ Failed to extract M3U8:', data.error);
@@ -836,7 +835,6 @@ function extractAndPlayIqiyiM3U8(dashUrl) {
         showEmbedPlayer(dashUrl);
         showNotification('Using iQiyi iframe fallback', 'warning');
     });
-    */
 }
 
 
