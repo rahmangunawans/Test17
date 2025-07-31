@@ -17,15 +17,20 @@
 <script src="{{ url_for('static', filename='js/professional-video-player.js') }}"></script>
 
 <style>
-/* Professional Video.js Player Styling */
+/* Ultra Professional Video.js Player Styling */
 .video-js {
     width: 100% !important;
     height: 100% !important;
-    border-radius: 16px;
+    border-radius: 20px;
     overflow: hidden;
-    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+    box-shadow: 
+        0 32px 64px rgba(0, 0, 0, 0.4),
+        0 16px 32px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
     font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
-    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    position: relative;
 }
 
 .video-js video {
@@ -34,37 +39,60 @@
 }
 
 .video-js .vjs-control-bar {
-    background: linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.95) 100%);
-    backdrop-filter: blur(16px);
-    border-radius: 0 0 16px 16px;
-    padding: 16px 24px;
-    height: 80px;
+    background: linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.98) 100%);
+    backdrop-filter: blur(20px) saturate(180%);
+    border-radius: 0 0 20px 20px;
+    padding: 20px 32px;
+    height: 90px;
     display: flex;
     align-items: center;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.3);
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 
+        0 -15px 40px rgba(0, 0, 0, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    position: relative;
 }
 
 .video-js .vjs-big-play-button {
-    width: 100px;
-    height: 100px;
+    width: 120px;
+    height: 120px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-    border: 4px solid rgba(255, 255, 255, 0.9);
-    backdrop-filter: blur(12px);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    font-size: 36px;
-    box-shadow: 0 10px 30px rgba(239, 68, 68, 0.4);
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 50%, #b91c1c 100%);
+    border: 6px solid rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(16px) saturate(180%);
+    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    font-size: 42px;
+    box-shadow: 
+        0 16px 40px rgba(239, 68, 68, 0.5),
+        0 8px 20px rgba(0, 0, 0, 0.3),
+        inset 0 2px 4px rgba(255, 255, 255, 0.2);
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
+    position: relative;
 }
 
 .video-js .vjs-big-play-button:hover {
-    background: linear-gradient(135deg, #f87171 0%, #ef4444 100%);
+    background: linear-gradient(135deg, #f87171 0%, #ef4444 50%, #dc2626 100%);
     border-color: white;
-    transform: translate(-50%, -50%) scale(1.1);
-    box-shadow: 0 15px 40px rgba(239, 68, 68, 0.6);
+    transform: translate(-50%, -50%) scale(1.15);
+    box-shadow: 
+        0 24px 60px rgba(239, 68, 68, 0.7),
+        0 12px 30px rgba(0, 0, 0, 0.4),
+        inset 0 2px 8px rgba(255, 255, 255, 0.3);
+}
+
+.video-js .vjs-big-play-button:before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 80px;
+    height: 80px;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
 }
 
 .video-js .vjs-play-control,
@@ -124,14 +152,31 @@
     border-radius: 16px;
 }
 
-/* Hide default Video.js UI elements that clash with our custom design */
+/* Hide/customize default Video.js UI elements */
 .video-js .vjs-menu-button .vjs-menu .vjs-menu-content {
-    display: none !important;
+    background: linear-gradient(145deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.95));
+    backdrop-filter: blur(20px);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    overflow: hidden;
 }
 
-.video-js .vjs-subtitles-button,
-.video-js .vjs-captions-button,
-.video-js .vjs-chapters-button {
+.video-js .vjs-menu .vjs-menu-item {
+    color: white;
+    padding: 12px 16px;
+    transition: all 0.2s ease;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.video-js .vjs-menu .vjs-menu-item:hover {
+    background: linear-gradient(90deg, rgba(239, 68, 68, 0.2), rgba(220, 38, 38, 0.1));
+    color: #ef4444;
+}
+
+/* Hide download button */
+.video-js .vjs-download-button,
+.video-js .vjs-picture-in-picture-control {
     display: none !important;
 }
 
@@ -141,6 +186,29 @@
     border-width: 4px !important;
     width: 60px !important;
     height: 60px !important;
+}
+
+/* Professional Subtitle Styling */
+.video-js .vjs-text-track-display {
+    pointer-events: none;
+}
+
+.video-js .vjs-text-track-display div {
+    background: linear-gradient(135deg, rgba(0, 0, 0, 0.9), rgba(0, 0, 0, 0.7));
+    backdrop-filter: blur(8px);
+    border-radius: 12px;
+    padding: 12px 20px;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    font-size: 18px;
+    line-height: 1.4;
+    color: white;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+    margin: 0 auto 20px;
+    max-width: 80%;
+    text-align: center;
 }
 
 /* Enhance the control bar visibility */
@@ -568,14 +636,16 @@
                                     </div>
                                 </div>
                                 
-                                <!-- Custom Action Buttons (Hidden) -->
-                                <div class="absolute top-4 right-4 flex gap-2" style="display: none;">
-                                    <button id="subtitle-btn" class="pointer-events-auto bg-black/50 hover:bg-black/70 backdrop-blur-sm rounded-lg p-3 text-white transition-all duration-200">
-                                        <i class="fas fa-closed-captioning text-lg"></i>
-                                    </button>
-                                    <button id="quality-btn" class="pointer-events-auto bg-black/50 hover:bg-black/70 backdrop-blur-sm rounded-lg p-3 text-white transition-all duration-200">
-                                        <i class="fas fa-cog text-lg"></i>
-                                    </button>
+                                <!-- Professional Subtitle Controls -->
+                                <div class="absolute top-4 right-4 flex gap-3">
+                                    <div class="relative">
+                                        <select id="subtitle-selector" 
+                                                class="pointer-events-auto bg-black/70 hover:bg-black/80 backdrop-blur-sm rounded-lg px-4 py-2 text-white text-sm border border-white/20 hover:border-white/40 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500/50">
+                                            <option value="off">No Subtitles</option>
+                                            <option value="sample-en" data-url="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.vtt" data-lang="English">English</option>
+                                            <option value="sample-id" data-url="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.vtt" data-lang="Indonesian">Indonesian</option>
+                                        </select>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -1429,43 +1499,87 @@ function showNotification(message, type = 'info') {
 
 // Remove duplicate - will use the one at the end
 
-function changeSubtitle(subtitleUrl) {
-    if (!subtitleUrl) {
-        // Remove subtitles
-        if (player && player.textTracks) {
-            for (let i = player.textTracks().length - 1; i >= 0; i--) {
-                const track = player.textTracks()[i];
-                if (track.kind === 'subtitles') {
-                    player.removeRemoteTextTrack(track);
-                }
-            }
+// Enhanced subtitle support with URL handling
+function setupSubtitleSupport(videoPlayer) {
+    console.log('🎬 Setting up professional subtitle support...');
+    
+    // Add subtitle tracks from episode data
+    if (window.episodeSubtitles && window.episodeSubtitles.length > 0) {
+        window.episodeSubtitles.forEach(subtitle => {
+            addSubtitleTrack(videoPlayer, subtitle);
+        });
+    }
+}
+
+function addSubtitleTrack(videoPlayer, subtitle) {
+    if (!videoPlayer || !subtitle.url) return;
+    
+    try {
+        const track = videoPlayer.addRemoteTextTrack({
+            kind: 'subtitles',
+            src: subtitle.url,
+            srclang: subtitle.language_code || 'en',
+            label: subtitle.language || 'Unknown',
+            default: subtitle.default || false
+        }, false);
+        
+        console.log(`✅ Added subtitle track: ${subtitle.language} (${subtitle.url})`);
+        return track;
+    } catch (error) {
+        console.error('❌ Failed to add subtitle track:', error);
+        showNotification(`Failed to load subtitle: ${subtitle.language}`, 'error');
+    }
+}
+
+function changeSubtitle(subtitleUrl, language = 'Unknown') {
+    if (!player) {
+        showNotification('Video player not ready', 'error');
+        return;
+    }
+    
+    // Remove existing subtitle tracks
+    const tracks = player.textTracks();
+    for (let i = tracks.length - 1; i >= 0; i--) {
+        const track = tracks[i];
+        if (track.kind === 'subtitles' || track.kind === 'captions') {
+            track.mode = 'disabled';
+            player.removeRemoteTextTrack(track);
         }
+    }
+    
+    if (!subtitleUrl || subtitleUrl === 'off') {
         showNotification('Subtitles disabled', 'info');
         return;
     }
     
-    // Add subtitle track to Video.js player
-    if (player && typeof player.addRemoteTextTrack === 'function') {
-        // Remove existing subtitle tracks
-        for (let i = player.textTracks().length - 1; i >= 0; i--) {
-            const track = player.textTracks()[i];
-            if (track.kind === 'subtitles') {
-                player.removeRemoteTextTrack(track);
-            }
-        }
-        
-        // Add new subtitle track
-        const language = document.querySelector(`#subtitle-select option[value="${subtitleUrl}"]`)?.getAttribute('data-language') || 'English';
-        
-        player.addRemoteTextTrack({
+    // Add new subtitle track
+    try {
+        const languageCode = language.toLowerCase().substring(0, 2);
+        const track = player.addRemoteTextTrack({
             kind: 'subtitles',
             src: subtitleUrl,
-            srclang: language.toLowerCase().substring(0, 2),
+            srclang: languageCode,
             label: language,
             default: true
-        }, true);
+        }, false);
+        
+        // Enable the track
+        setTimeout(() => {
+            const textTracks = player.textTracks();
+            for (let i = 0; i < textTracks.length; i++) {
+                if (textTracks[i].kind === 'subtitles') {
+                    textTracks[i].mode = 'showing';
+                    break;
+                }
+            }
+        }, 100);
         
         showNotification(`Subtitles loaded: ${language}`, 'success');
+        console.log(`✅ Subtitle track loaded: ${language} from ${subtitleUrl}`);
+        
+    } catch (error) {
+        console.error('❌ Failed to load subtitle:', error);
+        showNotification(`Failed to load subtitle: ${language}`, 'error');
     }
 }
 
@@ -1548,20 +1662,24 @@ function initializeVideoJS() {
         player = null;
     }
     
-    // Initialize Video.js with professional options
+    // Initialize Video.js with professional options and subtitle support
     player = videojs('video-player', {
         controls: true,
         fluid: true,
         responsive: true,
-        playbackRates: [0.5, 1, 1.25, 1.5, 2],
+        playbackRates: [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2],
         preload: 'auto',
         html5: {
             vhs: {
                 overrideNative: true
-            }
+            },
+            nativeTextTracks: false
         },
         techOrder: ['html5'],
-        sources: []
+        sources: [],
+        textTrackSettings: false,
+        crossOrigin: 'anonymous',
+        tracks: []
     });
     
     // Apply professional styling after initialization
@@ -1570,6 +1688,10 @@ function initializeVideoJS() {
         
         // Add professional CSS classes
         player.el().classList.add('vjs-professional');
+        
+        // Enhanced subtitle functionality
+        setupSubtitleSupport(player);
+        setupSubtitleSelector();
         
         // Auto-start with first available server
         if (window.availableServers && window.availableServers.length > 0) {
@@ -1581,6 +1703,26 @@ function initializeVideoJS() {
     });
     
     return player;
+}
+
+// Setup subtitle selector functionality
+function setupSubtitleSelector() {
+    const subtitleSelector = document.getElementById('subtitle-selector');
+    if (subtitleSelector) {
+        subtitleSelector.addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            const subtitleUrl = selectedOption.getAttribute('data-url');
+            const language = selectedOption.getAttribute('data-lang') || selectedOption.text;
+            
+            if (this.value === 'off') {
+                changeSubtitle(null);
+            } else if (subtitleUrl) {
+                changeSubtitle(subtitleUrl, language);
+            }
+        });
+        
+        console.log('✅ Subtitle selector initialized');
+    }
 }
 
 // Wait for page to load
