@@ -93,14 +93,13 @@ class IQiyiScraper:
                         continue
                     return None
                 
-                # Additional check for HTML content when expecting JSON
-                if hasattr(response, 'text') and response.text.strip().startswith('<'):
-                    print(f'❌ Response content is HTML, not JSON for {url}')
-                    if 'cache.video.iqiyi.com' in url:  # This is a DASH API request
-                        print('🔄 DASH API is returning HTML - likely blocked or rate limited')
-                        if attempt < max_retries - 1:
-                            time.sleep(5)  # Longer delay for API requests
-                            continue
+                # Additional check for HTML content when expecting JSON (only for DASH API)
+                if hasattr(response, 'text') and 'cache.video.iqiyi.com' in url and response.text.strip().startswith('<'):
+                    print(f'❌ DASH API returned HTML instead of JSON for {url}')
+                    print('🔄 DASH API is returning HTML - likely blocked or rate limited')
+                    if attempt < max_retries - 1:
+                        time.sleep(5)  # Longer delay for API requests
+                        continue
                     return None
                 
                 return response
@@ -135,6 +134,12 @@ class IQiyiScraper:
         print("🔍 Fetching player data dari IQiyi...")
         response = self._request('get', self.url)
         if not response:
+            print("❌ Failed to get response from IQiyi")
+            return None
+
+        # Check if we got a valid HTML response
+        if not response.text or len(response.text) < 100:
+            print("❌ Response too short or empty")
             return None
 
         soup = BeautifulSoup(response.text, 'html.parser')
@@ -142,15 +147,35 @@ class IQiyiScraper:
 
         if not script_tag:
             print("❌ Tidak menemukan __NEXT_DATA__ script tag")
-            return None
+            # Try alternative script tag patterns
+            alt_script = soup.find('script', string=re.compile(r'"cachePlayList"'))
+            if alt_script:
+                print("🔄 Found alternative script with cachePlayList")
+                script_tag = alt_script
+            else:
+                print("❌ No alternative script found either")
+                return None
 
         try:
-            json_data = script_tag.string.strip()
+            if script_tag.string:
+                json_data = script_tag.string.strip()
+            else:
+                json_data = script_tag.get_text().strip()
+                
+            if not json_data:
+                print("❌ Script tag is empty")
+                return None
+                
             self._player_data = json.loads(json_data)
             print("✅ Player data berhasil dimuat")
             return self._player_data
+            
         except json.JSONDecodeError as e:
             print(f"❌ Error parsing JSON data: {e}")
+            print(f"JSON preview: {json_data[:200]}...")
+            return None
+        except Exception as e:
+            print(f"❌ Unexpected error getting player data: {e}")
             return None
 
     def dash(self) -> Optional[str]:
@@ -285,11 +310,33 @@ class IQiyiScraper:
         print("🎬 Extracting semua episode dari playlist...")
         data = self.get_player_data()
         if not data:
+            print("❌ Cannot get player data - playlist extraction failed")
             return []
 
         episodes = []
         try:
-            episode_data = data['props']['initialState']['play']['cachePlayList']['1']
+            # Try to access the episode data with better error handling
+            props = data.get('props', {})
+            initial_state = props.get('initialState', {})
+            play = initial_state.get('play', {})
+            cache_playlist = play.get('cachePlayList', {})
+            episode_data = cache_playlist.get('1', [])
+            
+            if not episode_data:
+                print("❌ No episode data found in cachePlayList")
+                # Try alternative data structure
+                initial_props = props.get('initialProps', {})
+                page_props = initial_props.get('pageProps', {})
+                pre_player_data = page_props.get('prePlayerData', {})
+                
+                if pre_player_data:
+                    print("🔄 Trying alternative data structure...")
+                    # Look for alternative episode data structure
+                    return []
+                else:
+                    print("❌ No alternative episode data found")
+                    return []
+            
             total_episodes = len(episode_data)
             print(f"📺 Ditemukan {total_episodes} episode")
             
@@ -344,6 +391,19 @@ class IQiyiScraper:
             print(f"✅ Berhasil extract {len(episodes)} episode dari {process_count} yang diproses")
             return episodes
 
+        except KeyError as e:
+            print(f"❌ Key error - struktur data berubah: {e}")
+            print("🔍 Available keys in data structure:")
+            try:
+                if 'props' in data:
+                    print(f"  props keys: {list(data['props'].keys())}")
+                    if 'initialState' in data['props']:
+                        print(f"  initialState keys: {list(data['props']['initialState'].keys())}")
+                    if 'initialProps' in data['props']:
+                        print(f"  initialProps keys: {list(data['props']['initialProps'].keys())}")
+            except:
+                pass
+            return []
         except Exception as e:
             print(f"❌ Error extracting episodes: {e}")
             return []
