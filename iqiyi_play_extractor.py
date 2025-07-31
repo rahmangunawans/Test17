@@ -10,7 +10,7 @@ import json
 import logging
 import re
 from urllib.parse import urlparse, parse_qs
-from enhanced_iqiyi_scraper import scrape_iqiyi_episodes
+from enhanced_iqiyi_scraper import scrape_all_episodes_playlist
 
 def extract_m3u8_from_iqiyi_play_url(play_url):
     """
@@ -36,7 +36,7 @@ def extract_m3u8_from_iqiyi_play_url(play_url):
                 logging.info(f"🔍 Found episode info: {episode_slug}, ID: {episode_id}")
                 
                 # Use enhanced scraper to get DASH URL
-                result = scrape_iqiyi_episodes(play_url, max_episodes=1)
+                result = scrape_all_episodes_playlist(play_url, max_episodes=1)
                 
                 if result.get('success') and result.get('episodes'):
                     episode = result['episodes'][0]
