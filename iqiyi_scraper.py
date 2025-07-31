@@ -7,12 +7,16 @@ import json
 import requests
 import urllib3
 import re
+import ssl
+import time
 from dataclasses import dataclass, asdict
 from typing import List, Optional, Dict, Any
 from bs4 import BeautifulSoup
 import sys
 import os
 from datetime import datetime
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 # Disable SSL warnings
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -43,9 +47,24 @@ class IQiyiScraper:
             'connection': 'keep-alive',
             'upgrade-insecure-requests': '1',
         }
+        
+        # Create session with SSL configuration
         self.session = requests.Session()
         self.session.verify = False
         self.session.headers.update(self.headers)
+        
+        # Setup retry strategy
+        retry_strategy = Retry(
+            total=3,
+            backoff_factor=1,
+            status_forcelist=[429, 500, 502, 503, 504],
+        )
+        
+        # Custom HTTPAdapter with SSL context
+        adapter = HTTPAdapter(max_retries=retry_strategy)
+        self.session.mount("http://", adapter)
+        self.session.mount("https://", adapter)
+        
         self._player_data = None
 
     def _request(self, method: str, url: str, max_retries: int = 3, **kwargs) -> Optional[requests.Response]:

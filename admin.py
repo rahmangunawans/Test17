@@ -578,12 +578,35 @@ def api_scrape_playlist():
         # Scrape playlist - let user choose batch size
         batch_size = data.get('batch_size', 5)  # Default to 5 if not specified
         
-        # If batch_size is very high (999), use chunked processing for ALL episodes
-        if batch_size >= 999:
-            # For "ALL episodes", process in smaller chunks to prevent timeout
-            result = scrape_iqiyi_playlist(iqiyi_url, max_episodes=15)  # Process 15 episodes max to prevent timeout
-        else:
-            result = scrape_iqiyi_playlist(iqiyi_url, max_episodes=batch_size)
+        # Enhanced error handling for IQiyi dependency issues
+        try:
+            # If batch_size is very high (999), use chunked processing for ALL episodes
+            if batch_size >= 999:
+                # For "ALL episodes", process in smaller chunks to prevent timeout
+                result = scrape_iqiyi_playlist(iqiyi_url, max_episodes=15)  # Process 15 episodes max to prevent timeout
+            else:
+                result = scrape_iqiyi_playlist(iqiyi_url, max_episodes=batch_size)
+        except Exception as e:
+            # Handle SSL, connection, and timeout errors gracefully
+            error_msg = str(e)
+            if "SSL" in error_msg or "ssl" in error_msg.lower():
+                return jsonify({
+                    'success': False,
+                    'error': 'SSL connection error. IQiyi servers may be blocking requests. Try again later or use a different network.',
+                    'technical_error': error_msg
+                })
+            elif "timeout" in error_msg.lower() or "timed out" in error_msg.lower():
+                return jsonify({
+                    'success': False,
+                    'error': 'Request timeout. IQiyi servers are taking too long to respond. Try with fewer episodes.',
+                    'technical_error': error_msg
+                })
+            else:
+                return jsonify({
+                    'success': False,
+                    'error': f'Network error occurred: {error_msg}. Please check your connection and try again.',
+                    'technical_error': error_msg
+                })
         
         if result['success']:
             return jsonify({
