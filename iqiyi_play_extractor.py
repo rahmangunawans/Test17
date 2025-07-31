@@ -25,8 +25,42 @@ def extract_m3u8_from_iqiyi_play_url(play_url):
     try:
         logging.info(f"🎬 Extracting M3U8 from iQiyi play URL: {play_url[:100]}...")
         
-        # Method 1: Try to extract episode info from URL and use enhanced scraper
+        # Method 1: Try direct DASH URL extraction from play page
         try:
+            from iqiyi_direct_scraper import extract_dash_url_from_play_page
+            
+            logging.info("🔍 Trying direct DASH URL extraction from play page...")
+            dash_result = extract_dash_url_from_play_page(play_url)
+            
+            if dash_result.get('success') and dash_result.get('dash_url'):
+                logging.info(f"✅ Got DASH URL: {dash_result['dash_url'][:100]}...")
+                
+                # Extract M3U8 from DASH URL
+                from iqiyi_dash_extractor import extract_m3u8_from_dash_url
+                m3u8_result = extract_m3u8_from_dash_url(dash_result['dash_url'])
+                
+                if m3u8_result.get('success'):
+                    return {
+                        'success': True,
+                        'method': f"direct_dash_{dash_result.get('method', 'unknown')}",
+                        'm3u8_content': m3u8_result['m3u8_content'],
+                        'dash_url': dash_result['dash_url'],
+                        'episode_info': {
+                            'title': 'iQiyi Episode',
+                            'source': dash_result.get('source', 'direct_scraping')
+                        }
+                    }
+                else:
+                    logging.warning(f"DASH URL found but M3U8 extraction failed: {m3u8_result.get('error')}")
+            else:
+                logging.warning(f"Direct DASH extraction failed: {dash_result.get('error')}")
+        
+        except Exception as e:
+            logging.warning(f"Direct DASH extraction method failed: {e}")
+        
+        # Method 2: Try enhanced scraper for DASH URL
+        try:
+            logging.info("🔍 Trying enhanced scraper for DASH URL...")
             # Extract episode info from URL pattern
             match = re.search(r'/play/([^-]+-episode-\d+)-([a-zA-Z0-9]+)', play_url)
             if match:
@@ -62,7 +96,53 @@ def extract_m3u8_from_iqiyi_play_url(play_url):
         except Exception as e:
             logging.warning(f"Enhanced scraper method failed: {e}")
         
-        # Method 2: Try direct URL scraping (fallback)
+        # Method 3: Try constructing DASH URL from episode ID
+        try:
+            logging.info("🔧 Trying to construct DASH URL from episode ID...")
+            
+            # Extract episode ID from play URL - improved pattern
+            match = re.search(r'/play/([^/]+)-([a-zA-Z0-9]+)', play_url)
+            if match:
+                episode_slug = match.group(1)
+                episode_id = match.group(2).split('?')[0]  # Remove query params
+                
+                logging.info(f"🔍 Extracted episode ID: {episode_id}")
+                
+                # Try common DASH URL patterns
+                dash_patterns = [
+                    f"https://cache.video.iqiyi.com/dash?tvid={episode_id}&bid=200&vid={episode_id}",
+                    f"https://cache.video.iqiyi.com/dash?tvid={episode_id}&vid={episode_id}&src=01010031010000000000",
+                    f"https://cache.video.iqiyi.com/dash?tvid={episode_id}&bid=500&vid={episode_id}&src=01010031010000000000&vf=bd"
+                ]
+                
+                for i, dash_url in enumerate(dash_patterns):
+                    logging.info(f"🧪 Testing DASH pattern {i+1}: {dash_url[:80]}...")
+                    
+                    try:
+                        from iqiyi_dash_extractor import extract_m3u8_from_dash_url
+                        dash_result = extract_m3u8_from_dash_url(dash_url)
+                        
+                        if dash_result.get('success') and len(dash_result.get('m3u8_content', '')) > 100:
+                            logging.info(f"✅ Constructed DASH URL works! M3U8 length: {len(dash_result['m3u8_content'])}")
+                            return {
+                                'success': True,
+                                'method': f'constructed_dash_pattern_{i+1}',
+                                'm3u8_content': dash_result['m3u8_content'],
+                                'dash_url': dash_url,
+                                'episode_info': {
+                                    'title': f'iQiyi Episode {episode_id}',
+                                    'episode_id': episode_id,
+                                    'episode_slug': episode_slug
+                                }
+                            }
+                    except Exception as pattern_error:
+                        logging.debug(f"DASH pattern {i+1} failed: {pattern_error}")
+                        continue
+                        
+        except Exception as e:
+            logging.warning(f"DASH URL construction failed: {e}")
+        
+        # Method 4: Try direct URL scraping (fallback)
         try:
             logging.info("🔄 Trying direct URL scraping method...")
             
