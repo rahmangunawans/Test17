@@ -11,6 +11,7 @@ import logging
 import re
 from urllib.parse import urlparse, parse_qs
 from enhanced_iqiyi_scraper import scrape_all_episodes_playlist
+from enhanced_iqiyi_extractor import extract_m3u8_enhanced
 
 def extract_m3u8_from_iqiyi_play_url(play_url):
     """
@@ -24,6 +25,19 @@ def extract_m3u8_from_iqiyi_play_url(play_url):
     """
     try:
         logging.info(f"🎬 Extracting M3U8 from iQiyi play URL: {play_url[:100]}...")
+        
+        # Method 0: Try enhanced extraction using mainx.py methodology (PRIORITY)
+        try:
+            logging.info("🚀 Trying enhanced extraction (mainx.py method)...")
+            enhanced_result = extract_m3u8_enhanced(play_url)
+            
+            if enhanced_result.get('success'):
+                logging.info("✅ Enhanced extraction successful!")
+                return enhanced_result
+            else:
+                logging.warning(f"Enhanced extraction failed: {enhanced_result.get('error')}")
+        except Exception as e:
+            logging.warning(f"Enhanced extraction error: {str(e)}")
         
         # Method 1: Try direct DASH URL extraction from play page
         try:
