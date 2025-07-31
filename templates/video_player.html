@@ -563,34 +563,80 @@ function extractAndPlayIqiyiM3U8(iqiyiUrl) {
             const blobUrl = URL.createObjectURL(blob);
             
             const videoPlayer = document.getElementById('video-player');
+            if (!videoPlayer) {
+                console.error('❌ Video player element not found');
+                return;
+            }
+            
+            console.log('🎬 Loading iQiyi M3U8 into video player...');
+            
             if (typeof Hls !== 'undefined' && Hls.isSupported()) {
-                const hls = new Hls();
+                // Destroy existing HLS instance if exists
+                if (window.hlsPlayer) {
+                    window.hlsPlayer.destroy();
+                }
+                
+                const hls = new Hls({
+                    debug: false,
+                    enableWorker: true,
+                    lowLatencyMode: true,
+                    backBufferLength: 90
+                });
+                
                 hls.loadSource(blobUrl);
                 hls.attachMedia(videoPlayer);
                 window.hlsPlayer = hls;
                 
                 hls.on(Hls.Events.MANIFEST_PARSED, function() {
-                    console.log('✅ M3U8 playlist loaded successfully');
+                    console.log('✅ M3U8 playlist loaded successfully, starting playback...');
+                    videoPlayer.play().catch(e => console.log('Autoplay prevented:', e));
                 });
                 
                 hls.on(Hls.Events.ERROR, function(event, data) {
-                    console.error('❌ HLS Error:', data);
+                    console.error('❌ HLS Error:', event, data);
+                    if (data.fatal) {
+                        switch (data.type) {
+                            case Hls.ErrorTypes.NETWORK_ERROR:
+                                console.log('🔄 Attempting to recover from network error...');
+                                hls.startLoad();
+                                break;
+                            case Hls.ErrorTypes.MEDIA_ERROR:
+                                console.log('🔄 Attempting to recover from media error...');
+                                hls.recoverMediaError();
+                                break;
+                            default:
+                                console.error('💥 Fatal error, cannot recover');
+                                hls.destroy();
+                                break;
+                        }
+                    }
                 });
+                
+                hls.on(Hls.Events.MEDIA_ATTACHED, function() {
+                    console.log('🎬 Media attached to video element');
+                });
+                
             } else if (videoPlayer.canPlayType('application/vnd.apple.mpegurl')) {
                 // Native HLS support (Safari)
+                console.log('🎬 Using native HLS support');
                 videoPlayer.src = blobUrl;
+                videoPlayer.load();
+                videoPlayer.play().catch(e => console.log('Autoplay prevented:', e));
             } else {
                 // Fallback
+                console.log('🎬 Using fallback video playback');
                 videoPlayer.src = blobUrl;
+                videoPlayer.load();
+                videoPlayer.play().catch(e => console.log('Autoplay prevented:', e));
             }
         } else {
-            console.error('❌ M3U8 extraction failed:', data.error);
-            alert('Failed to extract video stream from iQiyi: ' + (data.error || 'Unknown error'));
+            console.error('❌ M3U8 extraction failed:', data.error || 'Unknown error');
+            alert('Server iQiyi gagal memuat video. Coba server lain: ' + (data.error || 'Unknown error'));
         }
     })
     .catch(error => {
         console.error('❌ Error extracting M3U8:', error);
-        alert('Error connecting to extraction service');
+        alert('Koneksi ke server iQiyi gagal. Silakan coba server lain atau coba lagi nanti.');
     });
 }
 
