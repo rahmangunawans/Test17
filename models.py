@@ -74,7 +74,7 @@ class Episode(db.Model):
     thumbnail_url = db.Column(db.String(500))  # Episode thumbnail
     
     # Multiple streaming servers
-    server_m3u8_url = db.Column(db.String(500))  # M3U8 streaming URL
+    server_m3u8_url = db.Column(db.Text)  # M3U8 streaming content (can be very long)
     server_embed_url = db.Column(db.String(500))  # Embed iframe URL
     
     created_at = db.Column(db.DateTime, default=datetime.utcnow)

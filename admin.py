@@ -638,9 +638,9 @@ def api_auto_add_episodes():
                 new_episode = Episode(
                     content_id=content_id,
                     episode_number=episode_data.get('episode_number'),
-                    title=episode_data.get('title'),
-                    description=episode_data.get('description'),
-                    server_m3u8_url=episode_data.get('m3u8_content'),  # M3U8 content dari scraper
+                    title=episode_data.get('title')[:200] if episode_data.get('title') else None,  # Limit title length
+                    description=episode_data.get('description'),  # TEXT field, no limit needed
+                    server_m3u8_url=episode_data.get('m3u8_content'),  # TEXT field, no limit needed
                     server_embed_url=episode_data.get('url'),  # IQiyi URL sebagai embed fallback
                     thumbnail_url=episode_data.get('thumbnail_url')
                 )
@@ -659,7 +659,12 @@ def api_auto_add_episodes():
                 })
         
         # Commit changes
-        db.session.commit()
+        try:
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            logging.error(f"Database commit error: {e}")
+            raise e
         
         # Create notification for new episodes
         if added_episodes:
