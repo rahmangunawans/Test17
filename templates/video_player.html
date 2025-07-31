@@ -106,6 +106,55 @@
     border-radius: 6px;
 }
 
+/* Professional Video.js Player Class */
+.video-js.vjs-professional {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%) !important;
+    border-radius: 16px !important;
+    overflow: hidden !important;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5) !important;
+}
+
+.video-js.vjs-professional .vjs-poster {
+    border-radius: 16px;
+    background-size: cover;
+    background-position: center;
+}
+
+.video-js.vjs-professional .vjs-tech {
+    border-radius: 16px;
+}
+
+/* Hide default Video.js UI elements that clash with our custom design */
+.video-js .vjs-menu-button .vjs-menu .vjs-menu-content {
+    display: none !important;
+}
+
+.video-js .vjs-subtitles-button,
+.video-js .vjs-captions-button,
+.video-js .vjs-chapters-button {
+    display: none !important;
+}
+
+/* Custom loading spinner for Video.js */
+.video-js .vjs-loading-spinner {
+    border-color: #ef4444 transparent transparent transparent !important;
+    border-width: 4px !important;
+    width: 60px !important;
+    height: 60px !important;
+}
+
+/* Enhance the control bar visibility */
+.video-js:hover .vjs-control-bar {
+    opacity: 1 !important;
+    transform: translateY(0) !important;
+}
+
+.video-js .vjs-control-bar {
+    opacity: 0.95 !important;
+    transition: all 0.3s ease !important;
+    transform: translateY(10px);
+}
+
 .video-js .vjs-progress-control {
     background: rgba(255, 255, 255, 0.15);
     border-radius: 10px;
@@ -470,10 +519,10 @@
                             <!-- Professional Video.js Player -->
                             <video
                                 id="video-player"
-                                class="video-js vjs-default-skin w-full h-full hidden"
+                                class="video-js vjs-default-skin w-full h-full"
                                 controls
                                 preload="auto"
-                                data-setup="{}"
+                                data-setup='{"fluid": true, "responsive": true}'
                                 poster="{{ content.thumbnail_url }}"
                                 playsinline>
                                 <p class="vjs-no-js text-white p-8">
@@ -868,7 +917,6 @@ function switchServer(serverType, serverUrl) {
     }
     
     // Hide all containers
-    document.getElementById('video-player').classList.add('hidden');
     document.getElementById('embed-container').classList.add('hidden');
     
     // Dispose of existing Video.js player if it exists
@@ -929,7 +977,8 @@ function showVideoPlayer(url, type = 'video/mp4') {
             throw new Error('Video player elements not found');
         }
         
-        videoElement.classList.remove('hidden');
+        // Video element should always be visible for Video.js
+        videoElement.style.display = 'block';
         
         // Check if HLS.js is available
         console.log('HLS.js availability check:', typeof Hls !== 'undefined');
@@ -1489,12 +1538,63 @@ async function extractAndPlayIqiyi(iqiyiPlayUrl) {
     }
 }
 
+// Initialize Video.js Player with Professional Styling
+function initializeVideoJS() {
+    console.log('🎬 Initializing Video.js with professional styling...');
+    
+    // Dispose any existing player
+    if (player && typeof player.dispose === 'function') {
+        player.dispose();
+        player = null;
+    }
+    
+    // Initialize Video.js with professional options
+    player = videojs('video-player', {
+        controls: true,
+        fluid: true,
+        responsive: true,
+        playbackRates: [0.5, 1, 1.25, 1.5, 2],
+        preload: 'auto',
+        html5: {
+            vhs: {
+                overrideNative: true
+            }
+        },
+        techOrder: ['html5'],
+        sources: []
+    });
+    
+    // Apply professional styling after initialization
+    player.ready(function() {
+        console.log('✅ Video.js player initialized successfully');
+        
+        // Add professional CSS classes
+        player.el().classList.add('vjs-professional');
+        
+        // Auto-start with first available server
+        if (window.availableServers && window.availableServers.length > 0) {
+            const firstServer = window.availableServers[0];
+            setTimeout(() => {
+                switchServer(firstServer.type, firstServer.url);
+            }, 1000);
+        }
+    });
+    
+    return player;
+}
+
 // Wait for page to load
 document.addEventListener('DOMContentLoaded', function() {
-    // Wait for Video.js to be ready
-    setTimeout(() => {
-        initializeApp();
-    }, 500);
+    // Wait for Video.js library to be ready
+    if (typeof videojs !== 'undefined') {
+        setTimeout(() => {
+            initializeVideoJS();
+            initializeApp();
+        }, 500);
+    } else {
+        console.error('Video.js library not loaded');
+        showNotification('Video player library not available', 'error');
+    }
 });
 </script>
 {% endblock %}
