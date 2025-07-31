@@ -288,7 +288,7 @@ def add_episode(content_id):
                 description=request.form.get('description', ''),
                 server_m3u8_url=request.form.get('server_m3u8_url', ''),
                 server_embed_url=request.form.get('server_embed_url', ''),
-                dash_url=request.form.get('dash_url', '')
+                iqiyi_play_url=request.form.get('iqiyi_play_url', '')
             )
             db.session.add(episode)
             db.session.commit()
@@ -320,7 +320,7 @@ def edit_episode(episode_id):
             episode.description = request.form.get('description', '')
             episode.server_m3u8_url = request.form.get('server_m3u8_url', '')
             episode.server_embed_url = request.form.get('server_embed_url', '')
-            episode.dash_url = request.form.get('dash_url', '')
+            episode.iqiyi_play_url = request.form.get('iqiyi_play_url', '')
             
             db.session.commit()
             flash(f'Episode {episode.episode_number} updated successfully!', 'success')
@@ -1300,6 +1300,56 @@ def extract_dash_m3u8():
             
     except Exception as e:
         logging.error(f"DASH M3U8 extraction error: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': f'Error extracting M3U8: {str(e)}'
+        }), 500
+
+@admin_bp.route('/api/extract-iqiyi-m3u8', methods=['POST'])
+@login_required
+@admin_required
+def extract_iqiyi_m3u8():
+    """Extract M3U8 from iQiyi play URL"""
+    try:
+        data = request.get_json()
+        iqiyi_play_url = data.get('iqiyi_play_url', '').strip()
+        
+        if not iqiyi_play_url:
+            return jsonify({
+                'success': False,
+                'error': 'iQiyi play URL is required'
+            }), 400
+        
+        # Validate iQiyi play URL format
+        if 'iq.com/play/' not in iqiyi_play_url:
+            return jsonify({
+                'success': False,
+                'error': 'Invalid iQiyi play URL format'
+            }), 400
+        
+        logging.info(f"Extracting M3U8 from iQiyi play URL: {iqiyi_play_url[:100]}...")
+        
+        # Extract M3U8 using the play URL extractor
+        from iqiyi_play_extractor import extract_m3u8_from_iqiyi_play_url
+        result = extract_m3u8_from_iqiyi_play_url(iqiyi_play_url)
+        
+        if result['success']:
+            return jsonify({
+                'success': True,
+                'm3u8_content': result['m3u8_content'],
+                'method': result['method'],
+                'episode_info': result.get('episode_info', {}),
+                'message': f'M3U8 berhasil diekstrak dari iQiyi play URL'
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': result.get('error', 'Failed to extract M3U8 from iQiyi play URL'),
+                'details': 'Periksa apakah URL play iQiyi masih valid dan dapat diakses'
+            }), 400
+            
+    except Exception as e:
+        logging.error(f"iQiyi play M3U8 extraction error: {str(e)}")
         return jsonify({
             'success': False,
             'error': f'Error extracting M3U8: {str(e)}'

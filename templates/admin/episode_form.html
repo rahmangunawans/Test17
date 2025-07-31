@@ -78,25 +78,17 @@
                             <p class="text-xs text-gray-400 mt-1">Embed iframe URL for external player</p>
                         </div>
                         
-                        <!-- Server 3: DASH URL untuk iQiyi -->
+                        <!-- Server 3: iQiyi Play URL -->
                         <div>
                             <label class="block text-sm font-medium text-gray-300 mb-2">
                                 <i class="fas fa-tachometer-alt mr-1 text-orange-500"></i>
-                                Server 3 - DASH URL (iQiyi)
+                                Server 3 - iQiyi Play URL
                             </label>
-                            <div class="flex gap-2">
-                                <input type="url" name="dash_url" id="dashUrlInput"
-                                       value="{{ episode.dash_url if episode and episode.dash_url else '' }}"
-                                       class="flex-1 px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-red-500"
-                                       placeholder="https://cache.video.iqiyi.com/dash?tvid=...">
-                                <button type="button" onclick="extractM3U8FromDash()" 
-                                        class="bg-orange-600 hover:bg-orange-700 text-white px-3 py-2 rounded-lg text-sm whitespace-nowrap"
-                                        id="extractDashBtn">
-                                    <i class="fas fa-magic"></i> Extract M3U8
-                                </button>
-                            </div>
-                            <p class="text-xs text-gray-400 mt-1">DASH URL dari iQiyi untuk ekstraksi M3U8</p>
-                            <div id="dashExtractionStatus" class="mt-2 text-sm hidden"></div>
+                            <input type="url" name="iqiyi_play_url" 
+                                   value="{{ episode.iqiyi_play_url if episode and episode.iqiyi_play_url else '' }}"
+                                   class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-red-500"
+                                   placeholder="https://www.iq.com/play/super-cube-episode-1-11eihk07dr8?lang=en_us">
+                            <p class="text-xs text-gray-400 mt-1">iQiyi play URL - akan otomatis extract M3U8 saat streaming</p>
                         </div>
                         
                         <!-- Legacy Video URL (for backwards compatibility) -->

@@ -195,9 +195,9 @@ console.log('HLS.js support:', supportsHLS());
                         </button>
                         {% endif %}
                         
-                        {% if episode.dash_url %}
-                        <button onclick="switchServer('dash', '{{ episode.dash_url }}')" 
-                                id="server-dash"
+                        {% if episode.iqiyi_play_url %}
+                        <button onclick="switchServer('iqiyi', '{{ episode.iqiyi_play_url }}')" 
+                                id="server-iqiyi"
                                 class="server-btn flex items-center px-4 py-2 rounded-lg bg-orange-600 hover:bg-orange-700 text-white font-medium transition-all duration-200">
                             <i class="fas fa-tachometer-alt mr-2"></i>
                             Server 3 (iQiyi)
@@ -576,9 +576,9 @@ function switchServer(serverType, serverUrl) {
             showNotification('Switched to Embed Server', 'success');
             break;
             
-        case 'dash':
-            extractAndPlayDash(serverUrl);
-            showNotification('Extracting M3U8 from iQiyi DASH...', 'info');
+        case 'iqiyi':
+            extractAndPlayIqiyi(serverUrl);
+            showNotification('Extracting M3U8 from iQiyi play URL...', 'info');
             break;
             
         default:
@@ -898,22 +898,22 @@ function changeSubtitle(subtitleUrl) {
     }
 }
 
-// DASH URL M3U8 Extraction and Streaming
-async function extractAndPlayDash(dashUrl) {
-    const dashBtn = document.getElementById('server-dash');
-    if (dashBtn) {
-        dashBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Extracting...';
-        dashBtn.disabled = true;
+// iQiyi Play URL M3U8 Extraction and Streaming
+async function extractAndPlayIqiyi(iqiyiPlayUrl) {
+    const iqiyiBtn = document.getElementById('server-iqiyi');
+    if (iqiyiBtn) {
+        iqiyiBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Extracting...';
+        iqiyiBtn.disabled = true;
     }
     
     try {
-        const response = await fetch('/admin/api/extract-dash-m3u8', {
+        const response = await fetch('/admin/api/extract-iqiyi-m3u8', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                dash_url: dashUrl
+                iqiyi_play_url: iqiyiPlayUrl
             })
         });
         
@@ -930,15 +930,16 @@ async function extractAndPlayDash(dashUrl) {
             await showVideoPlayer(m3u8Url, 'application/x-mpegURL');
             showNotification(`iQiyi streaming ready (${result.method})`, 'success');
             
-            console.log('DASH M3U8 extracted successfully:', {
+            console.log('iQiyi M3U8 extracted successfully:', {
                 method: result.method,
                 contentLength: result.m3u8_content.length,
-                blobUrl: m3u8Url
+                blobUrl: m3u8Url,
+                episodeInfo: result.episode_info
             });
             
         } else {
-            console.error('DASH extraction failed:', result.error);
-            showNotification(`DASH extraction failed: ${result.error}`, 'error');
+            console.error('iQiyi extraction failed:', result.error);
+            showNotification(`iQiyi extraction failed: ${result.error}`, 'error');
             
             // Fallback to embed if available  
             const embedUrl = '{{ episode.server_embed_url if episode.server_embed_url else "" }}';
@@ -948,7 +949,7 @@ async function extractAndPlayDash(dashUrl) {
             }
         }
     } catch (error) {
-        console.error('DASH extraction error:', error);
+        console.error('iQiyi extraction error:', error);
         showNotification(`Network error: ${error.message}`, 'error');
         
         // Fallback to embed if available
@@ -959,9 +960,9 @@ async function extractAndPlayDash(dashUrl) {
         }
     } finally {
         // Restore button
-        if (dashBtn) {
-            dashBtn.innerHTML = '<i class="fas fa-tachometer-alt mr-2"></i>Server 3 (iQiyi)';
-            dashBtn.disabled = false;
+        if (iqiyiBtn) {
+            iqiyiBtn.innerHTML = '<i class="fas fa-tachometer-alt mr-2"></i>Server 3 (iQiyi)';
+            iqiyiBtn.disabled = false;
         }
     }
 }
