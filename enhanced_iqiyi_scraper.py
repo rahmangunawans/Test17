@@ -97,33 +97,61 @@ class EnhancedIQiyiScraper:
             return None
 
     def _extract_title_from_data(self, episode_data: Dict[str, Any]) -> str:
-        """Extract title with comprehensive fallbacks"""
+        """Extract title with comprehensive fallbacks and language preference"""
         print(f"🏷️ Extracting title from episode data...")
         
-        # Priority title fields - most reliable first
-        title_fields = [
-            'title', 'name', 'subTitle', 'albumName', 'playTitle', 'videoTitle',
-            'displayTitle', 'episodeTitle', 'showTitle', 'seriesTitle', 'programTitle',
-            'fullTitle', 'originalTitle', 'chineseTitle', 'englishTitle'
-        ]
+        # Debug: Show all available keys
+        print(f"📋 Available episode keys: {list(episode_data.keys())}")
         
-        # Try direct fields first
-        for field in title_fields:
-            if episode_data.get(field):
-                title = str(episode_data.get(field)).strip()
-                if title and title.lower() not in ['null', 'none', '', 'undefined']:
-                    print(f"✅ Using title from {field}: {title}")
-                    return title
+        # First check 'name' field which seems to be primary
+        name_title = episode_data.get('name', '').strip()
+        if name_title:
+            print(f"🔍 Found name field: {name_title}")
+            # If it's mostly English, use it
+            if any(ord(char) < 128 for char in name_title):
+                # Convert Chinese titles to English pattern if possible
+                if "超能立方：超凡篇" in name_title:
+                    # Extract episode number from Chinese title
+                    import re
+                    match = re.search(r'第(\d+)集', name_title)
+                    if match:
+                        episode_num = match.group(1)
+                        english_title = f"Super Cube Episode {episode_num}"
+                        print(f"✅ Converted Chinese to English: {english_title}")
+                        return english_title
+                
+                print(f"✅ Using title from name: {name_title}")
+                return name_title
         
-        # Try nested objects
+        # Try alternate title field
+        alt_title = episode_data.get('alterTitle', '').strip()
+        if alt_title and any(ord(char) < 128 for char in alt_title):
+            print(f"✅ Using title from alterTitle: {alt_title}")
+            return alt_title
+        
+        # Try subtitle field
+        sub_title = episode_data.get('subTitle', '').strip()
+        if sub_title and any(ord(char) < 128 for char in sub_title):
+            print(f"✅ Using title from subTitle: {sub_title}")
+            return sub_title
+        
+        # Try album name
+        album_name = episode_data.get('albumName', '').strip()
+        if album_name and any(ord(char) < 128 for char in album_name):
+            print(f"✅ Using title from albumName: {album_name}")
+            return album_name
+        
+        # Fallback to Chinese title if nothing else works
+        if name_title:
+            print(f"⚠️ Using Chinese title as fallback: {name_title}")
+            return name_title
+        
+        # Try all fields as fallback
         for key, value in episode_data.items():
-            if isinstance(value, dict):
-                for field in title_fields:
-                    if field in value and value[field]:
-                        title = str(value[field]).strip()
-                        if title and title.lower() not in ['null', 'none', '', 'undefined']:
-                            print(f"✅ Using title from {key}.{field}: {title}")
-                            return title
+            if isinstance(value, str) and value.strip():
+                if any(keyword in key.lower() for keyword in ['title', 'name']):
+                    print(f"⚠️ Using fallback title from {key}: {value}")
+                    return value.strip()
         
         print(f"❌ No title found, using default")
         return "Unknown Episode"
@@ -258,8 +286,21 @@ class EnhancedIQiyiScraper:
         
         return None
 
+    def _is_preview_or_trailer(self, title: str) -> bool:
+        """Check if the title indicates a preview or trailer"""
+        title_lower = title.lower()
+        preview_keywords = [
+            'preview', 'trailer', 'teaser', 'promo', 'preview', '预告', 'pv', 
+            'coming soon', 'next episode', 'sneak peek', '先行版', '预览',
+            'ep02 preview', 'ep03 preview', 'ep04 preview', 'ep05 preview',
+            'ep06 preview', 'ep07 preview', 'ep08 preview', 'ep09 preview',
+            'ep10 preview', 'ep11 preview', 'ep12 preview'
+        ]
+        
+        return any(keyword in title_lower for keyword in preview_keywords)
+
     def extract_all_episodes(self, max_episodes: int = 100) -> List[EpisodeInfo]:
-        """Extract all episodes from playlist"""
+        """Extract all episodes from playlist, filtering out previews and trailers"""
         print("📺 Extracting all episodes from playlist...")
         
         player_data = self.get_player_data()
@@ -267,6 +308,7 @@ class EnhancedIQiyiScraper:
             return []
         
         episodes = []
+        episode_counter = 1
         
         try:
             # Navigate through the data structure
@@ -282,14 +324,20 @@ class EnhancedIQiyiScraper:
                 print("❌ No episode data found in playlist")
                 return []
             
-            print(f"📺 Found {len(episode_data)} episodes in playlist")
+            print(f"📺 Found {len(episode_data)} total items in playlist")
             
             # Limit episodes to prevent timeout
             process_count = min(len(episode_data), max_episodes)
-            print(f"🎯 Processing {process_count} episodes")
+            print(f"🎯 Processing {process_count} items (filtering out previews/trailers)")
             
             for i, episode in enumerate(episode_data[:process_count], 1):
                 title = self._extract_title_from_data(episode)
+                
+                # Skip previews and trailers
+                if self._is_preview_or_trailer(title):
+                    print(f"⏭️ Skipping preview/trailer {i}: {title}")
+                    continue
+                
                 description = self._extract_description(episode)
                 thumbnail = self._extract_thumbnail(episode)
                 duration = self._extract_duration(episode)
@@ -305,7 +353,7 @@ class EnhancedIQiyiScraper:
                 
                 episode_info = EpisodeInfo(
                     title=title,
-                    episode_number=i,
+                    episode_number=episode_counter,
                     url=full_url,
                     content_type="episode",
                     description=description,
@@ -316,13 +364,14 @@ class EnhancedIQiyiScraper:
                 )
                 
                 episodes.append(episode_info)
-                print(f"✅ Episode {i}: {title}")
+                print(f"✅ Episode {episode_counter}: {title}")
+                episode_counter += 1
                 
                 # Small delay to avoid rate limiting
                 if i < process_count:
                     time.sleep(0.1)
             
-            print(f"✅ Successfully extracted {len(episodes)} episodes")
+            print(f"✅ Successfully extracted {len(episodes)} valid episodes (filtered out previews/trailers)")
             return episodes
             
         except Exception as e:
