@@ -77,12 +77,27 @@
                                    placeholder="https://embed.example.com/video/123">
                             <p class="text-xs text-gray-400 mt-1">Embed iframe URL for external player</p>
                         </div>
-
-
                         
-
-                        
-
+                        <!-- Server 3: DASH URL untuk iQiyi -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">
+                                <i class="fas fa-tachometer-alt mr-1 text-orange-500"></i>
+                                Server 3 - DASH URL (iQiyi)
+                            </label>
+                            <div class="flex gap-2">
+                                <input type="url" name="dash_url" id="dashUrlInput"
+                                       value="{{ episode.dash_url if episode and episode.dash_url else '' }}"
+                                       class="flex-1 px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-red-500"
+                                       placeholder="https://cache.video.iqiyi.com/dash?tvid=...">
+                                <button type="button" onclick="extractM3U8FromDash()" 
+                                        class="bg-orange-600 hover:bg-orange-700 text-white px-3 py-2 rounded-lg text-sm whitespace-nowrap"
+                                        id="extractDashBtn">
+                                    <i class="fas fa-magic"></i> Extract M3U8
+                                </button>
+                            </div>
+                            <p class="text-xs text-gray-400 mt-1">DASH URL dari iQiyi untuk ekstraksi M3U8</p>
+                            <div id="dashExtractionStatus" class="mt-2 text-sm hidden"></div>
+                        </div>
                         
                         <!-- Legacy Video URL (for backwards compatibility) -->
                         <div>
@@ -137,7 +152,87 @@
 {% block extra_js %}
 <script>
 
+async function extractM3U8FromDash() {
+    const dashUrl = document.getElementById('dashUrlInput').value.trim();
+    const statusDiv = document.getElementById('dashExtractionStatus');
+    const extractBtn = document.getElementById('extractDashBtn');
+    
+    if (!dashUrl) {
+        showDashStatus('Masukkan DASH URL terlebih dahulu', 'error');
+        return;
+    }
+    
+    if (!dashUrl.includes('cache.video.iqiyi.com/dash')) {
+        showDashStatus('URL harus berupa DASH URL dari iQiyi', 'error');
+        return;
+    }
+    
+    // Disable button and show loading
+    extractBtn.disabled = true;
+    extractBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Extracting...';
+    showDashStatus('Mengekstrak M3U8 dari DASH URL...', 'info');
+    
+    try {
+        const response = await fetch('/admin/api/extract-dash-m3u8', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                dash_url: dashUrl
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            // Auto-fill M3U8 URL field
+            const m3u8Field = document.querySelector('input[name="server_m3u8_url"]');
+            if (m3u8Field && result.m3u8_content) {
+                // Create blob URL for M3U8 content
+                const blob = new Blob([result.m3u8_content], { type: 'application/vnd.apple.mpegurl' });
+                const m3u8Url = URL.createObjectURL(blob);
+                m3u8Field.value = m3u8Url;
+                
+                showDashStatus(`✅ ${result.message} - M3U8 URL diisi otomatis`, 'success');
+                showNotification('M3U8 berhasil diekstrak dan diisi ke Server 1', 'success');
+            } else {
+                showDashStatus(`✅ ${result.message}`, 'success');
+            }
+        } else {
+            showDashStatus(`❌ Error: ${result.error}`, 'error');
+            if (result.details) {
+                showDashStatus(`💡 ${result.details}`, 'info');
+            }
+        }
+    } catch (error) {
+        showDashStatus(`❌ Network error: ${error.message}`, 'error');
+    } finally {
+        // Re-enable button
+        extractBtn.disabled = false;
+        extractBtn.innerHTML = '<i class="fas fa-magic"></i> Extract M3U8';
+    }
+}
 
+function showDashStatus(message, type) {
+    const statusDiv = document.getElementById('dashExtractionStatus');
+    const colors = {
+        'info': 'text-blue-400',
+        'success': 'text-green-400',
+        'error': 'text-red-400'
+    };
+    
+    statusDiv.className = `mt-2 text-sm ${colors[type]}`;
+    statusDiv.textContent = message;
+    statusDiv.classList.remove('hidden');
+    
+    // Auto-hide after 10 seconds for non-error messages
+    if (type !== 'error') {
+        setTimeout(() => {
+            statusDiv.classList.add('hidden');
+        }, 10000);
+    }
+}
 
 function showNotification(message, type = 'info') {
     const notification = document.createElement('div');
@@ -157,11 +252,12 @@ function showNotification(message, type = 'info') {
     setTimeout(() => {
         notification.classList.add('translate-x-full');
         setTimeout(() => {
-            document.body.removeChild(notification);
+            if (document.body.contains(notification)) {
+                document.body.removeChild(notification);
+            }
         }, 300);
     }, 3000);
 }
-
 
 </script>
 {% endblock %}

@@ -10,6 +10,7 @@ from anilist_integration import anilist_service
 import logging
 import json
 from iqiyi_scraper import scrape_iqiyi_episode, scrape_iqiyi_playlist
+from iqiyi_dash_extractor import extract_m3u8_from_dash_url
 
 admin_bp = Blueprint('admin', __name__)
 
@@ -286,7 +287,8 @@ def add_episode(content_id):
                 thumbnail_url=request.form.get('thumbnail_url', ''),
                 description=request.form.get('description', ''),
                 server_m3u8_url=request.form.get('server_m3u8_url', ''),
-                server_embed_url=request.form.get('server_embed_url', '')
+                server_embed_url=request.form.get('server_embed_url', ''),
+                dash_url=request.form.get('dash_url', '')
             )
             db.session.add(episode)
             db.session.commit()
@@ -318,6 +320,7 @@ def edit_episode(episode_id):
             episode.description = request.form.get('description', '')
             episode.server_m3u8_url = request.form.get('server_m3u8_url', '')
             episode.server_embed_url = request.form.get('server_embed_url', '')
+            episode.dash_url = request.form.get('dash_url', '')
             
             db.session.commit()
             flash(f'Episode {episode.episode_number} updated successfully!', 'success')
@@ -1254,5 +1257,51 @@ def update_system_settings():
     
     return redirect(url_for('admin.system_settings'))
 
-
+@admin_bp.route('/api/extract-dash-m3u8', methods=['POST'])
+@login_required
+@admin_required
+def extract_dash_m3u8():
+    """Extract M3U8 from DASH URL"""
+    try:
+        data = request.get_json()
+        dash_url = data.get('dash_url', '').strip()
+        
+        if not dash_url:
+            return jsonify({
+                'success': False,
+                'error': 'DASH URL is required'
+            }), 400
+        
+        # Validate DASH URL format
+        if 'cache.video.iqiyi.com/dash' not in dash_url:
+            return jsonify({
+                'success': False,
+                'error': 'Invalid DASH URL format'
+            }), 400
+        
+        logging.info(f"Extracting M3U8 from DASH URL: {dash_url[:100]}...")
+        
+        # Extract M3U8 using the extractor
+        result = extract_m3u8_from_dash_url(dash_url)
+        
+        if result['success']:
+            return jsonify({
+                'success': True,
+                'm3u8_content': result['m3u8_content'],
+                'method': result['method'],
+                'message': f'M3U8 berhasil diekstrak menggunakan method {result["method"]}'
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': result.get('error', 'Failed to extract M3U8 from DASH URL'),
+                'details': 'Periksa apakah DASH URL masih valid dan dapat diakses'
+            }), 400
+            
+    except Exception as e:
+        logging.error(f"DASH M3U8 extraction error: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': f'Error extracting M3U8: {str(e)}'
+        }), 500
 

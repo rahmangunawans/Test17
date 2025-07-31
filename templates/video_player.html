@@ -195,7 +195,14 @@ console.log('HLS.js support:', supportsHLS());
                         </button>
                         {% endif %}
                         
-
+                        {% if episode.dash_url %}
+                        <button onclick="switchServer('dash', '{{ episode.dash_url }}')" 
+                                id="server-dash"
+                                class="server-btn flex items-center px-4 py-2 rounded-lg bg-orange-600 hover:bg-orange-700 text-white font-medium transition-all duration-200">
+                            <i class="fas fa-tachometer-alt mr-2"></i>
+                            Server 3 (iQiyi)
+                        </button>
+                        {% endif %}
                         
 
                         
@@ -569,7 +576,10 @@ function switchServer(serverType, serverUrl) {
             showNotification('Switched to Embed Server', 'success');
             break;
             
-
+        case 'dash':
+            extractAndPlayDash(serverUrl);
+            showNotification('Extracting M3U8 from iQiyi DASH...', 'info');
+            break;
             
         default:
             showNotification('Unknown server type', 'error');
@@ -885,6 +895,74 @@ function changeSubtitle(subtitleUrl) {
         }, true);
         
         showNotification(`Subtitles loaded: ${language}`, 'success');
+    }
+}
+
+// DASH URL M3U8 Extraction and Streaming
+async function extractAndPlayDash(dashUrl) {
+    const dashBtn = document.getElementById('server-dash');
+    if (dashBtn) {
+        dashBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Extracting...';
+        dashBtn.disabled = true;
+    }
+    
+    try {
+        const response = await fetch('/admin/api/extract-dash-m3u8', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                dash_url: dashUrl
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success && result.m3u8_content) {
+            // Create blob URL for M3U8 content
+            const blob = new Blob([result.m3u8_content], { 
+                type: 'application/vnd.apple.mpegurl' 
+            });
+            const m3u8Url = URL.createObjectURL(blob);
+            
+            // Play the extracted M3U8
+            await showVideoPlayer(m3u8Url, 'application/x-mpegURL');
+            showNotification(`iQiyi streaming ready (${result.method})`, 'success');
+            
+            console.log('DASH M3U8 extracted successfully:', {
+                method: result.method,
+                contentLength: result.m3u8_content.length,
+                blobUrl: m3u8Url
+            });
+            
+        } else {
+            console.error('DASH extraction failed:', result.error);
+            showNotification(`DASH extraction failed: ${result.error}`, 'error');
+            
+            // Fallback to embed if available  
+            const embedUrl = '{{ episode.server_embed_url if episode.server_embed_url else "" }}';
+            if (embedUrl) {
+                showNotification('Falling back to embed player...', 'info');
+                showEmbedPlayer(embedUrl);
+            }
+        }
+    } catch (error) {
+        console.error('DASH extraction error:', error);
+        showNotification(`Network error: ${error.message}`, 'error');
+        
+        // Fallback to embed if available
+        const embedUrl = '{{ episode.server_embed_url if episode.server_embed_url else "" }}';
+        if (embedUrl) {
+            showNotification('Falling back to embed player...', 'info');
+            showEmbedPlayer(embedUrl);
+        }
+    } finally {
+        // Restore button
+        if (dashBtn) {
+            dashBtn.innerHTML = '<i class="fas fa-tachometer-alt mr-2"></i>Server 3 (iQiyi)';
+            dashBtn.disabled = false;
+        }
     }
 }
 
