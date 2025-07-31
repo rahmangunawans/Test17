@@ -3,11 +3,15 @@
 {% block title %}{{ episode.title }} - {{ content.title }}{% endblock %}
 
 {% block head %}
+<!-- Plyr CSS -->
+<link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
 <!-- HLS.js for M3U8 support -->
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+<!-- Plyr JavaScript -->
+<script src="https://cdn.plyr.io/3.7.8/plyr.js"></script>
 
 <style>
-/* Clean Simple Video Player */
+/* Custom Plyr Styling for AniFlix */
 .video-container {
     position: relative;
     width: 100%;
@@ -16,11 +20,58 @@
     overflow: hidden;
 }
 
-#video-player {
+.plyr {
     width: 100%;
     height: 100%;
     border-radius: 8px;
     background: #000000;
+}
+
+/* Plyr custom colors to match AniFlix theme */
+.plyr--full-ui input[type=range] {
+    color: #ef4444;
+}
+
+.plyr__control--overlaid {
+    background: #ef4444;
+}
+
+.plyr__control--overlaid:hover {
+    background: #dc2626;
+}
+
+.plyr__control.plyr__tab-focus,
+.plyr__control:hover,
+.plyr__control[aria-expanded=true] {
+    background: #ef4444;
+}
+
+.plyr__menu__container .plyr__control[role=menuitemradio][aria-checked=true]::before {
+    background: #ef4444;
+}
+
+.plyr--video .plyr__control.plyr__tab-focus {
+    background: rgba(239, 68, 68, 0.7);
+}
+
+.plyr--video .plyr__control:hover {
+    background: rgba(239, 68, 68, 0.7);
+}
+
+.plyr__progress input[type=range]::-webkit-slider-thumb {
+    background: #ef4444;
+}
+
+.plyr__progress input[type=range]::-moz-range-thumb {
+    background: #ef4444;
+}
+
+.plyr__volume input[type=range]::-webkit-slider-thumb {
+    background: #ef4444;
+}
+
+.plyr__volume input[type=range]::-moz-range-thumb {
+    background: #ef4444;
 }
 
 .glass-card {
@@ -101,13 +152,12 @@
                     </div>
                 </div>
 
-                <!-- Clean Simple Video Player -->
+                <!-- Plyr Video Player -->
                 <div class="aspect-video bg-slate-800 rounded-lg overflow-hidden mb-6">
                     <div id="video-container" class="w-full h-full relative">
                         <video 
-                            id="video-player" 
+                            id="video-player"
                             class="w-full h-full bg-black" 
-                            controls 
                             crossorigin 
                             playsinline
                             preload="auto"
@@ -134,7 +184,7 @@
 
                         <!-- VIP Download Button -->
                         {% if current_user.is_authenticated and current_user.is_vip() %}
-                        <div class="absolute top-4 right-4">
+                        <div class="absolute top-4 right-4 z-50">
                             <button onclick="alert('VIP download feature')" 
                                     class="bg-red-500/80 hover:bg-red-500/90 backdrop-blur-sm rounded-lg px-4 py-2 text-white text-sm transition-all duration-200 flex items-center">
                                 <i class="fas fa-download mr-2"></i>
@@ -391,8 +441,8 @@
 </div>
 
 <script>
-// Simple Video Player JavaScript
-console.log('🎬 Page loaded, initializing video player...');
+// Plyr + HLS.js Video Player JavaScript
+console.log('🎬 Page loaded, initializing Plyr video player...');
 
 // Available servers data
 const availableServers = [
@@ -418,30 +468,97 @@ const watchRestrictions = {
 console.log('Available servers:', availableServers);
 console.log('Watch restrictions:', watchRestrictions);
 
+// Global variables
+let player;
+let hls;
+
 // Initialize video player
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🎬 Initializing Simple Video Player...');
+    console.log('🎬 Initializing Plyr + HLS.js Video Player...');
     
-    const videoPlayer = document.getElementById('video-player');
-    if (!videoPlayer) {
+    const videoElement = document.getElementById('video-player');
+    if (!videoElement) {
         console.error('❌ Video player element not found');
         return;
     }
 
-    // Initialize HLS support
-    if (typeof Hls !== 'undefined' && Hls.isSupported()) {
-        const hls = new Hls();
-        window.hlsPlayer = hls;
+    // Initialize Plyr with custom options
+    player = new Plyr(videoElement, {
+        captions: { active: true, update: true },
+        controls: [
+            'play-large',
+            'play',
+            'progress',
+            'current-time',
+            'duration',
+            'mute',
+            'volume',
+            'captions',
+            'settings',
+            'fullscreen'
+        ],
+        settings: ['captions', 'quality', 'speed'],
+        quality: {
+            default: 'auto',
+            options: ['auto', 1080, 720, 480, 360]
+        },
+        speed: {
+            selected: 1,
+            options: [0.5, 0.75, 1, 1.25, 1.5, 2]
+        },
+        keyboard: { focused: true, global: true },
+        tooltips: { controls: true, seek: true },
+        displayDuration: true,
+        invertTime: false,
+        toggleInvert: true,
+        ratio: '16:9',
+        fullscreen: { enabled: true, fallback: true, iosNative: true }
+    });
+
+    // Initialize HLS.js if supported
+    if (Hls.isSupported()) {
+        hls = new Hls({
+            debug: false,
+            enableWorker: true,
+            lowLatencyMode: true,
+            backBufferLength: 90
+        });
         
         // Load default M3U8 if available
         {% if episode.server_m3u8_url %}
         hls.loadSource('{{ episode.server_m3u8_url }}');
-        hls.attachMedia(videoPlayer);
+        hls.attachMedia(videoElement);
+        
+        hls.on(Hls.Events.MANIFEST_PARSED, function() {
+            console.log('✅ HLS manifest loaded successfully');
+        });
+        
+        hls.on(Hls.Events.ERROR, function(event, data) {
+            console.error('❌ HLS Error:', event, data);
+            if (data.fatal) {
+                switch (data.type) {
+                    case Hls.ErrorTypes.NETWORK_ERROR:
+                        console.log('Network error - attempting to recover...');
+                        hls.startLoad();
+                        break;
+                    case Hls.ErrorTypes.MEDIA_ERROR:
+                        console.log('Media error - attempting to recover...');
+                        hls.recoverMediaError();
+                        break;
+                    default:
+                        console.log('Fatal error - destroying HLS instance');
+                        hls.destroy();
+                        break;
+                }
+            }
+        });
         {% endif %}
-    } else if (videoPlayer.canPlayType('application/vnd.apple.mpegurl')) {
+        
+        window.hlsPlayer = hls;
+    } else if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
         // Native HLS support (Safari)
         {% if episode.server_m3u8_url %}
-        videoPlayer.src = '{{ episode.server_m3u8_url }}';
+        videoElement.src = '{{ episode.server_m3u8_url }}';
         {% endif %}
     }
 
@@ -450,21 +567,25 @@ document.addEventListener('DOMContentLoaded', function() {
     let watchTimer;
     const maxWatchSeconds = {{ max_watch_time }} * 60;
     
-    videoPlayer.addEventListener('play', function() {
+    player.on('play', function() {
         if (watchTimer) clearTimeout(watchTimer);
         watchTimer = setTimeout(function() {
-            videoPlayer.pause();
+            player.pause();
             document.getElementById('upgrade-overlay').classList.remove('hidden');
         }, maxWatchSeconds * 1000);
     });
     
-    videoPlayer.addEventListener('pause', function() {
+    player.on('pause', function() {
         if (watchTimer) clearTimeout(watchTimer);
     });
     {% endif %}
+    
+    // Expose player globally
+    window.player = player;
+    console.log('✅ Plyr player initialized successfully');
 });
 
-// Server switching function
+// Server switching function for Plyr + HLS.js
 function switchServer(serverType, serverUrl) {
     const videoContainer = document.getElementById('video-container');
     if (!videoContainer) {
@@ -492,7 +613,15 @@ function switchServer(serverType, serverUrl) {
     console.log('🎬 Switching to server:', serverType, serverUrl);
     
     if (serverType === 'embed') {
-        // Replace video with iframe for embed
+        // Destroy current Plyr and HLS instances
+        if (window.player) {
+            window.player.destroy();
+        }
+        if (window.hlsPlayer) {
+            window.hlsPlayer.destroy();
+        }
+        
+        // Replace with iframe for embed
         videoContainer.innerHTML = `
             <iframe 
                 src="${serverUrl}" 
@@ -502,49 +631,100 @@ function switchServer(serverType, serverUrl) {
             </iframe>
         `;
     } else if (serverType === 'iqiyi') {
-        // Extract M3U8 from iQiyi and play with HLS.js
+        // Extract M3U8 from iQiyi and play with Plyr + HLS.js
         extractAndPlayIqiyiM3U8(serverUrl);
     } else {
-        // Use native HTML5 video for M3U8 and direct videos
+        // Handle M3U8 and direct video with Plyr + HLS.js
         if (videoContainer.querySelector('iframe')) {
             // Restore video element if iframe was used
             videoContainer.innerHTML = `
                 <video 
-                    id="video-player" 
+                    id="video-player"
                     class="w-full h-full bg-black" 
-                    controls 
                     crossorigin 
                     playsinline
                     preload="auto"
                     poster="{{ episode.thumbnail_url or content.thumbnail_url or '/static/images/default-poster.jpg' }}">
                 </video>
             `;
+            
+            // Reinitialize Plyr
+            const newVideoElement = document.getElementById('video-player');
+            window.player = new Plyr(newVideoElement, {
+                captions: { active: true, update: true },
+                controls: [
+                    'play-large', 'play', 'progress', 'current-time', 'duration',
+                    'mute', 'volume', 'captions', 'settings', 'fullscreen'
+                ],
+                settings: ['captions', 'quality', 'speed'],
+                quality: { default: 'auto', options: ['auto', 1080, 720, 480, 360] },
+                speed: { selected: 1, options: [0.5, 0.75, 1, 1.25, 1.5, 2] },
+                keyboard: { focused: true, global: true },
+                tooltips: { controls: true, seek: true },
+                displayDuration: true,
+                ratio: '16:9',
+                fullscreen: { enabled: true, fallback: true, iosNative: true }
+            });
         }
         
-        const newVideoPlayer = document.getElementById('video-player');
+        const videoElement = document.getElementById('video-player');
         
         if (serverType === 'm3u8') {
-            if (typeof Hls !== 'undefined' && Hls.isSupported()) {
+            // Destroy existing HLS instance
+            if (window.hlsPlayer) {
+                window.hlsPlayer.destroy();
+            }
+            
+            if (Hls.isSupported()) {
                 // Use HLS.js for M3U8
-                const hls = new Hls();
-                hls.loadSource(serverUrl);
-                hls.attachMedia(newVideoPlayer);
-                window.hlsPlayer = hls;
-            } else if (newVideoPlayer.canPlayType('application/vnd.apple.mpegurl')) {
+                window.hlsPlayer = new Hls({
+                    debug: false,
+                    enableWorker: true,
+                    lowLatencyMode: true,
+                    backBufferLength: 90
+                });
+                
+                window.hlsPlayer.loadSource(serverUrl);
+                window.hlsPlayer.attachMedia(videoElement);
+                
+                window.hlsPlayer.on(Hls.Events.MANIFEST_PARSED, function() {
+                    console.log('✅ HLS manifest loaded successfully');
+                });
+                
+                window.hlsPlayer.on(Hls.Events.ERROR, function(event, data) {
+                    console.error('❌ HLS Error:', event, data);
+                    if (data.fatal) {
+                        switch (data.type) {
+                            case Hls.ErrorTypes.NETWORK_ERROR:
+                                console.log('Network error - attempting to recover...');
+                                window.hlsPlayer.startLoad();
+                                break;
+                            case Hls.ErrorTypes.MEDIA_ERROR:
+                                console.log('Media error - attempting to recover...');
+                                window.hlsPlayer.recoverMediaError();
+                                break;
+                            default:
+                                console.log('Fatal error - destroying HLS instance');
+                                window.hlsPlayer.destroy();
+                                break;
+                        }
+                    }
+                });
+            } else if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
                 // Native HLS support (Safari)
-                newVideoPlayer.src = serverUrl;
+                videoElement.src = serverUrl;
             } else {
                 // Fallback
-                newVideoPlayer.src = serverUrl;
+                videoElement.src = serverUrl;
             }
         } else {
             // Direct video playback
-            newVideoPlayer.src = serverUrl;
+            videoElement.src = serverUrl;
         }
     }
 }
 
-// iQiyi M3U8 extraction
+// iQiyi M3U8 extraction for Plyr + HLS.js
 function extractAndPlayIqiyiM3U8(iqiyiUrl) {
     console.log('🎬 Extracting M3U8 from iQiyi URL:', iqiyiUrl);
     
@@ -564,118 +744,111 @@ function extractAndPlayIqiyiM3U8(iqiyiUrl) {
             const blob = new Blob([data.m3u8_content], { type: 'application/vnd.apple.mpegurl' });
             const blobUrl = URL.createObjectURL(blob);
             
-            const videoPlayer = document.getElementById('video-player');
-            if (!videoPlayer) {
+            const videoElement = document.getElementById('video-player');
+            if (!videoElement) {
                 console.error('❌ Video player element not found');
                 return;
             }
             
-            console.log('🎬 Loading iQiyi M3U8 into video player...');
+            console.log('🎬 Loading iQiyi M3U8 into Plyr player...');
             
-            if (typeof Hls !== 'undefined' && Hls.isSupported()) {
-                // Destroy existing HLS instance if exists
-                if (window.hlsPlayer) {
-                    window.hlsPlayer.destroy();
-                }
-                
-                const hls = new Hls({
+            // Destroy existing HLS instance if exists
+            if (window.hlsPlayer) {
+                window.hlsPlayer.destroy();
+            }
+            
+            if (Hls.isSupported()) {
+                window.hlsPlayer = new Hls({
                     debug: false,
                     enableWorker: true,
                     lowLatencyMode: true,
                     backBufferLength: 90
                 });
                 
-                hls.loadSource(blobUrl);
-                hls.attachMedia(videoPlayer);
-                window.hlsPlayer = hls;
+                window.hlsPlayer.loadSource(blobUrl);
+                window.hlsPlayer.attachMedia(videoElement);
                 
-                hls.on(Hls.Events.MANIFEST_PARSED, function() {
-                    console.log('✅ M3U8 playlist loaded successfully, starting playback...');
-                    videoPlayer.play().catch(e => console.log('Autoplay prevented:', e));
+                window.hlsPlayer.on(Hls.Events.MANIFEST_PARSED, function() {
+                    console.log('✅ iQiyi M3U8 loaded successfully into Plyr');
+                    if (window.player) {
+                        window.player.play().catch(e => console.log('Autoplay prevented:', e));
+                    }
                 });
                 
-                hls.on(Hls.Events.ERROR, function(event, data) {
-                    console.error('❌ HLS Error:', event, data);
+                window.hlsPlayer.on(Hls.Events.ERROR, function(event, data) {
+                    console.error('❌ iQiyi HLS Error:', event, data);
                     if (data.fatal) {
                         switch (data.type) {
                             case Hls.ErrorTypes.NETWORK_ERROR:
-                                console.log('🔄 Attempting to recover from network error...');
-                                hls.startLoad();
+                                console.log('Network error - attempting to recover...');
+                                window.hlsPlayer.startLoad();
                                 break;
                             case Hls.ErrorTypes.MEDIA_ERROR:
-                                console.log('🔄 Attempting to recover from media error...');
-                                hls.recoverMediaError();
+                                console.log('Media error - attempting to recover...');
+                                window.hlsPlayer.recoverMediaError();
                                 break;
                             default:
-                                console.error('💥 Fatal error, cannot recover');
-                                hls.destroy();
+                                console.error('Fatal error - destroying HLS instance');
+                                window.hlsPlayer.destroy();
                                 break;
                         }
                     }
                 });
                 
-                hls.on(Hls.Events.MEDIA_ATTACHED, function() {
-                    console.log('🎬 Media attached to video element');
-                });
-                
+            } else if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
+                // Native HLS support (Safari)
+                videoElement.src = blobUrl;
+                console.log('✅ Using native HLS support for iQiyi M3U8');
             } else {
-                // Try force HLS.js even if not "supported"
+                // Force HLS.js even if not "officially" supported
                 console.log('🎬 Forcing HLS.js for iQiyi M3U8...');
                 try {
-                    if (window.hlsPlayer) {
-                        window.hlsPlayer.destroy();
-                    }
-                    
-                    const hls = new Hls({
+                    window.hlsPlayer = new Hls({
                         debug: true,
                         enableWorker: false,
                         lowLatencyMode: false
                     });
                     
-                    hls.loadSource(blobUrl);
-                    hls.attachMedia(videoPlayer);
-                    window.hlsPlayer = hls;
+                    window.hlsPlayer.loadSource(blobUrl);
+                    window.hlsPlayer.attachMedia(videoElement);
                     
-                    hls.on(Hls.Events.MANIFEST_PARSED, function() {
-                        console.log('✅ Forced HLS.js M3U8 loaded successfully');
-                        videoPlayer.play().catch(e => console.log('Autoplay prevented:', e));
+                    window.hlsPlayer.on(Hls.Events.MANIFEST_PARSED, function() {
+                        console.log('✅ Forced HLS.js iQiyi M3U8 loaded successfully');
+                        if (window.player) {
+                            window.player.play().catch(e => console.log('Autoplay prevented:', e));
+                        }
                     });
                     
-                    hls.on(Hls.Events.ERROR, function(event, data) {
-                        console.error('❌ Forced HLS Error:', event, data);
-                    });
-                } catch (e) {
-                    console.error('❌ HLS.js force failed, trying direct:', e);
-                    // Final fallback - try setting as direct source
-                    videoPlayer.src = blobUrl;
-                    videoPlayer.load();
-                    
-                    videoPlayer.addEventListener('loadstart', () => console.log('🎬 Video load started'));
-                    videoPlayer.addEventListener('loadeddata', () => console.log('🎬 Video data loaded'));
-                    videoPlayer.addEventListener('canplay', () => {
-                        console.log('🎬 Video can play, attempting autoplay');
-                        videoPlayer.play().catch(e => console.log('Autoplay prevented:', e));
-                    });
-                    videoPlayer.addEventListener('error', (e) => console.error('❌ Video error:', e, videoPlayer.error));
+                } catch (error) {
+                    console.error('❌ Failed to load iQiyi M3U8:', error);
+                    // Fallback to direct source
+                    videoElement.src = blobUrl;
                 }
             }
         } else {
             console.error('❌ M3U8 extraction failed:', data.error || 'Unknown error');
-            alert('Server iQiyi gagal memuat video. Coba server lain: ' + (data.error || 'Unknown error'));
+            alert('Server iQiyi failed to load video. Try another server: ' + (data.error || 'Unknown error'));
         }
     })
     .catch(error => {
         console.error('❌ Error extracting M3U8:', error);
-        alert('Koneksi ke server iQiyi gagal. Silakan coba server lain atau coba lagi nanti.');
+        alert('Connection to iQiyi server failed. Please try another server or try again later.');
     });
 }
 
-// Restart video function
+// Restart video function for Plyr
 function restartVideo() {
     document.getElementById('upgrade-overlay').classList.add('hidden');
-    const videoPlayer = document.getElementById('video-player');
-    videoPlayer.currentTime = 0;
-    videoPlayer.play();
+    if (window.player) {
+        window.player.currentTime = 0;
+        window.player.play();
+    } else {
+        const videoElement = document.getElementById('video-player');
+        if (videoElement) {
+            videoElement.currentTime = 0;
+            videoElement.play();
+        }
+    }
 }
 </script>
 {% endblock %}
