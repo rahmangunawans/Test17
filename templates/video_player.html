@@ -603,15 +603,16 @@ function showVideoPlayer(url, type = 'video/mp4') {
             embedContainer.classList.add('hidden');
         }
         
-        // Show video player container
-        const videoContainer = document.getElementById('video-player');
-        const videoElement = document.getElementById('video');
+        // Show video player container  
+        const videoContainer = document.getElementById('video-container');
+        const videoElement = document.getElementById('video-player');
         
         if (!videoContainer || !videoElement) {
+            console.error('Missing elements:', { videoContainer: !!videoContainer, videoElement: !!videoElement });
             throw new Error('Video player elements not found');
         }
         
-        videoContainer.classList.remove('hidden');
+        videoElement.classList.remove('hidden');
         
         // Check if HLS.js is available
         console.log('HLS.js availability check:', typeof Hls !== 'undefined');
@@ -730,13 +731,24 @@ function showVideoPlayer(url, type = 'video/mp4') {
 }
 
 function showEmbedPlayer(url) {
-    document.getElementById('video-player').classList.add('hidden');
+    // Hide video player
+    const videoElement = document.getElementById('video-player');
+    if (videoElement) {
+        videoElement.classList.add('hidden');
+    }
     
+    // Show embed container
     const embedContainer = document.getElementById('embed-container');
     const embedPlayer = document.getElementById('embed-player');
     
-    embedPlayer.src = url;
-    embedContainer.classList.remove('hidden');
+    if (embedPlayer) {
+        embedPlayer.src = url;
+    }
+    if (embedContainer) {
+        embedContainer.classList.remove('hidden');
+    }
+    
+    showNotification('Embed player loaded', 'success');
 }
 
 function extractAndPlayIqiyiM3U8(dashUrl) {
