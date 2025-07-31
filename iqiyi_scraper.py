@@ -236,10 +236,7 @@ class IQiyiScraper:
                     else:
                         print(f"❌ Episode {i}: {episode_title} - Invalid")
                 
-                # Limit untuk mencegah terlalu banyak request
-                if i >= 5:  # Process hanya 5 episode pertama
-                    print(f"📋 Membatasi processing ke 5 episode pertama")
-                    break
+                # Process all episodes in playlist
 
             print(f"✅ Berhasil extract {len(episodes)} episode")
             return episodes
