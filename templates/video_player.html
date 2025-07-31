@@ -7,6 +7,8 @@
 <link href="https://vjs.zencdn.net/8.12.0/video-js.css" rel="stylesheet">
 <script src="https://vjs.zencdn.net/8.12.0/video.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@videojs/http-streaming@3.0.2/dist/videojs-http-streaming.min.js"></script>
+<!-- HLS.js for M3U8 streaming support -->
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
 <!-- Video.js Plugins for Professional Features -->
 <script src="https://cdn.jsdelivr.net/npm/videojs-hotkeys@0.2.28/videojs.hotkeys.min.js"></script>
@@ -402,7 +404,7 @@
                     <div class="aspect-video relative">
                         <div id="video-container" class="w-full h-full relative">
                             <!-- Professional Video.js Player -->
-                            <video-js
+                            <video
                                 id="video-player"
                                 class="video-js vjs-default-skin w-full h-full hidden"
                                 controls
@@ -413,7 +415,7 @@
                                     To view this video please enable JavaScript, and consider upgrading to a web browser that
                                     <a href="https://videojs.com/html5-video-support/" target="_blank">supports HTML5 video</a>.
                                 </p>
-                            </video-js>
+                            </video>
                             
                             <!-- Embed Player (for embed URLs) -->
                             <div id="embed-container" class="w-full h-full hidden">
