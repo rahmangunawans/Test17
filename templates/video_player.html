@@ -577,6 +577,23 @@ function switchServer(serverType, serverUrl) {
             break;
             
         case 'iqiyi':
+            // Check if there are alternative servers available
+            const hasM3u8 = '{{ episode.server_m3u8_url if episode.server_m3u8_url else "" }}';
+            const hasEmbed = '{{ episode.server_embed_url if episode.server_embed_url else "" }}';
+            
+            if (!serverUrl || serverUrl === 'None' || serverUrl === '') {
+                if (hasM3u8) {
+                    showNotification('IQiyi URL not available, switching to M3U8 server...', 'info');
+                    switchServer('m3u8', hasM3u8);
+                } else if (hasEmbed) {
+                    showNotification('IQiyi URL not available, switching to Embed server...', 'info');
+                    switchServer('embed', hasEmbed);
+                } else {
+                    showNotification('No streaming servers available for this episode', 'error');
+                }
+                return;
+            }
+            
             extractAndPlayIqiyi(serverUrl);
             showNotification('Extracting M3U8 from iQiyi play URL...', 'info');
             break;
