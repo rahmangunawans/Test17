@@ -641,10 +641,24 @@ function showVideoPlayer(url, type = 'video/mp4') {
             // Handle data URL (base64 encoded M3U8)
             if (url.startsWith('data:application/vnd.apple.mpegurl')) {
                 console.log('Converting base64 M3U8 to blob URL');
-                const base64Content = url.split(',')[1];
-                const m3u8Content = atob(base64Content);
-                const blob = new Blob([m3u8Content], { type: 'application/vnd.apple.mpegurl' });
-                sourceUrl = URL.createObjectURL(blob);
+                try {
+                    const base64Content = url.split(',')[1];
+                    const m3u8Content = atob(base64Content);
+                    console.log('Decoded M3U8 content length:', m3u8Content.length);
+                    console.log('M3U8 content preview:', m3u8Content.substring(0, 200));
+                    
+                    // Create blob with proper MIME type
+                    const blob = new Blob([m3u8Content], { 
+                        type: 'application/vnd.apple.mpegurl' 
+                    });
+                    sourceUrl = URL.createObjectURL(blob);
+                    console.log('Created blob URL:', sourceUrl);
+                } catch (error) {
+                    console.error('Failed to decode base64 M3U8:', error);
+                    // Fallback to demo URL
+                    sourceUrl = 'https://bitdash-a.akamaihd.net/content/sintel/hls/playlist.m3u8';
+                    showNotification('Failed to decode M3U8, using demo stream', 'warning');
+                }
             }
             
             if (typeof Hls !== 'undefined' && Hls.isSupported()) {
@@ -686,8 +700,27 @@ function showVideoPlayer(url, type = 'video/mp4') {
                 window.currentHls = hls;
                 
             } else if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
-                console.log('Using native HLS support');
+                console.log('Using native HLS support for URL:', sourceUrl);
                 videoElement.src = sourceUrl;
+                
+                // Add error event listener
+                videoElement.addEventListener('error', function(e) {
+                    console.error('Video element error:', e);
+                    console.error('Error details:', videoElement.error);
+                    showNotification('Video playback error: ' + (videoElement.error ? videoElement.error.message : 'Unknown error'), 'error');
+                });
+                
+                // Add loadstart event listener
+                videoElement.addEventListener('loadstart', function() {
+                    console.log('Video loading started');
+                });
+                
+                // Add canplay event listener
+                videoElement.addEventListener('canplay', function() {
+                    console.log('Video can start playing');
+                    showNotification('Video ready to play', 'success');
+                });
+                
                 showNotification('Using native HLS support', 'success');
             } else {
                 console.log('HLS not supported, trying direct playback');
