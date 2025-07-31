@@ -3,8 +3,8 @@
 {% block title %}{{ episode.title }} - {{ content.title }}{% endblock %}
 
 {% block head %}
-<!-- Plyr CSS (sama seperti file test yang berhasil) -->
-<link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
+<!-- Plyr CSS with integrity -->
+<link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" integrity="sha256-VRNrqU4ZfGTm6vbIy8qkJ1dQoVzQcyQE4QdvOYWzl4s=" crossorigin="anonymous" />
 
 <!-- Fallback CSS styling for HTML5 video -->
 <style>
