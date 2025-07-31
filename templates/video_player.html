@@ -462,6 +462,10 @@ document.addEventListener('DOMContentLoaded', function() {
 // Server switching function
 function switchServer(serverType, serverUrl) {
     const videoPlayer = document.getElementById('video-player');
+    if (!videoPlayer) {
+        console.error('Video player not found');
+        return;
+    }
     const videoContainer = videoPlayer.parentElement;
     
     // Clear all server button active states
@@ -485,20 +489,22 @@ function switchServer(serverType, serverUrl) {
     
     if (serverType === 'embed') {
         // Replace video with iframe for embed
-        videoContainer.innerHTML = `
-            <iframe 
-                src="${serverUrl}" 
-                class="w-full h-full rounded-lg" 
-                frameborder="0" 
-                allowfullscreen>
-            </iframe>
-        `;
+        if (videoContainer) {
+            videoContainer.innerHTML = `
+                <iframe 
+                    src="${serverUrl}" 
+                    class="w-full h-full rounded-lg" 
+                    frameborder="0" 
+                    allowfullscreen>
+                </iframe>
+            `;
+        }
     } else if (serverType === 'iqiyi') {
         // Extract M3U8 from iQiyi and play with HLS.js
         extractAndPlayIqiyiM3U8(serverUrl);
     } else {
         // Use native HTML5 video for M3U8 and direct videos
-        if (videoContainer.querySelector('iframe')) {
+        if (videoContainer && videoContainer.querySelector('iframe')) {
             // Restore video element if iframe was used
             videoContainer.innerHTML = `
                 <video 
