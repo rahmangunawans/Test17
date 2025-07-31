@@ -9,6 +9,7 @@ from anilist_integration import anilist_service
 
 import logging
 import json
+from iqiyi_scraper import scrape_iqiyi_episode, scrape_iqiyi_playlist
 
 admin_bp = Blueprint('admin', __name__)
 
@@ -501,7 +502,188 @@ def edit_user(user_id):
     
     return render_template('admin/user_form.html', user=user)
 
+# IQiyi Auto Scraping API Endpoints
+@admin_bp.route('/api/scrape-episode', methods=['POST'])
+@login_required
+@admin_required
+def api_scrape_episode():
+    """API endpoint untuk auto scraping single episode dari IQiyi"""
+    try:
+        data = request.get_json()
+        iqiyi_url = data.get('iqiyi_url', '').strip()
+        
+        if not iqiyi_url:
+            return jsonify({
+                'success': False,
+                'error': 'URL IQiyi diperlukan'
+            }), 400
+        
+        # Validasi URL IQiyi
+        if 'iq.com' not in iqiyi_url:
+            return jsonify({
+                'success': False,
+                'error': 'URL harus dari domain iq.com'
+            }), 400
+        
+        # Scrape episode
+        result = scrape_iqiyi_episode(iqiyi_url)
+        
+        if result['success']:
+            return jsonify({
+                'success': True,
+                'episode_data': result['data'],
+                'message': 'Episode berhasil di-scrape'
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': result.get('error', 'Gagal scraping episode')
+            }), 500
+            
+    except Exception as e:
+        logging.error(f"Error scraping episode: {e}")
+        return jsonify({
+            'success': False,
+            'error': f'Server error: {str(e)}'
+        }), 500
 
+@admin_bp.route('/api/scrape-playlist', methods=['POST'])
+@login_required
+@admin_required  
+def api_scrape_playlist():
+    """API endpoint untuk auto scraping seluruh playlist dari IQiyi"""
+    try:
+        data = request.get_json()
+        iqiyi_url = data.get('iqiyi_url', '').strip()
+        
+        if not iqiyi_url:
+            return jsonify({
+                'success': False,
+                'error': 'URL IQiyi diperlukan'
+            }), 400
+        
+        # Validasi URL IQiyi
+        if 'iq.com' not in iqiyi_url:
+            return jsonify({
+                'success': False,
+                'error': 'URL harus dari domain iq.com'
+            }), 400
+        
+        # Scrape playlist
+        result = scrape_iqiyi_playlist(iqiyi_url)
+        
+        if result['success']:
+            return jsonify({
+                'success': True,
+                'playlist_data': result,
+                'message': f"Berhasil scrape {result['total_episodes']} episode ({result['valid_episodes']} valid)"
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': result.get('error', 'Gagal scraping playlist')
+            }), 500
+            
+    except Exception as e:
+        logging.error(f"Error scraping playlist: {e}")
+        return jsonify({
+            'success': False,
+            'error': f'Server error: {str(e)}'
+        }), 500
+
+@admin_bp.route('/api/auto-add-episodes', methods=['POST'])
+@login_required
+@admin_required
+def api_auto_add_episodes():
+    """API endpoint untuk otomatis menambahkan episode hasil scraping ke database"""
+    try:
+        data = request.get_json()
+        content_id = data.get('content_id')
+        episodes_data = data.get('episodes_data', [])
+        
+        if not content_id:
+            return jsonify({
+                'success': False,
+                'error': 'Content ID diperlukan'
+            }), 400
+        
+        # Validasi content exists
+        content = Content.query.get(content_id)
+        if not content:
+            return jsonify({
+                'success': False,
+                'error': 'Content tidak ditemukan'
+            }), 404
+        
+        added_episodes = []
+        failed_episodes = []
+        
+        for episode_data in episodes_data:
+            try:
+                # Check if episode already exists
+                existing_episode = Episode.query.filter_by(
+                    content_id=content_id,
+                    episode_number=episode_data.get('episode_number')
+                ).first()
+                
+                if existing_episode:
+                    failed_episodes.append({
+                        'episode_number': episode_data.get('episode_number'),
+                        'title': episode_data.get('title'),
+                        'error': 'Episode sudah ada'
+                    })
+                    continue
+                
+                # Create new episode
+                new_episode = Episode(
+                    content_id=content_id,
+                    episode_number=episode_data.get('episode_number'),
+                    title=episode_data.get('title'),
+                    description=episode_data.get('description'),
+                    server_m3u8_url=episode_data.get('m3u8_content'),  # M3U8 content dari scraper
+                    server_embed_url=episode_data.get('url'),  # IQiyi URL sebagai embed fallback
+                    thumbnail_url=episode_data.get('thumbnail_url')
+                )
+                
+                db.session.add(new_episode)
+                added_episodes.append({
+                    'episode_number': episode_data.get('episode_number'),
+                    'title': episode_data.get('title')
+                })
+                
+            except Exception as e:
+                failed_episodes.append({
+                    'episode_number': episode_data.get('episode_number', 'Unknown'),
+                    'title': episode_data.get('title', 'Unknown'),
+                    'error': str(e)
+                })
+        
+        # Commit changes
+        db.session.commit()
+        
+        # Create notification for new episodes
+        if added_episodes:
+            try:
+                notify_new_episode(content.title, len(added_episodes))
+            except:
+                pass  # Ignore notification errors
+        
+        return jsonify({
+            'success': True,
+            'added_count': len(added_episodes),
+            'failed_count': len(failed_episodes),
+            'added_episodes': added_episodes,
+            'failed_episodes': failed_episodes,
+            'message': f'Berhasil menambahkan {len(added_episodes)} episode'
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        logging.error(f"Error auto adding episodes: {e}")
+        return jsonify({
+            'success': False,
+            'error': f'Server error: {str(e)}'
+        }), 500
 
 @admin_bp.route('/users/<int:user_id>/delete', methods=['POST'])
 @login_required

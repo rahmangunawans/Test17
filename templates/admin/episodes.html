@@ -47,8 +47,14 @@
                         </form>
                     </div>
                     
-                    <!-- Add Button -->
-                    <div>
+                    <!-- Action Buttons -->
+                    <div class="flex gap-2">
+                        <button onclick="openAutoScrapeModal()" 
+                                class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-sm hover:shadow-lg transition-all admin-button pulse-glow"
+                                title="Auto Scrape IQiyi Episodes">
+                            <i class="fas fa-robot"></i>
+                            <span class="hidden sm:inline ml-2">Auto Scrape</span>
+                        </button>
                         <a href="{{ url_for('admin.add_episode', content_id=content.id) }}" 
                            class="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg text-sm hover:shadow-lg transition-all admin-button pulse-glow"
                            title="Add New Episode">
@@ -150,4 +156,255 @@
         </div>
     </div>
 </div>
+
+<!-- Auto Scrape Modal -->
+<div id="autoScrapeModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-gray-800 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-bold text-white">
+                        <i class="fas fa-robot mr-2 text-blue-400"></i>Auto Scrape IQiyi Episodes
+                    </h3>
+                    <button onclick="closeAutoScrapeModal()" class="text-gray-400 hover:text-white">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+
+                <!-- Step 1: Input URL -->
+                <div id="step1" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">
+                            IQiyi Episode/Playlist URL
+                        </label>
+                        <input type="url" id="iqiyiUrl" 
+                               class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-blue-500"
+                               placeholder="https://www.iq.com/play/...">
+                        <p class="text-xs text-gray-400 mt-1">
+                            Masukkan URL episode IQiyi atau halaman utama untuk auto scraping
+                        </p>
+                    </div>
+
+                    <div class="flex gap-3">
+                        <button onclick="scrapeSingleEpisode()" 
+                                class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg">
+                            <i class="fas fa-play mr-2"></i>Scrape Single Episode
+                        </button>
+                        <button onclick="scrapePlaylist()" 
+                                class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg">
+                            <i class="fas fa-list mr-2"></i>Scrape Playlist (5 episode)
+                        </button>
+                    </div>
+                    
+                    <div id="scrapeStatus" class="mt-4 text-sm"></div>
+                </div>
+
+                <!-- Step 2: Review Results -->
+                <div id="step2" class="hidden space-y-4">
+                    <div class="flex items-center justify-between">
+                        <h4 class="text-lg font-semibold text-white">Hasil Scraping</h4>
+                        <button onclick="backToStep1()" class="text-blue-400 hover:text-blue-300">
+                            <i class="fas fa-arrow-left mr-1"></i>Back
+                        </button>
+                    </div>
+                    
+                    <div id="scrapeResults" class="space-y-3"></div>
+                    
+                    <div class="flex gap-3 mt-6">
+                        <button onclick="addSelectedEpisodes()" 
+                                class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg">
+                            <i class="fas fa-plus mr-2"></i>Add Selected Episodes
+                        </button>
+                        <button onclick="selectAllEpisodes()" 
+                                class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg">
+                            <i class="fas fa-check-double mr-2"></i>Select All
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let scrapedEpisodes = [];
+
+function openAutoScrapeModal() {
+    document.getElementById('autoScrapeModal').classList.remove('hidden');
+    document.getElementById('step1').classList.remove('hidden');
+    document.getElementById('step2').classList.add('hidden');
+    document.getElementById('iqiyiUrl').value = '';
+    document.getElementById('scrapeStatus').innerHTML = '';
+}
+
+function closeAutoScrapeModal() {
+    document.getElementById('autoScrapeModal').classList.add('hidden');
+    scrapedEpisodes = [];
+}
+
+function backToStep1() {
+    document.getElementById('step1').classList.remove('hidden');
+    document.getElementById('step2').classList.add('hidden');
+}
+
+async function scrapeSingleEpisode() {
+    const url = document.getElementById('iqiyiUrl').value.trim();
+    if (!url) {
+        showScrapeStatus('Masukkan URL IQiyi terlebih dahulu', 'error');
+        return;
+    }
+
+    showScrapeStatus('Scraping episode...', 'info');
+    
+    try {
+        const response = await fetch('/admin/api/scrape-episode', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ iqiyi_url: url })
+        });
+
+        const result = await response.json();
+        
+        if (result.success) {
+            scrapedEpisodes = [result.episode_data];
+            showScrapeResults();
+            showScrapeStatus('Episode berhasil di-scrape!', 'success');
+        } else {
+            showScrapeStatus(`Error: ${result.error}`, 'error');
+        }
+    } catch (error) {
+        showScrapeStatus(`Network error: ${error.message}`, 'error');
+    }
+}
+
+async function scrapePlaylist() {
+    const url = document.getElementById('iqiyiUrl').value.trim();
+    if (!url) {
+        showScrapeStatus('Masukkan URL IQiyi terlebih dahulu', 'error');
+        return;
+    }
+
+    showScrapeStatus('Scraping playlist (ini mungkin memakan waktu)...', 'info');
+    
+    try {
+        const response = await fetch('/admin/api/scrape-playlist', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ iqiyi_url: url })
+        });
+
+        const result = await response.json();
+        
+        if (result.success) {
+            scrapedEpisodes = result.playlist_data.episodes;
+            showScrapeResults();
+            showScrapeStatus(result.message, 'success');
+        } else {
+            showScrapeStatus(`Error: ${result.error}`, 'error');
+        }
+    } catch (error) {
+        showScrapeStatus(`Network error: ${error.message}`, 'error');
+    }
+}
+
+function showScrapeResults() {
+    document.getElementById('step1').classList.add('hidden');
+    document.getElementById('step2').classList.remove('hidden');
+    
+    const resultsDiv = document.getElementById('scrapeResults');
+    resultsDiv.innerHTML = '';
+
+    scrapedEpisodes.forEach((episode, index) => {
+        const validIcon = episode.is_valid ? 
+            '<i class="fas fa-check-circle text-green-400"></i>' : 
+            '<i class="fas fa-exclamation-triangle text-yellow-400"></i>';
+        
+        const validText = episode.is_valid ? 'Valid M3U8' : 'No M3U8';
+        
+        resultsDiv.innerHTML += `
+            <div class="bg-gray-700 p-4 rounded-lg">
+                <div class="flex items-center gap-3">
+                    <input type="checkbox" id="episode_${index}" checked 
+                           class="w-4 h-4 text-blue-600 bg-gray-600 border-gray-500 rounded focus:ring-blue-500">
+                    <div class="flex-1">
+                        <div class="flex items-center gap-2 mb-1">
+                            <h5 class="font-medium text-white">Episode ${episode.episode_number || 'N/A'}: ${episode.title}</h5>
+                            ${validIcon}
+                            <span class="text-xs ${episode.is_valid ? 'text-green-400' : 'text-yellow-400'}">${validText}</span>
+                        </div>
+                        ${episode.description ? `<p class="text-sm text-gray-300 mb-2">${episode.description.substring(0, 100)}...</p>` : ''}
+                        <div class="text-xs text-gray-400">
+                            ${episode.thumbnail_url ? '<i class="fas fa-image mr-1"></i>Thumbnail tersedia' : ''}
+                            ${episode.m3u8_content ? '<i class="fas fa-video ml-3 mr-1"></i>M3U8 content tersedia' : ''}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+}
+
+function selectAllEpisodes() {
+    const checkboxes = document.querySelectorAll('#scrapeResults input[type="checkbox"]');
+    checkboxes.forEach(cb => cb.checked = true);
+}
+
+async function addSelectedEpisodes() {
+    const selectedEpisodes = [];
+    const checkboxes = document.querySelectorAll('#scrapeResults input[type="checkbox"]:checked');
+    
+    checkboxes.forEach(cb => {
+        const index = parseInt(cb.id.split('_')[1]);
+        selectedEpisodes.push(scrapedEpisodes[index]);
+    });
+
+    if (selectedEpisodes.length === 0) {
+        showScrapeStatus('Pilih minimal satu episode', 'error');
+        return;
+    }
+
+    showScrapeStatus('Menambahkan episode ke database...', 'info');
+
+    try {
+        const response = await fetch('/admin/api/auto-add-episodes', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                content_id: {{ content.id }},
+                episodes_data: selectedEpisodes
+            })
+        });
+
+        const result = await response.json();
+        
+        if (result.success) {
+            showScrapeStatus(`Berhasil menambahkan ${result.added_count} episode!`, 'success');
+            setTimeout(() => {
+                location.reload(); // Reload halaman untuk melihat episode baru
+            }, 2000);
+        } else {
+            showScrapeStatus(`Error: ${result.error}`, 'error');
+        }
+    } catch (error) {
+        showScrapeStatus(`Network error: ${error.message}`, 'error');
+    }
+}
+
+function showScrapeStatus(message, type) {
+    const statusDiv = document.getElementById('scrapeStatus');
+    const colors = {
+        'info': 'text-blue-400',
+        'success': 'text-green-400',
+        'error': 'text-red-400'
+    };
+    
+    statusDiv.innerHTML = `<div class="${colors[type]}">${message}</div>`;
+}
+</script>
 {% endblock %}
