@@ -582,8 +582,8 @@ function switchServer(serverType, serverUrl) {
                 return;
             }
             
-            extractAndPlayIqiyi(serverUrl);
-            showNotification('Extracting M3U8 from iQiyi play URL...', 'info');
+            showIqiyiPlayer(serverUrl);
+            showNotification('Loading iQiyi player...', 'info');
             break;
             
         default:
@@ -670,11 +670,31 @@ async function showVideoPlayer(url, type = 'video/mp4') {
 }
 
 function showEmbedPlayer(url) {
+    document.getElementById('video-player').classList.add('hidden');
+    
     const embedContainer = document.getElementById('embed-container');
     const embedPlayer = document.getElementById('embed-player');
     
     embedPlayer.src = url;
     embedContainer.classList.remove('hidden');
+}
+
+function showIqiyiPlayer(url) {
+    document.getElementById('video-player').classList.add('hidden');
+    
+    const embedContainer = document.getElementById('embed-container');
+    const iframe = document.getElementById('embed-player');
+    
+    // Use iQiyi URL directly in iframe like in the CodePen example
+    iframe.src = url;
+    iframe.setAttribute('allowfullscreen', 'true');
+    iframe.setAttribute('webkitallowfullscreen', 'true');
+    iframe.setAttribute('mozallowfullscreen', 'true');
+    iframe.setAttribute('allow', 'autoplay; fullscreen; picture-in-picture');
+    
+    embedContainer.classList.remove('hidden');
+    
+    console.log('Loading iQiyi player with URL:', url);
 }
 
 
