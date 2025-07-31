@@ -158,7 +158,7 @@
                     </video>
 
                     <!-- VIP Download Menu (Only show if user has VIP) -->
-                    {% if current_user.is_authenticated and current_user.is_vip_active() %}
+                    {% if current_user.is_authenticated and current_user.is_vip() %}
                     <div class="absolute top-4 right-4">
                         <div class="relative">
                             <button onclick="toggleDownloadMenu()" 
