@@ -165,7 +165,7 @@ def watch_episode(episode_id):
     else:
         progress_percentage = 0
     
-    return render_template('simple_video_player.html', 
+    return render_template('video_player_fixed.html', 
                          episode=episode, 
                          content=content,
                          can_watch_full=can_watch_full,

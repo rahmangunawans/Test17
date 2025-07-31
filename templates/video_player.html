@@ -3,8 +3,8 @@
 {% block title %}{{ episode.title }} - {{ content.title }}{% endblock %}
 
 {% block head %}
-<!-- Plyr CSS with integrity -->
-<link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" integrity="sha256-VRNrqU4ZfGTm6vbIy8qkJ1dQoVzQcyQE4QdvOYWzl4s=" crossorigin="anonymous" />
+<!-- Plyr CSS -->
+<link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
 
 <!-- Fallback CSS styling for HTML5 video -->
 <style>
@@ -91,6 +91,18 @@ video {
 /* Prevent black box issue */
 .plyr__video-wrapper {
     background: transparent !important;
+}
+
+/* Critical fix for video display */
+.plyr__video-wrapper video,
+.plyr video {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: contain !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    display: block !important;
+    background: #000 !important;
 }
 
 /* Plyr custom colors to match AniFlix theme */
@@ -543,21 +555,23 @@ let hls;
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🎬 DOM loaded, checking for libraries...');
     
-    // Dynamic script loading
-    const plyrScript = document.createElement('script');
-    plyrScript.src = 'https://cdn.plyr.io/3.7.8/plyr.polyfilled.js';
-    plyrScript.onload = function() {
-        console.log('✅ Plyr loaded');
-        
-        const hlsScript = document.createElement('script');
-        hlsScript.src = 'https://cdn.jsdelivr.net/npm/hls.js@latest';
-        hlsScript.onload = function() {
-            console.log('✅ HLS.js loaded, initializing player...');
+    // Wait for libraries to load
+    let checkLibraries = setInterval(() => {
+        if (typeof Plyr !== 'undefined' && typeof Hls !== 'undefined') {
+            clearInterval(checkLibraries);
+            console.log('✅ Libraries loaded, initializing player...');
             initializePlayer();
-        };
-        document.head.appendChild(hlsScript);
-    };
-    document.head.appendChild(plyrScript);
+        }
+    }, 100);
+    
+    // Timeout after 5 seconds
+    setTimeout(() => {
+        clearInterval(checkLibraries);
+        if (typeof Plyr === 'undefined' || typeof Hls === 'undefined') {
+            console.error('❌ Libraries failed to load, using fallback');
+            initializeFallbackPlayer();
+        }
+    }, 5000);
 });
 
 function initializePlayer() {
@@ -568,14 +582,18 @@ function initializePlayer() {
     }
     
     // Get default source
-    const defaultSource = serverConfig.m3u8 || 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8';
+    const defaultSource = serverConfig.m3u8 || serverConfig.direct;
+    if (!defaultSource) {
+        console.error('❌ No video source available');
+        return;
+    }
+    
     console.log('🎬 Initializing player with source:', defaultSource);
     
-    if (Hls.isSupported()) {
+    if (Hls.isSupported() && defaultSource.includes('.m3u8')) {
         hls = new Hls({
             debug: false,
-            enableWorker: true,
-            lowLatencyMode: true,
+            enableWorker: true
         });
         
         hls.loadSource(defaultSource);
@@ -583,34 +601,38 @@ function initializePlayer() {
         
         hls.on(Hls.Events.MANIFEST_PARSED, function() {
             console.log('✅ HLS manifest parsed successfully');
-            
-            player = new Plyr(video, {
-                captions: { active: true, update: true, language: 'en' },
-                controls: [
-                    'play-large', 'play', 'progress', 'current-time', 'duration',
-                    'mute', 'volume', 'captions', 'settings', 'pip', 'airplay', 'fullscreen'
-                ],
-                settings: ['captions', 'quality', 'speed'],
-                quality: { default: 720, options: [4320, 2880, 2160, 1440, 1080, 720, 576, 480, 360, 240] },
-                ratio: '16:9',
-                fullscreen: { enabled: true, fallback: true, iosNative: true }
-            });
-            
-            window.player = player;
-            window.hls = hls;
-            
-            // Force video to be visible after Plyr initialization
-            setTimeout(() => {
-                const plyrVideo = document.querySelector('.plyr video, .plyr__video-wrapper video');
-                if (plyrVideo) {
-                    plyrVideo.style.opacity = '1';
-                    plyrVideo.style.visibility = 'visible';
-                    plyrVideo.style.display = 'block';
-                    console.log('✅ Forced video visibility after Plyr init');
-                }
-            }, 500);
-            
-            console.log('✅ Plyr + HLS.js initialized successfully');
+            initializePlyr(video);
+        });
+        
+        hls.on(Hls.Events.ERROR, function(event, data) {
+            console.error('❌ HLS Error:', data);
+            if (data.fatal) {
+                initializeFallbackPlayer();
+            }
+        });
+        
+    } else {
+        // Direct video or Safari native HLS
+        video.src = defaultSource;
+        initializePlyr(video);
+    }
+}
+
+function initializePlyr(video) {
+    player = new Plyr(video, {
+        captions: { active: true, update: true },
+        controls: [
+            'play-large', 'play', 'progress', 'current-time', 'duration',
+            'mute', 'volume', 'captions', 'settings', 'fullscreen'
+        ],
+        settings: ['captions', 'quality', 'speed'],
+        ratio: '16:9'
+    });
+    
+    window.player = player;
+    window.hls = hls;
+    
+    console.log('✅ Plyr initialized successfully');
             
             // Setup watch restrictions if needed
             setupWatchRestrictions();
