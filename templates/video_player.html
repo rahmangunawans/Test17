@@ -9,7 +9,7 @@
 
 <!-- HLS.js for M3U8 support -->
 <link rel="stylesheet" href="https://code-reserve.web.app/2.0.1/player.css">
-<script src="https://code-reserve.web.app/2.0.1/hls.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.15/dist/hls.min.js"></script>
 <script src="https://code-reserve.web.app/2.0.1/player.js" defer></script>
 
 <style>
@@ -454,17 +454,29 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
     }
 
-    // Initialize HLS support
-    if (Hls.isSupported()) {
-        const hls = new Hls();
-        window.hlsPlayer = hls;
-        
-        // Load default M3U8 if available
-        {% if episode.server_m3u8_url %}
-        hls.loadSource('{{ episode.server_m3u8_url }}');
-        hls.attachMedia(videoPlayer);
-        {% endif %}
-    }
+    // Wait for HLS.js to load then initialize
+    setTimeout(() => {
+        if (typeof Hls !== 'undefined' && Hls.isSupported()) {
+            const hls = new Hls();
+            window.hlsPlayer = hls;
+            
+            // Load default M3U8 if available
+            {% if episode.server_m3u8_url %}
+            hls.loadSource('{{ episode.server_m3u8_url }}');
+            hls.attachMedia(videoPlayer);
+            hls.on(Hls.Events.MANIFEST_PARSED, function() {
+                console.log('✅ HLS stream loaded successfully');
+            });
+            {% endif %}
+        } else {
+            console.log('⚠️ HLS.js not available, using native player');
+            {% if episode.server_m3u8_url %}
+            if (videoPlayer.canPlayType('application/vnd.apple.mpegurl')) {
+                videoPlayer.src = '{{ episode.server_m3u8_url }}';
+            }
+            {% endif %}
+        }
+    }, 1000);
 
     // Watch time restriction for free users
     {% if not can_watch_full and max_watch_time %}
@@ -541,14 +553,35 @@ function switchServer(serverType, serverUrl) {
         
         const newVideoPlayer = document.getElementById('video-player');
         
-        if (serverType === 'm3u8' && Hls.isSupported()) {
-            // Use HLS.js for M3U8
-            const hls = new Hls();
-            hls.loadSource(serverUrl);
-            hls.attachMedia(newVideoPlayer);
-            window.hlsPlayer = hls;
+        if (serverType === 'm3u8') {
+            // Handle M3U8 streams
+            if (typeof Hls !== 'undefined' && Hls.isSupported()) {
+                // Use HLS.js for M3U8
+                if (window.hlsPlayer) {
+                    window.hlsPlayer.destroy();
+                }
+                const hls = new Hls();
+                hls.loadSource(serverUrl);
+                hls.attachMedia(newVideoPlayer);
+                hls.on(Hls.Events.MANIFEST_PARSED, function() {
+                    console.log('✅ M3U8 stream loaded successfully');
+                });
+                hls.on(Hls.Events.ERROR, function(event, data) {
+                    console.error('❌ HLS Error:', data);
+                });
+                window.hlsPlayer = hls;
+            } else if (newVideoPlayer.canPlayType('application/vnd.apple.mpegurl')) {
+                // Safari native HLS support
+                newVideoPlayer.src = serverUrl;
+            } else {
+                console.error('❌ HLS not supported');
+            }
         } else {
             // Direct video playback
+            if (window.hlsPlayer) {
+                window.hlsPlayer.destroy();
+                window.hlsPlayer = null;
+            }
             newVideoPlayer.src = serverUrl;
         }
     }
