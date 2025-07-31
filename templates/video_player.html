@@ -125,6 +125,7 @@
     position: absolute;
     bottom: 80px;
     right: 24px;
+    display: none;
     background: rgba(0, 0, 0, 0.9);
     backdrop-filter: blur(16px);
     border-radius: 12px;
@@ -170,6 +171,7 @@
     position: absolute;
     bottom: 80px;
     right: 180px;
+    display: none;
     background: rgba(0, 0, 0, 0.9);
     backdrop-filter: blur(16px);
     border-radius: 12px;
@@ -428,8 +430,8 @@
                             
                             <!-- Custom Professional Controls Overlay -->
                             <div id="custom-controls" class="absolute inset-0 pointer-events-none z-10">
-                                <!-- Subtitle Menu -->
-                                <div id="subtitle-menu" class="subtitle-menu">
+                                <!-- Subtitle Menu (Hidden by default) -->
+                                <div id="subtitle-menu" class="subtitle-menu" style="display: none;">
                                     <div class="text-white text-sm font-semibold mb-2 px-2">Subtitles</div>
                                     <div id="subtitle-options">
                                         <div class="subtitle-option active" data-lang="off">Off</div>
@@ -437,8 +439,8 @@
                                     </div>
                                 </div>
                                 
-                                <!-- Quality Menu -->
-                                <div id="quality-menu" class="quality-menu">
+                                <!-- Quality Menu (Hidden by default) -->
+                                <div id="quality-menu" class="quality-menu" style="display: none;">
                                     <div class="text-white text-sm font-semibold mb-2 px-2">Quality</div>
                                     <div id="quality-options">
                                         <div class="quality-option active" data-quality="auto">Auto</div>
@@ -446,8 +448,8 @@
                                     </div>
                                 </div>
                                 
-                                <!-- Custom Action Buttons -->
-                                <div class="absolute top-4 right-4 flex gap-2">
+                                <!-- Custom Action Buttons (Hidden) -->
+                                <div class="absolute top-4 right-4 flex gap-2" style="display: none;">
                                     <button id="subtitle-btn" class="pointer-events-auto bg-black/50 hover:bg-black/70 backdrop-blur-sm rounded-lg p-3 text-white transition-all duration-200">
                                         <i class="fas fa-closed-captioning text-lg"></i>
                                     </button>
