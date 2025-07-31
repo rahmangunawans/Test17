@@ -503,6 +503,56 @@ def edit_user(user_id):
     return render_template('admin/user_form.html', user=user)
 
 # IQiyi Auto Scraping API Endpoints
+@admin_bp.route('/api/scrape-basic', methods=['POST'])
+@login_required
+@admin_required
+def api_scrape_basic():
+    """API endpoint for basic episode scraping without M3U8 extraction"""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'success': False, 'error': 'No data provided'})
+        
+        iqiyi_url = data.get('iqiyi_url', '').strip()
+        if not iqiyi_url:
+            return jsonify({'success': False, 'error': 'IQiyi URL is required'})
+        
+        # Validasi URL IQiyi
+        if 'iq.com' not in iqiyi_url:
+            return jsonify({
+                'success': False,
+                'error': 'URL harus dari domain iq.com'
+            }), 400
+        
+        batch_size = data.get('batch_size', 10)
+        
+        # Import and use basic scraper
+        from simple_episode_scraper import scrape_basic_episodes
+        result = scrape_basic_episodes(iqiyi_url, max_episodes=batch_size)
+        
+        if result.get('success'):
+            return jsonify({
+                'success': True,
+                'playlist_data': {
+                    'episodes': result['episodes']
+                },
+                'message': f"Basic scraping successful: {result['message']}. Note: No M3U8 URLs extracted.",
+                'method': 'basic_scraping'
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': result.get('error', 'Basic scraping failed'),
+                'suggestion': result.get('suggestion', 'Try again later')
+            })
+            
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'Basic scraping error: {str(e)}',
+            'suggestion': 'Even basic scraping failed - network issues'
+        })
+
 @admin_bp.route('/api/scrape-episode', methods=['POST'])
 @login_required
 @admin_required
@@ -578,7 +628,7 @@ def api_scrape_playlist():
         # Scrape playlist - let user choose batch size
         batch_size = data.get('batch_size', 5)  # Default to 5 if not specified
         
-        # Enhanced error handling for IQiyi dependency issues
+        # Enhanced error handling with fallback to basic scraping
         try:
             # If batch_size is very high (999), use chunked processing for ALL episodes
             if batch_size >= 999:
@@ -587,26 +637,70 @@ def api_scrape_playlist():
             else:
                 result = scrape_iqiyi_playlist(iqiyi_url, max_episodes=batch_size)
         except Exception as e:
-            # Handle SSL, connection, and timeout errors gracefully
-            error_msg = str(e)
-            if "SSL" in error_msg or "ssl" in error_msg.lower():
+            # Handle all types of network errors gracefully
+            error_msg = str(e).lower()
+            
+            if any(term in error_msg for term in ['ssl', 'certificate', 'handshake']):
                 return jsonify({
                     'success': False,
-                    'error': 'SSL connection error. IQiyi servers may be blocking requests. Try again later or use a different network.',
-                    'technical_error': error_msg
+                    'error': 'SSL/Certificate error. IQiyi servers are rejecting secure connections.',
+                    'suggestion': 'This is a server-side issue with IQiyi. Try again later or contact system admin.',
+                    'technical_error': str(e)
                 })
-            elif "timeout" in error_msg.lower() or "timed out" in error_msg.lower():
+            elif any(term in error_msg for term in ['timeout', 'timed out', 'time out']):
                 return jsonify({
                     'success': False,
-                    'error': 'Request timeout. IQiyi servers are taking too long to respond. Try with fewer episodes.',
-                    'technical_error': error_msg
+                    'error': 'Request timeout. IQiyi servers are too slow to respond.',
+                    'suggestion': 'Try with fewer episodes (5 instead of 15) or try again later.',
+                    'technical_error': str(e)
+                })
+            elif any(term in error_msg for term in ['dns', 'getaddrinfo', 'name resolution', 'resolve']):
+                return jsonify({
+                    'success': False,
+                    'error': 'DNS/Network resolution error. Cannot reach IQiyi servers.',
+                    'suggestion': 'This indicates internet connectivity issues or IQiyi blocking this server.',
+                    'technical_error': str(e)
+                })
+            elif any(term in error_msg for term in ['connection', 'refused', 'unreachable']):
+                return jsonify({
+                    'success': False,
+                    'error': 'Connection refused. IQiyi servers are not accepting connections.',
+                    'suggestion': 'IQiyi may have blocked this server or is temporarily down.',
+                    'technical_error': str(e)
                 })
             else:
-                return jsonify({
-                    'success': False,
-                    'error': f'Network error occurred: {error_msg}. Please check your connection and try again.',
-                    'technical_error': error_msg
-                })
+                # Try fallback to basic scraping
+                print(f"⚠️ Full scraping failed: {str(e)}")
+                print("🔄 Attempting fallback to basic scraping...")
+                
+                try:
+                    from simple_episode_scraper import scrape_basic_episodes
+                    fallback_result = scrape_basic_episodes(iqiyi_url, max_episodes=batch_size if batch_size < 999 else 15)
+                    
+                    if fallback_result.get('success'):
+                        # Convert basic scraping format to expected format
+                        return jsonify({
+                            'success': True,
+                            'playlist_data': {
+                                'episodes': fallback_result['episodes']
+                            },
+                            'message': f"Using basic scraping method - {fallback_result['message']}. Note: M3U8 URLs not available with this method.",
+                            'method': 'fallback_basic_scraping'
+                        })
+                    else:
+                        return jsonify({
+                            'success': False,
+                            'error': f'Both full and basic scraping failed: {fallback_result.get("error")}',
+                            'suggestion': 'IQiyi servers are completely inaccessible right now.',
+                            'technical_error': str(e)
+                        })
+                except Exception as fallback_error:
+                    return jsonify({
+                        'success': False,
+                        'error': f'All scraping methods failed. Original: {str(e)}. Fallback: {str(fallback_error)}',
+                        'suggestion': 'Complete network failure - try again later.',
+                        'technical_error': str(e)
+                    })
         
         if result['success']:
             return jsonify({
