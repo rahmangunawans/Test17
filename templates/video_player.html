@@ -4,7 +4,7 @@
 
 {% block head %}
 <!-- HLS.js for M3U8 support -->
-<script src="https://code-reserve.web.app/2.0.1/hls.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
 <style>
 /* Clean Simple Video Player */
@@ -132,7 +132,7 @@
                     </video>
 
                     <!-- VIP Download Button -->
-                    {% if current_user.is_authenticated and current_user.subscription_tier and current_user.subscription_tier != 'free' %}
+                    {% if current_user.is_authenticated and current_user.is_vip() %}
                     <div class="absolute top-4 right-4">
                         <button onclick="alert('VIP download feature')" 
                                 class="bg-red-500/80 hover:bg-red-500/90 backdrop-blur-sm rounded-lg px-4 py-2 text-white text-sm transition-all duration-200 flex items-center">
@@ -424,7 +424,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Initialize HLS support
-    if (Hls.isSupported()) {
+    if (typeof Hls !== 'undefined' && Hls.isSupported()) {
         const hls = new Hls();
         window.hlsPlayer = hls;
         
@@ -432,6 +432,11 @@ document.addEventListener('DOMContentLoaded', function() {
         {% if episode.server_m3u8_url %}
         hls.loadSource('{{ episode.server_m3u8_url }}');
         hls.attachMedia(videoPlayer);
+        {% endif %}
+    } else if (videoPlayer.canPlayType('application/vnd.apple.mpegurl')) {
+        // Native HLS support (Safari)
+        {% if episode.server_m3u8_url %}
+        videoPlayer.src = '{{ episode.server_m3u8_url }}';
         {% endif %}
     }
 
@@ -510,12 +515,20 @@ function switchServer(serverType, serverUrl) {
         
         const newVideoPlayer = document.getElementById('video-player');
         
-        if (serverType === 'm3u8' && Hls.isSupported()) {
-            // Use HLS.js for M3U8
-            const hls = new Hls();
-            hls.loadSource(serverUrl);
-            hls.attachMedia(newVideoPlayer);
-            window.hlsPlayer = hls;
+        if (serverType === 'm3u8') {
+            if (typeof Hls !== 'undefined' && Hls.isSupported()) {
+                // Use HLS.js for M3U8
+                const hls = new Hls();
+                hls.loadSource(serverUrl);
+                hls.attachMedia(newVideoPlayer);
+                window.hlsPlayer = hls;
+            } else if (newVideoPlayer.canPlayType('application/vnd.apple.mpegurl')) {
+                // Native HLS support (Safari)
+                newVideoPlayer.src = serverUrl;
+            } else {
+                // Fallback
+                newVideoPlayer.src = serverUrl;
+            }
         } else {
             // Direct video playback
             newVideoPlayer.src = serverUrl;
@@ -544,7 +557,7 @@ function extractAndPlayIqiyiM3U8(iqiyiUrl) {
             const blobUrl = URL.createObjectURL(blob);
             
             const videoPlayer = document.getElementById('video-player');
-            if (Hls.isSupported()) {
+            if (typeof Hls !== 'undefined' && Hls.isSupported()) {
                 const hls = new Hls();
                 hls.loadSource(blobUrl);
                 hls.attachMedia(videoPlayer);
@@ -557,7 +570,11 @@ function extractAndPlayIqiyiM3U8(iqiyiUrl) {
                 hls.on(Hls.Events.ERROR, function(event, data) {
                     console.error('❌ HLS Error:', data);
                 });
+            } else if (videoPlayer.canPlayType('application/vnd.apple.mpegurl')) {
+                // Native HLS support (Safari)
+                videoPlayer.src = blobUrl;
             } else {
+                // Fallback
                 videoPlayer.src = blobUrl;
             }
         } else {
