@@ -707,7 +707,20 @@ function showVideoPlayer(url, type = 'video/mp4') {
                 videoElement.addEventListener('error', function(e) {
                     console.error('Video element error:', e);
                     console.error('Error details:', videoElement.error);
-                    showNotification('Video playback error: ' + (videoElement.error ? videoElement.error.message : 'Unknown error'), 'error');
+                    const errorCode = videoElement.error ? videoElement.error.code : 'Unknown';
+                    const errorMessage = videoElement.error ? 
+                        `Media error (Code: ${errorCode})` : 'Unknown playback error';
+                    showNotification('Video playback error: ' + errorMessage, 'error');
+                    
+                    // Auto-fallback for M3U8 blob URLs that fail on mobile
+                    if (sourceUrl.startsWith('blob:') && url.startsWith('data:application/vnd.apple.mpegurl')) {
+                        console.log('Blob M3U8 failed, trying demo fallback');
+                        const fallbackUrl = 'https://bitdash-a.akamaihd.net/content/sintel/hls/playlist.m3u8';
+                        setTimeout(() => {
+                            videoElement.src = fallbackUrl;
+                            showNotification('Switched to demo M3U8 stream', 'info');
+                        }, 1000);
+                    }
                 });
                 
                 // Add loadstart event listener
@@ -787,7 +800,14 @@ function showEmbedPlayer(url) {
 function extractAndPlayIqiyiM3U8(dashUrl) {
     console.log('Extracting M3U8 from iQiyi DASH URL:', dashUrl);
     
-    // Call backend API to extract M3U8
+    // Try iframe fallback approach for iQiyi
+    console.log('Using iQiyi iframe approach instead of M3U8 extraction');
+    showEmbedPlayer(dashUrl);
+    showNotification('Loading iQiyi via iframe player', 'info');
+    return;
+    
+    // Original M3U8 extraction code (commented out due to mobile compatibility issues)
+    /*
     fetch('/api/extract-iqiyi-m3u8', {
         method: 'POST',
         headers: {
@@ -805,19 +825,18 @@ function extractAndPlayIqiyiM3U8(dashUrl) {
             showNotification('M3U8 extracted and loaded successfully!', 'success');
         } else {
             console.error('❌ Failed to extract M3U8:', data.error);
-            // Fallback to demo M3U8 for testing
-            const fallbackUrl = 'https://bitdash-a.akamaihd.net/content/sintel/hls/playlist.m3u8';
-            showVideoPlayer(fallbackUrl, 'application/x-mpegURL');
-            showNotification('Using fallback M3U8 stream', 'warning');
+            // Fallback to iframe
+            showEmbedPlayer(dashUrl);
+            showNotification('Using iQiyi iframe fallback', 'warning');
         }
     })
     .catch(error => {
         console.error('❌ API call failed:', error);
-        // Fallback to demo M3U8
-        const fallbackUrl = 'https://bitdash-a.akamaihd.net/content/sintel/hls/playlist.m3u8';
-        showVideoPlayer(fallbackUrl, 'application/x-mpegURL');
-        showNotification('Using fallback M3U8 stream', 'warning');
+        // Fallback to iframe
+        showEmbedPlayer(dashUrl);
+        showNotification('Using iQiyi iframe fallback', 'warning');
     });
+    */
 }
 
 
