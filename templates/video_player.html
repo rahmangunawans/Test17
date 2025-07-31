@@ -614,9 +614,11 @@ function showVideoPlayer(url, type = 'video/mp4') {
         videoContainer.classList.remove('hidden');
         
         // Check if HLS.js is available
+        console.log('HLS.js availability check:', typeof Hls !== 'undefined');
         if (typeof Hls === 'undefined') {
             console.error('HLS.js library not loaded');
-            throw new Error('HLS.js library not available');
+            // Try fallback without throwing error immediately
+            console.log('Attempting fallback without HLS.js...');
         }
         
         // Dispose existing HLS instance if any
@@ -644,7 +646,7 @@ function showVideoPlayer(url, type = 'video/mp4') {
                 sourceUrl = URL.createObjectURL(blob);
             }
             
-            if (Hls.isSupported()) {
+            if (typeof Hls !== 'undefined' && Hls.isSupported()) {
                 console.log('Using HLS.js for M3U8 streaming');
                 
                 const hls = new Hls({
@@ -687,7 +689,9 @@ function showVideoPlayer(url, type = 'video/mp4') {
                 videoElement.src = sourceUrl;
                 showNotification('Using native HLS support', 'success');
             } else {
-                throw new Error('HLS not supported on this browser');
+                console.log('HLS not supported, trying direct playback');
+                videoElement.src = sourceUrl;
+                showNotification('Attempting direct M3U8 playback', 'warning');
             }
         } else {
             // For direct video files (MP4, etc.)
@@ -705,7 +709,23 @@ function showVideoPlayer(url, type = 'video/mp4') {
         
     } catch (error) {
         console.error('❌ Failed to initialize video player:', error);
+        console.error('Error details:', error.stack);
         showNotification('Video player error: ' + error.message, 'error');
+        
+        // Show detailed error info
+        if (videoContainer) {
+            videoContainer.innerHTML = `
+                <div class="flex items-center justify-center h-64 bg-gray-800 text-white">
+                    <div class="text-center p-4">
+                        <h3 class="text-lg font-semibold mb-2">Video Player Error</h3>
+                        <p class="text-gray-300 mb-2">${error.message}</p>
+                        <button onclick="location.reload()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                            Retry
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
     }
 }
 
