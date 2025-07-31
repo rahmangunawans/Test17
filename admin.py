@@ -817,6 +817,7 @@ def api_auto_add_episodes():
                     description=episode_data.get('description'),  # TEXT field, no limit needed
                     server_m3u8_url=episode_data.get('m3u8_content'),  # TEXT field, no limit needed
                     server_embed_url=episode_data.get('url'),  # IQiyi URL sebagai embed fallback
+                    iqiyi_play_url=episode_data.get('url'),  # IQiyi play URL untuk Server 3
                     thumbnail_url=episode_data.get('thumbnail_url')
                 )
                 
@@ -841,13 +842,9 @@ def api_auto_add_episodes():
             logging.error(f"Database commit error: {e}")
             raise e
         
-        # Create notification for new episodes
-        if added_episodes:
-            try:
-                notify_new_episode(content.title, len(added_episodes))
-            except Exception as notif_e:
-                logging.error(f"Notification error: {notif_e}")
-                pass  # Ignore notification errors
+        # Create notification for new episodes (disabled for now)
+        # if added_episodes:
+        #     notify_new_episode(content.title, len(added_episodes))
         
         return jsonify({
             'success': True,
