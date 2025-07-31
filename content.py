@@ -178,13 +178,14 @@ def watch_episode(episode_id):
 
 
 
-@content_bp.route('/api/update-progress', methods=['POST'])
+@content_bp.route('/api/update-watch-progress', methods=['POST'])
 @login_required
 def update_watch_progress():
     data = request.get_json()
     episode_id = data.get('episode_id')
     watch_time = data.get('watch_time', 0)
-    completed = data.get('completed', False)
+    total_duration = data.get('total_duration', 0)
+    completed_raw = data.get('completed', False)
     
     if not episode_id:
         return jsonify({'success': False, 'message': 'Episode ID required'})
@@ -197,6 +198,18 @@ def update_watch_progress():
     max_watch_time = current_user.get_max_watch_time(episode.episode_number)
     if max_watch_time and watch_time > max_watch_time * 60:  # Convert minutes to seconds
         return jsonify({'success': False, 'message': 'Watch time limit exceeded'})
+    
+    # Convert completed to proper boolean - handle percentage values from JavaScript
+    if isinstance(completed_raw, bool):
+        completed = completed_raw
+    elif isinstance(completed_raw, (int, float)):
+        # If percentage value (like 1261.024397%), convert to boolean
+        if completed_raw > 1:  # Percentage format 
+            completed = completed_raw >= 80  # Consider 80%+ as completed
+        else:  # Decimal format (0.0 to 1.0)
+            completed = completed_raw >= 0.8  # Consider 80%+ as completed
+    else:
+        completed = False
     
     # Update or create watch history
     watch_history = WatchHistory.query.filter_by(
@@ -212,7 +225,8 @@ def update_watch_progress():
         )
         db.session.add(watch_history)
     
-    watch_history.watch_time = watch_time
+    # Store watch_time as integer (seconds)
+    watch_history.watch_time = int(watch_time)
     watch_history.completed = completed
     watch_history.status = 'completed' if completed else 'on-going'
     watch_history.last_watched = db.func.now()
