@@ -577,20 +577,8 @@ function switchServer(serverType, serverUrl) {
             break;
             
         case 'iqiyi':
-            // Check if there are alternative servers available
-            const hasM3u8 = '{{ episode.server_m3u8_url if episode.server_m3u8_url else "" }}';
-            const hasEmbed = '{{ episode.server_embed_url if episode.server_embed_url else "" }}';
-            
             if (!serverUrl || serverUrl === 'None' || serverUrl === '') {
-                if (hasM3u8) {
-                    showNotification('IQiyi URL not available, switching to M3U8 server...', 'info');
-                    switchServer('m3u8', hasM3u8);
-                } else if (hasEmbed) {
-                    showNotification('IQiyi URL not available, switching to Embed server...', 'info');
-                    switchServer('embed', hasEmbed);
-                } else {
-                    showNotification('No streaming servers available for this episode', 'error');
-                }
+                showNotification('IQiyi URL not available for this episode', 'error');
                 return;
             }
             
@@ -827,6 +815,8 @@ function rateAnime(animeId) {
 
 // Initialize default server on page load
 function initializeApp() {
+    console.log('Initializing video player app...');
+    
     // Find the first available server and switch to it
     const serverOptions = [];
     
@@ -844,11 +834,19 @@ function initializeApp() {
     serverOptions.push({type: 'direct', url: '{{ episode.video_url|safe }}'});
     {% endif %}
     
+    console.log('Available servers:', serverOptions);
+    
     if (serverOptions.length > 0) {
         const firstServer = serverOptions[0];
+        console.log('Loading first server:', firstServer);
         switchServer(firstServer.type, firstServer.url);
+    } else {
+        console.log('No streaming servers available');
+        showNotification('No streaming servers available for this episode', 'error');
     }
 }
+
+
 
 function showNotification(message, type = 'info') {
     const notification = document.createElement('div');
