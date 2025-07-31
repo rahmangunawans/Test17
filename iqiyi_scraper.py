@@ -36,33 +36,67 @@ class IQiyiScraper:
     def __init__(self, url: str):
         self.url = url
         self.headers = {
-            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36'
+            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+            'accept-language': 'en-US,en;q=0.5',
+            'accept-encoding': 'gzip, deflate',
+            'connection': 'keep-alive',
+            'upgrade-insecure-requests': '1',
         }
         self.session = requests.Session()
         self.session.verify = False
+        self.session.headers.update(self.headers)
         self._player_data = None
 
-    def _request(self, method: str, url: str, **kwargs) -> Optional[requests.Response]:
-        """Enhanced request method dengan error handling"""
-        try:
-            kwargs.setdefault('headers', self.headers)
-            kwargs.setdefault('timeout', 15)  # Reduced timeout
-            kwargs.setdefault('verify', False)  # Disable SSL verification
-            response = self.session.request(method, url, **kwargs)
-            response.raise_for_status()
-            return response
-        except requests.exceptions.SSLError as e:
-            print(f'❌ SSL Error for {url}: {str(e)}')
-            return None
-        except requests.exceptions.Timeout as e:
-            print(f'❌ Timeout Error for {url}: {str(e)}')
-            return None
-        except requests.exceptions.ConnectionError as e:
-            print(f'❌ Connection Error for {url}: {str(e)}')
-            return None
-        except Exception as e:
-            print(f'❌ Error making request to {url}: {str(e)}')
-            return None
+    def _request(self, method: str, url: str, max_retries: int = 3, **kwargs) -> Optional[requests.Response]:
+        """Enhanced request method dengan error handling dan retry logic"""
+        import time
+        
+        for attempt in range(max_retries):
+            try:
+                kwargs.setdefault('timeout', 20)
+                kwargs.setdefault('verify', False)
+                
+                # Add delay between retries
+                if attempt > 0:
+                    delay = attempt * 2  # 2s, 4s delays
+                    print(f'⏳ Retry attempt {attempt + 1} after {delay}s delay...')
+                    time.sleep(delay)
+                
+                response = self.session.request(method, url, **kwargs)
+                response.raise_for_status()
+                
+                # Check if response is actually HTML when we expect JSON
+                content_type = response.headers.get('content-type', '').lower()
+                if 'json' in kwargs.get('headers', {}).get('accept', '') and 'text/html' in content_type:
+                    print(f'❌ Received HTML response when expecting JSON for {url}')
+                    if attempt < max_retries - 1:
+                        continue
+                    return None
+                
+                return response
+                
+            except requests.exceptions.SSLError as e:
+                print(f'❌ SSL Error for {url} (attempt {attempt + 1}): {str(e)}')
+                if attempt == max_retries - 1:
+                    return None
+                    
+            except requests.exceptions.Timeout as e:
+                print(f'❌ Timeout Error for {url} (attempt {attempt + 1}): {str(e)}')
+                if attempt == max_retries - 1:
+                    return None
+                    
+            except requests.exceptions.ConnectionError as e:
+                print(f'❌ Connection Error for {url} (attempt {attempt + 1}): {str(e)}')
+                if attempt == max_retries - 1:
+                    return None
+                    
+            except Exception as e:
+                print(f'❌ Error making request to {url} (attempt {attempt + 1}): {str(e)}')
+                if attempt == max_retries - 1:
+                    return None
+        
+        return None
 
     def get_player_data(self) -> Optional[Dict[str, Any]]:
         """Get dan cache player data dari halaman"""
@@ -207,8 +241,10 @@ class IQiyiScraper:
             is_valid=is_valid
         )
 
-    def get_all_episodes(self) -> List[EpisodeData]:
-        """Extract semua episode dari playlist IQiyi"""
+    def get_all_episodes(self, max_episodes: int = None) -> List[EpisodeData]:
+        """Extract semua episode dari playlist IQiyi dengan rate limiting"""
+        import time
+        
         print("🎬 Extracting semua episode dari playlist...")
         data = self.get_player_data()
         if not data:
@@ -219,8 +255,13 @@ class IQiyiScraper:
             episode_data = data['props']['initialState']['play']['cachePlayList']['1']
             total_episodes = len(episode_data)
             print(f"📺 Ditemukan {total_episodes} episode")
+            
+            # Limit episodes untuk mencegah timeout jika diperlukan
+            process_count = min(total_episodes, max_episodes) if max_episodes else total_episodes
+            if max_episodes and total_episodes > max_episodes:
+                print(f"⚠️ Membatasi processing ke {max_episodes} episode pertama untuk mencegah timeout")
 
-            for i, episode in enumerate(episode_data, 1):
+            for i, episode in enumerate(episode_data[:process_count], 1):
                 episode_title = episode.get('subTitle', f'Episode {i}')
                 
                 # Build episode URL
@@ -232,23 +273,34 @@ class IQiyiScraper:
                 else:
                     full_url = album_url
 
-                # Extract DASH URL untuk episode ini
-                episode_scraper = IQiyiScraper(full_url)
-                episode_data = episode_scraper.extract_episode_info()
+                # Add delay between requests untuk mencegah rate limiting
+                if i > 1:
+                    time.sleep(1)  # 1 second delay between episodes
                 
-                if episode_data:
-                    episode_data.episode_number = i
-                    episode_data.title = episode_title
-                    episodes.append(episode_data)
+                print(f"🎬 Processing episode {i}/{process_count}: {episode_title}")
+                
+                try:
+                    # Extract DASH URL untuk episode ini
+                    episode_scraper = IQiyiScraper(full_url)
+                    episode_info = episode_scraper.extract_episode_info()
                     
-                    if episode_data.is_valid:
-                        print(f"✅ Episode {i}: {episode_title} - Valid")
+                    if episode_info:
+                        episode_info.episode_number = i
+                        episode_info.title = episode_title
+                        episodes.append(episode_info)
+                        
+                        if episode_info.is_valid:
+                            print(f"✅ Episode {i}: {episode_title} - Valid")
+                        else:
+                            print(f"❌ Episode {i}: {episode_title} - Invalid")
                     else:
-                        print(f"❌ Episode {i}: {episode_title} - Invalid")
-                
-                # Process all episodes in playlist
+                        print(f"❌ Episode {i}: {episode_title} - Failed to extract")
+                        
+                except Exception as ep_error:
+                    print(f"❌ Episode {i}: {episode_title} - Error: {ep_error}")
+                    continue
 
-            print(f"✅ Berhasil extract {len(episodes)} episode")
+            print(f"✅ Berhasil extract {len(episodes)} episode dari {process_count} yang diproses")
             return episodes
 
         except Exception as e:
@@ -290,14 +342,14 @@ def scrape_iqiyi_episode(url: str) -> dict:
             'error': str(e)
         }
 
-def scrape_iqiyi_playlist(url: str) -> dict:
+def scrape_iqiyi_playlist(url: str, max_episodes: int = 10) -> dict:
     """
-    Function untuk scraping seluruh playlist IQiyi
-    Return: dict dengan semua episode data
+    Function untuk scraping playlist IQiyi dengan batasan episode untuk mencegah timeout
+    Return: dict dengan episode data
     """
     try:
         scraper = IQiyiScraper(url)
-        episodes_data = scraper.get_all_episodes()
+        episodes_data = scraper.get_all_episodes(max_episodes=max_episodes)
         
         if episodes_data:
             episodes_list = []
@@ -317,18 +369,19 @@ def scrape_iqiyi_playlist(url: str) -> dict:
                 'success': True,
                 'total_episodes': len(episodes_list),
                 'valid_episodes': len([ep for ep in episodes_list if ep['is_valid']]),
-                'episodes': episodes_list
+                'episodes': episodes_list,
+                'message': f'Berhasil extract {len(episodes_list)} episode (dibatasi {max_episodes} untuk mencegah timeout)'
             }
         else:
             return {
                 'success': False,
-                'error': 'Tidak dapat extract episode playlist'
+                'error': 'Tidak dapat extract episode dari playlist'
             }
             
     except Exception as e:
         return {
             'success': False,
-            'error': str(e)
+            'error': f'Error scraping playlist: {str(e)}'
         }
 
 if __name__ == "__main__":
