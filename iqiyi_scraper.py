@@ -279,7 +279,7 @@ class IQiyiScraper:
 
                 # Add delay between requests untuk mencegah rate limiting
                 if i > 1:
-                    time.sleep(0.5)  # Reduced delay to 0.5 seconds
+                    time.sleep(1.0)  # Increased delay to 1 second for better stability
                 
                 print(f"🎬 Processing episode {i}/{process_count}: {episode_title}")
                 

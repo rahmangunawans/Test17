@@ -200,7 +200,7 @@
                         </button>
                         <button onclick="scrapePlaylist()" 
                                 class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg">
-                            <i class="fas fa-infinity mr-2"></i>Scrape ALL Episodes
+                            <i class="fas fa-list mr-2"></i>Scrape 15 Episodes (Max Safe)
                         </button>
                     </div>
                     
@@ -302,7 +302,7 @@ async function scrapePlaylist(batchSize = null) {
         return;
     }
 
-    const batchText = batchSize ? `${batchSize} episodes` : 'ALL episodes';
+    const batchText = batchSize ? `${batchSize} episodes` : '15 episodes (max safe batch)';
     showScrapeStatus(`Scraping playlist (${batchText}) - ini mungkin memakan waktu...`, 'info');
     
     try {
