@@ -73,7 +73,7 @@ def admin_dashboard():
         flash(f'Dashboard loading error. Please contact administrator.', 'error')
         return redirect(url_for('index'))
 
-@admin_bp.route('/admin/content')
+@admin_bp.route('/content')
 @login_required
 @admin_required
 def admin_content():
@@ -95,7 +95,7 @@ def admin_content():
     
     return render_template('admin/content.html', content=content, search=search)
 
-@admin_bp.route('/admin/content/add', methods=['GET', 'POST'])
+@admin_bp.route('/content/add', methods=['GET', 'POST'])
 @login_required
 @admin_required
 def add_content():
@@ -195,7 +195,7 @@ def anilist_get_by_id(anilist_id):
 
 
 
-@admin_bp.route('/admin/content/<int:content_id>/edit', methods=['GET', 'POST'])
+@admin_bp.route('/content/<int:content_id>/edit', methods=['GET', 'POST'])
 @login_required
 @admin_required
 def edit_content(content_id):
@@ -230,7 +230,7 @@ def edit_content(content_id):
     
     return render_template('admin/content_form.html', content=content)
 
-@admin_bp.route('/admin/content/<int:content_id>/delete', methods=['POST'])
+@admin_bp.route('/content/<int:content_id>/delete', methods=['POST'])
 @login_required
 @admin_required
 def delete_content(content_id):
@@ -348,7 +348,7 @@ def delete_episode(episode_id):
     
     return redirect(url_for('admin.manage_episodes', content_id=content_id))
 
-@admin_bp.route('/admin/users')
+@admin_bp.route('/users')
 @login_required
 @admin_required
 def admin_users():
