@@ -185,26 +185,14 @@
                         </p>
                     </div>
 
-                    <div class="flex flex-wrap gap-3">
+                    <div class="flex flex-wrap gap-4">
                         <button onclick="scrapeSingleEpisode()" 
-                                class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg">
+                                class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors">
                             <i class="fas fa-play mr-2"></i>Single Episode
                         </button>
-                        <button onclick="scrapePlaylist(5)" 
-                                class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg">
-                            <i class="fas fa-play mr-2"></i>Test (5 episodes)
-                        </button>
-                        <button onclick="scrapePlaylist(10)" 
-                                class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg">
-                            <i class="fas fa-list mr-2"></i>Medium (10 episodes)
-                        </button>
-                        <button onclick="scrapePlaylist()" 
-                                class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg">
-                            <i class="fas fa-infinity mr-2"></i>Max Safe (15 episodes)
-                        </button>
-                        <button onclick="scrapeBasic()" 
-                                class="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg">
-                            <i class="fas fa-bolt mr-2"></i>Basic Mode (Fast)
+                        <button onclick="scrapeAllPlaylist()" 
+                                class="px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors">
+                            <i class="fas fa-list mr-2"></i>All Playlist Episodes
                         </button>
                     </div>
                     
@@ -274,7 +262,7 @@ async function scrapeSingleEpisode() {
         return;
     }
 
-    showScrapeStatus('Scraping episode...', 'info');
+    showScrapeStatus('Scraping single episode with enhanced scraper...', 'info');
     
     try {
         const response = await fetch('/admin/api/scrape-episode', {
@@ -290,7 +278,42 @@ async function scrapeSingleEpisode() {
         if (result.success) {
             scrapedEpisodes = [result.episode_data];
             showScrapeResults();
-            showScrapeStatus('Episode berhasil di-scrape!', 'success');
+            showScrapeStatus(result.message, 'success');
+        } else {
+            showScrapeStatus(`Error: ${result.error}`, 'error');
+        }
+    } catch (error) {
+        showScrapeStatus(`Network error: ${error.message}`, 'error');
+    }
+}
+
+async function scrapeAllPlaylist() {
+    const url = document.getElementById('iqiyiUrl').value.trim();
+    if (!url) {
+        showScrapeStatus('Masukkan URL IQiyi terlebih dahulu', 'error');
+        return;
+    }
+
+    showScrapeStatus('Scraping all episodes from playlist with enhanced scraper...', 'info');
+    
+    try {
+        const response = await fetch('/admin/api/scrape-all-playlist', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ 
+                iqiyi_url: url,
+                max_episodes: 50  // Set reasonable limit
+            })
+        });
+
+        const result = await response.json();
+        
+        if (result.success) {
+            scrapedEpisodes = result.playlist_data.episodes;
+            showScrapeResults();
+            showScrapeStatus(result.message, 'success');
         } else {
             showScrapeStatus(`Error: ${result.error}`, 'error');
         }

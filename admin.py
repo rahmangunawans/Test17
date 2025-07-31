@@ -575,17 +575,17 @@ def api_scrape_episode():
                 'error': 'URL harus dari domain iq.com'
             }), 400
         
-        # Import scraping functions
-        from iqiyi_scraper import scrape_iqiyi_episode
+        # Import enhanced scraping functions
+        from enhanced_iqiyi_scraper import scrape_single_episode
         
-        # Scrape episode
-        result = scrape_iqiyi_episode(iqiyi_url)
+        # Scrape single episode using enhanced scraper
+        result = scrape_single_episode(iqiyi_url)
         
         if result['success']:
             return jsonify({
                 'success': True,
                 'episode_data': result['data'],
-                'message': 'Episode berhasil di-scrape'
+                'message': result['message']
             })
         else:
             return jsonify({
@@ -600,11 +600,11 @@ def api_scrape_episode():
             'error': f'Server error: {str(e)}'
         }), 500
 
-@admin_bp.route('/api/scrape-playlist', methods=['POST'])
+@admin_bp.route('/api/scrape-all-playlist', methods=['POST'])
 @login_required
 @admin_required  
-def api_scrape_playlist():
-    """API endpoint untuk auto scraping seluruh playlist dari IQiyi"""
+def api_scrape_all_playlist():
+    """API endpoint untuk auto scraping semua episode dari playlist IQiyi"""
     try:
         data = request.get_json()
         iqiyi_url = data.get('iqiyi_url', '').strip()
@@ -622,20 +622,15 @@ def api_scrape_playlist():
                 'error': 'URL harus dari domain iq.com'
             }), 400
         
-        # Import scraping functions
-        from iqiyi_scraper import scrape_iqiyi_playlist
+        # Import enhanced scraping functions
+        from enhanced_iqiyi_scraper import scrape_all_episodes_playlist
         
-        # Scrape playlist - let user choose batch size
-        batch_size = data.get('batch_size', 5)  # Default to 5 if not specified
+        # Scrape all episodes from playlist using enhanced scraper
+        max_episodes = data.get('max_episodes', 50)  # Default to 50 if not specified
         
         # Enhanced error handling with fallback to basic scraping
         try:
-            # If batch_size is very high (999), use chunked processing for ALL episodes
-            if batch_size >= 999:
-                # For "ALL episodes", process in smaller chunks to prevent timeout
-                result = scrape_iqiyi_playlist(iqiyi_url, max_episodes=15)  # Process 15 episodes max to prevent timeout
-            else:
-                result = scrape_iqiyi_playlist(iqiyi_url, max_episodes=batch_size)
+            result = scrape_all_episodes_playlist(iqiyi_url, max_episodes=max_episodes)
         except Exception as e:
             # Handle all types of network errors gracefully
             error_msg = str(e).lower()
@@ -684,7 +679,7 @@ def api_scrape_playlist():
                 
                 try:
                     from iqiyi_fallback_scraper import scrape_iqiyi_playlist_fallback
-                    fallback_result = scrape_iqiyi_playlist_fallback(iqiyi_url, max_episodes=batch_size if batch_size < 999 else 15)
+                    fallback_result = scrape_iqiyi_playlist_fallback(iqiyi_url, max_episodes=max_episodes)
                     
                     if fallback_result.get('success'):
                         # Convert fallback scraping format to expected format
