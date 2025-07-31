@@ -9,48 +9,86 @@
 <script src="https://code-reserve.web.app/2.0.1/player.js" defer></script>
 
 <style>
-/* Professional Native HTML5 Video Player Styling */
-#player {
+/* Ultra-Professional Video Player Design */
+#video-player.video-professional {
     width: 100% !important;
     height: 100% !important;
-    border-radius: 20px;
+    border-radius: 24px;
     overflow: hidden;
-    box-shadow: 
-        0 32px 64px rgba(0, 0, 0, 0.4),
-        0 16px 32px rgba(0, 0, 0, 0.3),
-        inset 0 1px 0 rgba(255, 255, 255, 0.1);
     font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #2a2a2a 100%);
+    border: 2px solid rgba(255, 255, 255, 0.15);
     position: relative;
     outline: none;
+    box-shadow: 
+        0 48px 100px rgba(0, 0, 0, 0.7),
+        0 24px 50px rgba(0, 0, 0, 0.5),
+        0 12px 25px rgba(0, 0, 0, 0.3),
+        inset 0 2px 0 rgba(255, 255, 255, 0.1),
+        inset 0 0 100px rgba(239, 68, 68, 0.05);
+    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
-/* Professional HTML5 Video Controls */
-#player::-webkit-media-controls-panel {
-    background: linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.98) 100%);
-    border-radius: 0 0 20px 20px;
+/* Ultra-Professional HTML5 Video Controls */
+#video-player.video-professional::-webkit-media-controls-panel {
+    background: linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.95) 70%, rgba(0,0,0,0.98) 100%);
+    border-radius: 0 0 24px 24px;
+    backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.5);
 }
 
-#player::-webkit-media-controls-play-button,
-#player::-webkit-media-controls-mute-button,
-#player::-webkit-media-controls-fullscreen-button {
-    background-color: rgba(239, 68, 68, 0.2);
-    border-radius: 8px;
+#video-player.video-professional::-webkit-media-controls-play-button,
+#video-player.video-professional::-webkit-media-controls-mute-button,
+#video-player.video-professional::-webkit-media-controls-fullscreen-button {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.3), rgba(220, 38, 38, 0.2));
+    border-radius: 12px;
     color: white;
+    border: 1px solid rgba(239, 68, 68, 0.4);
+    backdrop-filter: blur(8px);
+    box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+    transition: all 0.3s ease;
 }
 
-#player::-webkit-media-controls-timeline {
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 6px;
-    height: 6px;
+#video-player.video-professional::-webkit-media-controls-play-button:hover,
+#video-player.video-professional::-webkit-media-controls-mute-button:hover,
+#video-player.video-professional::-webkit-media-controls-fullscreen-button:hover {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.5), rgba(220, 38, 38, 0.3));
+    border-color: rgba(239, 68, 68, 0.6);
+    box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+    transform: scale(1.05);
 }
 
-#player::-webkit-media-controls-current-time-display,
-#player::-webkit-media-controls-time-remaining-display {
+#video-player.video-professional::-webkit-media-controls-timeline {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 10px;
+    height: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.3);
+}
+
+#video-player.video-professional::-webkit-media-controls-current-time-display,
+#video-player.video-professional::-webkit-media-controls-time-remaining-display {
     color: white;
     font-family: 'Poppins', sans-serif;
-    font-weight: 500;
+    font-weight: 600;
+    font-size: 14px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.7);
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+    padding: 4px 8px;
+    backdrop-filter: blur(5px);
+}
+
+#video-player.video-professional:hover {
+    border-color: rgba(239, 68, 68, 0.3);
+    box-shadow: 
+        0 48px 100px rgba(0, 0, 0, 0.8),
+        0 24px 50px rgba(0, 0, 0, 0.6),
+        0 12px 25px rgba(0, 0, 0, 0.4),
+        inset 0 2px 0 rgba(255, 255, 255, 0.15),
+        inset 0 0 100px rgba(239, 68, 68, 0.1),
+        0 0 50px rgba(239, 68, 68, 0.2);
 }
 
 .video-js .vjs-big-play-button {
@@ -503,6 +541,58 @@
     background: linear-gradient(90deg, #ef4444 0%, #dc2626 50%, #b91c1c 100%);
     box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
 }
+
+/* Professional Loading Animations */
+.border-6 {
+    border-width: 6px;
+}
+
+@keyframes professional-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Enhanced Video Player Wrapper */
+.video-wrapper {
+    background: linear-gradient(145deg, rgba(0,0,0,0.9) 0%, rgba(15,23,42,0.9) 100%);
+    border: 2px solid rgba(239, 68, 68, 0.2);
+    border-radius: 24px;
+    padding: 8px;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 
+        0 25px 50px rgba(0, 0, 0, 0.6),
+        0 0 100px rgba(239, 68, 68, 0.1),
+        inset 0 2px 4px rgba(255, 255, 255, 0.1);
+}
+
+.video-wrapper:hover {
+    border-color: rgba(239, 68, 68, 0.4);
+    box-shadow: 
+        0 35px 70px rgba(0, 0, 0, 0.7),
+        0 0 150px rgba(239, 68, 68, 0.2),
+        inset 0 2px 4px rgba(255, 255, 255, 0.15);
+    transform: translateY(-2px);
+}
+
+/* Network Error Styling */
+.network-error {
+    background: linear-gradient(135deg, rgba(220, 38, 38, 0.1) 0%, rgba(185, 28, 28, 0.05) 100%);
+    border: 2px solid rgba(220, 38, 38, 0.3);
+    backdrop-filter: blur(10px);
+    border-radius: 16px;
+    animation: errorPulse 2s ease-in-out infinite;
+}
+
+@keyframes errorPulse {
+    0%, 100% { 
+        border-color: rgba(220, 38, 38, 0.3);
+        box-shadow: 0 0 20px rgba(220, 38, 38, 0.2);
+    }
+    50% { 
+        border-color: rgba(220, 38, 38, 0.5);
+        box-shadow: 0 0 40px rgba(220, 38, 38, 0.4);
+    }
+}
 </style>
 {% endblock %}
 
@@ -580,14 +670,16 @@
 
                 </div>
 
-                <!-- Professional Video Player -->
-                <div class="relative rounded-2xl overflow-hidden bg-gradient-to-br from-slate-800 to-slate-900 shadow-2xl border border-slate-600/30">
-                    <div class="aspect-video relative bg-gradient-to-br from-slate-800 via-slate-900 to-black">
+                <!-- Ultra-Professional Video Player -->
+                <div class="relative rounded-3xl overflow-hidden bg-gradient-to-br from-black via-gray-900 to-gray-800 shadow-2xl border-2 border-gray-700/50 backdrop-blur-sm">
+                    <div class="aspect-video relative bg-gradient-to-br from-black via-gray-900 to-gray-800 p-2">
+                        <!-- Professional Player Frame -->
+                        <div class="w-full h-full rounded-2xl overflow-hidden bg-gradient-to-br from-gray-900 to-black shadow-inner border border-gray-600/30">
                         <div id="video-container" class="w-full h-full relative">
                             <!-- Professional HLS Video Player -->
                             <video 
-                                id="player" 
-                                class="w-full h-full rounded-2xl" 
+                                id="video-player" 
+                                class="w-full h-full rounded-2xl video-professional" 
                                 controls 
                                 crossorigin 
                                 playsinline
@@ -627,11 +719,22 @@
                                 
                             </video>
                             
-                            <!-- Loading Overlay -->
-                            <div id="video-loading" class="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-slate-800/90 to-slate-900/90 backdrop-blur-sm hidden">
+                            <!-- Professional Loading Overlay -->
+                            <div id="video-loading" class="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-black/95 to-slate-900/95 backdrop-blur-md hidden rounded-2xl">
                                 <div class="text-center text-white">
-                                    <div class="animate-spin w-12 h-12 border-4 border-red-500 border-t-transparent rounded-full mx-auto mb-4"></div>
-                                    <p class="text-lg font-medium">Loading video...</p>
+                                    <div class="relative mb-6">
+                                        <div class="w-20 h-20 border-6 border-red-500/20 border-t-red-500 rounded-full animate-spin mx-auto"></div>
+                                        <div class="absolute inset-0 w-20 h-20 border-6 border-transparent border-l-red-400 rounded-full animate-ping mx-auto"></div>
+                                    </div>
+                                    <div class="space-y-2">
+                                        <p class="text-xl font-semibold">Loading Professional Player</p>
+                                        <p class="text-sm text-slate-300">Please wait while we prepare your content...</p>
+                                    </div>
+                                    <div class="mt-4 flex justify-center space-x-1">
+                                        <div class="w-2 h-2 bg-red-500 rounded-full animate-bounce"></div>
+                                        <div class="w-2 h-2 bg-red-500 rounded-full animate-bounce" style="animation-delay: 0.1s;"></div>
+                                        <div class="w-2 h-2 bg-red-500 rounded-full animate-bounce" style="animation-delay: 0.2s;"></div>
+                                    </div>
                                 </div>
                             </div>
                             
@@ -642,6 +745,14 @@
                                         frameborder="0" 
                                         allowfullscreen>
                                 </iframe>
+                            </div>
+                            
+                            <!-- Professional Status Indicator -->
+                            <div id="video-status" class="absolute top-4 right-4 z-20 hidden">
+                                <div class="bg-black/80 backdrop-blur-md px-3 py-2 rounded-xl border border-white/20 text-white text-sm font-medium flex items-center space-x-2">
+                                    <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                                    <span id="status-text">Playing</span>
+                                </div>
                             </div>
                             
                             <!-- Custom Professional Controls Overlay -->
@@ -1503,26 +1614,83 @@ function initializeApp() {
 
 
 function showNotification(message, type = 'info') {
+    // Remove existing notifications
+    const existingNotifications = document.querySelectorAll('.notification-toast');
+    existingNotifications.forEach(notification => notification.remove());
+    
     const notification = document.createElement('div');
-    notification.className = `fixed top-4 right-4 z-50 px-6 py-3 rounded-xl text-white font-medium transition-all duration-300 transform translate-x-full ${
-        type === 'success' ? 'bg-green-500' : 
-        type === 'error' ? 'bg-red-500' : 
-        'bg-blue-500'
-    }`;
-    notification.textContent = message;
+    notification.className = `notification-toast fixed top-20 right-4 z-50 max-w-sm transform translate-x-full transition-all duration-500`;
+    
+    const getNotificationStyle = (type) => {
+        switch(type) {
+            case 'success':
+                return 'bg-gradient-to-r from-green-500 to-emerald-600 border-green-400';
+            case 'error':
+                return 'bg-gradient-to-r from-red-500 to-rose-600 border-red-400';
+            case 'warning':
+                return 'bg-gradient-to-r from-yellow-500 to-amber-600 border-yellow-400';
+            default:
+                return 'bg-gradient-to-r from-blue-500 to-indigo-600 border-blue-400';
+        }
+    };
+    
+    const getIcon = (type) => {
+        switch(type) {
+            case 'success':
+                return '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>';
+            case 'error':
+                return '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>';
+            case 'warning':
+                return '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L5.314 18.5c-.77.833.192 2.5 1.732 2.5z"></path></svg>';
+            default:
+                return '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>';
+        }
+    };
+    
+    notification.innerHTML = `
+        <div class="p-4 rounded-xl shadow-2xl backdrop-blur-sm ${getNotificationStyle(type)} border border-opacity-50">
+            <div class="flex items-start">
+                <div class="flex-shrink-0 text-white">
+                    ${getIcon(type)}
+                </div>
+                <div class="ml-3 w-0 flex-1 pt-0.5">
+                    <p class="text-sm font-semibold text-white drop-shadow-lg">${message}</p>
+                </div>
+                <div class="ml-4 flex-shrink-0 flex">
+                    <button class="bg-white/20 hover:bg-white/30 rounded-lg p-1 inline-flex text-white/90 hover:text-white transition-all duration-200 focus:outline-none" onclick="this.parentElement.parentElement.parentElement.parentElement.remove()">
+                        <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
     
     document.body.appendChild(notification);
     
+    // Professional slide-in animation
     setTimeout(() => {
         notification.classList.remove('translate-x-full');
+        notification.classList.add('animate-pulse');
     }, 100);
     
+    // Remove pulse after animation
     setTimeout(() => {
-        notification.classList.add('translate-x-full');
-        setTimeout(() => {
-            document.body.removeChild(notification);
-        }, 300);
-    }, 3000);
+        notification.classList.remove('animate-pulse');
+    }, 600);
+    
+    // Auto remove after 4 seconds
+    setTimeout(() => {
+        if (notification.parentElement) {
+            notification.classList.add('translate-x-full', 'opacity-0', 'scale-95');
+            setTimeout(() => {
+                if (notification.parentElement) {
+                    notification.remove();
+                }
+            }, 500);
+        }
+    }, 4000);
 }
 
 // Remove duplicate - will use the one at the end
