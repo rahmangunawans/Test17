@@ -924,6 +924,213 @@
         filter: blur(0px);
     }
 }
+
+/* Ultra-Professional Cinema Video Player */
+.ultra-pro-video-wrapper {
+    position: relative;
+    background: linear-gradient(145deg, #0a0f1a 0%, #1a1f2e 50%, #0a0f1a 100%);
+    border-radius: 24px;
+    padding: 20px;
+    box-shadow: 
+        0 50px 100px -20px rgba(0, 0, 0, 0.8),
+        0 30px 60px -12px rgba(239, 68, 68, 0.3),
+        0 0 0 1px rgba(239, 68, 68, 0.4),
+        inset 0 2px 4px rgba(255, 255, 255, 0.1);
+    border: 2px solid rgba(239, 68, 68, 0.3);
+    transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.ultra-pro-video-wrapper::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    background: linear-gradient(45deg, 
+        rgba(239, 68, 68, 0.3) 0%, 
+        rgba(147, 51, 234, 0.2) 25%, 
+        rgba(59, 130, 246, 0.2) 50%, 
+        rgba(16, 185, 129, 0.2) 75%, 
+        rgba(239, 68, 68, 0.3) 100%);
+    border-radius: 26px;
+    z-index: -1;
+    animation: cinemaGlow 3s ease-in-out infinite;
+}
+
+.ultra-pro-video-wrapper:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 
+        0 60px 120px -20px rgba(0, 0, 0, 0.9),
+        0 40px 80px -12px rgba(239, 68, 68, 0.5),
+        0 0 0 2px rgba(239, 68, 68, 0.6),
+        inset 0 2px 4px rgba(255, 255, 255, 0.15);
+}
+
+@keyframes cinemaGlow {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+}
+
+.ultra-professional-player {
+    border-radius: 16px !important;
+    background: linear-gradient(145deg, #000000 0%, #1a1a2e 50%, #16213e 100%) !important;
+    box-shadow: 
+        inset 0 4px 8px rgba(0, 0, 0, 0.6),
+        inset 0 0 0 1px rgba(239, 68, 68, 0.2) !important;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.ultra-professional-player:hover {
+    box-shadow: 
+        inset 0 4px 8px rgba(0, 0, 0, 0.8),
+        inset 0 0 0 2px rgba(239, 68, 68, 0.4) !important;
+}
+
+/* Cinema-Grade Control Bar */
+.ultra-professional-player::-webkit-media-controls-panel {
+    background: linear-gradient(180deg, 
+        rgba(0, 0, 0, 0) 0%, 
+        rgba(0, 0, 0, 0.3) 30%, 
+        rgba(15, 23, 42, 0.95) 70%, 
+        rgba(0, 0, 0, 0.98) 100%) !important;
+    border-radius: 0 0 14px 14px !important;
+    backdrop-filter: blur(30px) saturate(150%) !important;
+    border-top: 3px solid rgba(239, 68, 68, 0.4) !important;
+    padding: 16px 20px !important;
+    box-shadow: 
+        0 -8px 32px rgba(0, 0, 0, 0.6),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Cinema Play Button */
+.ultra-professional-player::-webkit-media-controls-play-button {
+    background: linear-gradient(135deg, 
+        #ef4444 0%, 
+        #dc2626 25%, 
+        #b91c1c 50%, 
+        #991b1b 75%, 
+        #7f1d1d 100%) !important;
+    border-radius: 20px !important;
+    width: 64px !important;
+    height: 64px !important;
+    margin: 0 16px !important;
+    border: 3px solid rgba(255, 255, 255, 0.3) !important;
+    box-shadow: 
+        0 8px 25px rgba(239, 68, 68, 0.6),
+        0 4px 12px rgba(0, 0, 0, 0.4),
+        inset 0 2px 4px rgba(255, 255, 255, 0.2) !important;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    position: relative !important;
+}
+
+.ultra-professional-player::-webkit-media-controls-play-button:hover {
+    background: linear-gradient(135deg, 
+        #f87171 0%, 
+        #ef4444 25%, 
+        #dc2626 50%, 
+        #b91c1c 75%, 
+        #991b1b 100%) !important;
+    transform: scale(1.2) !important;
+    box-shadow: 
+        0 12px 35px rgba(239, 68, 68, 0.8),
+        0 6px 20px rgba(0, 0, 0, 0.6),
+        inset 0 2px 4px rgba(255, 255, 255, 0.3) !important;
+    border-color: rgba(255, 255, 255, 0.5) !important;
+}
+
+/* Premium Timeline */
+.ultra-professional-player::-webkit-media-controls-timeline {
+    background: linear-gradient(135deg, 
+        rgba(15, 23, 42, 0.9) 0%, 
+        rgba(30, 41, 59, 0.8) 50%, 
+        rgba(51, 65, 85, 0.9) 100%) !important;
+    border-radius: 20px !important;
+    height: 16px !important;
+    margin: 0 20px !important;
+    border: 3px solid rgba(239, 68, 68, 0.4) !important;
+    box-shadow: 
+        inset 0 4px 8px rgba(0, 0, 0, 0.6),
+        0 4px 12px rgba(239, 68, 68, 0.3),
+        0 0 0 1px rgba(255, 255, 255, 0.1) !important;
+    backdrop-filter: blur(10px) !important;
+    transition: all 0.3s ease !important;
+}
+
+.ultra-professional-player::-webkit-media-controls-timeline:hover {
+    border-color: rgba(239, 68, 68, 0.7) !important;
+    box-shadow: 
+        inset 0 4px 8px rgba(0, 0, 0, 0.8),
+        0 6px 20px rgba(239, 68, 68, 0.5),
+        0 0 0 2px rgba(255, 255, 255, 0.2) !important;
+}
+
+/* Elite Time Displays */
+.ultra-professional-player::-webkit-media-controls-current-time-display,
+.ultra-professional-player::-webkit-media-controls-time-remaining-display {
+    color: #ffffff !important;
+    font-weight: 900 !important;
+    font-size: 18px !important;
+    font-family: 'SF Pro Display', 'Inter', system-ui, sans-serif !important;
+    text-shadow: 0 3px 12px rgba(0, 0, 0, 0.9) !important;
+    background: linear-gradient(135deg, 
+        rgba(15, 23, 42, 0.95) 0%, 
+        rgba(30, 41, 59, 0.9) 50%,
+        rgba(51, 65, 85, 0.95) 100%) !important;
+    padding: 10px 16px !important;
+    border-radius: 16px !important;
+    border: 2px solid rgba(239, 68, 68, 0.4) !important;
+    margin: 0 8px !important;
+    backdrop-filter: blur(20px) saturate(120%) !important;
+    box-shadow: 
+        0 6px 20px rgba(0, 0, 0, 0.5),
+        inset 0 1px 2px rgba(255, 255, 255, 0.2) !important;
+    transition: all 0.3s ease !important;
+}
+
+/* Premium Volume Control */
+.ultra-professional-player::-webkit-media-controls-volume-slider {
+    background: linear-gradient(135deg, 
+        rgba(15, 23, 42, 0.9) 0%, 
+        rgba(30, 41, 59, 0.8) 50%,
+        rgba(51, 65, 85, 0.9) 100%) !important;
+    border-radius: 12px !important;
+    height: 12px !important;
+    border: 2px solid rgba(239, 68, 68, 0.4) !important;
+    margin: 0 12px !important;
+    box-shadow: 
+        inset 0 3px 6px rgba(0, 0, 0, 0.5),
+        0 2px 8px rgba(239, 68, 68, 0.2) !important;
+    backdrop-filter: blur(8px) !important;
+}
+
+/* Cinema Fullscreen Button */
+.ultra-professional-player::-webkit-media-controls-fullscreen-button {
+    background: linear-gradient(135deg, 
+        #1f2937 0%, 
+        #374151 30%, 
+        #4b5563 60%,
+        #6b7280 100%) !important;
+    border-radius: 14px !important;
+    width: 56px !important;
+    height: 56px !important;
+    margin: 0 8px !important;
+    border: 2px solid rgba(239, 68, 68, 0.4) !important;
+    box-shadow: 
+        0 6px 16px rgba(0, 0, 0, 0.6),
+        inset 0 1px 2px rgba(255, 255, 255, 0.2) !important;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.ultra-professional-player::-webkit-media-controls-fullscreen-button:hover {
+    background: linear-gradient(135deg, 
+        #374151 0%, 
+        #4b5563 30%, 
+        #6b7280 60%,
+        #9ca3af 100%) !important;
+    transform: scale(1.15) !important;
+    border-color: rgba(239, 68, 68, 0.6) !important;
+    box-shadow: 
+        0 8px 24px rgba(0, 0, 0, 0.8),
+        inset 0 2px 4px rgba(255, 255, 255, 0.3) !important;
+}
 </style>
 {% endblock %}
 
@@ -1009,26 +1216,16 @@
                             <!-- Premium Glow Effect -->
                             <div class="absolute inset-0 bg-gradient-to-br from-red-500/5 via-transparent to-purple-500/5 rounded-2xl"></div>
                         <div id="video-container" class="w-full h-full relative">
-                            <!-- Ultra-Professional HLS Video Player -->
-                            <video 
-                                id="video-player" 
-                                class="w-full h-full rounded-2xl video-professional" 
-                                controls 
-                                crossorigin 
-                                playsinline
-                                preload="auto"
-                                poster="{{ episode.thumbnail_url or content.thumbnail_url or '/static/images/default-poster.jpg' }}"
-                                style="
-                                    background: linear-gradient(135deg, #0f172a 0%, #1e293b 30%, #0f172a 100%);
-                                    border: 3px solid rgba(239, 68, 68, 0.4);
-                                    border-radius: 20px;
-                                    box-shadow: 
-                                        0 32px 64px -12px rgba(0, 0, 0, 0.8),
-                                        0 20px 25px -5px rgba(0, 0, 0, 0.5),
-                                        0 0 0 2px rgba(239, 68, 68, 0.3),
-                                        inset 0 1px 0 rgba(255, 255, 255, 0.1);
-                                    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-                                ">
+                            <!-- Ultra-Professional Cinema Video Player -->
+                            <div class="ultra-pro-video-wrapper">
+                                <video 
+                                    id="video-player" 
+                                    class="w-full h-full ultra-professional-player" 
+                                    controls 
+                                    crossorigin 
+                                    playsinline
+                                    preload="auto"
+                                    poster="{{ episode.thumbnail_url or content.thumbnail_url or '/static/images/default-poster.jpg' }}">
                                 
                                 <!-- Default M3U8 source -->
                                 {% if episode.server_m3u8_url %}
@@ -1061,7 +1258,19 @@
                                     srclang="id"
                                     src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.vtt">
                                 
-                            </video>
+                                </video>
+                                
+                                <!-- Cinema-Grade Video Overlay Effects -->
+                                <div class="absolute inset-0 pointer-events-none rounded-2xl overflow-hidden">
+                                    <!-- Top Gradient Overlay -->
+                                    <div class="absolute top-0 left-0 right-0 h-20 bg-gradient-to-b from-black/30 to-transparent"></div>
+                                    <!-- Bottom Gradient Overlay -->
+                                    <div class="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-black/40 to-transparent"></div>
+                                    <!-- Side Glow Effects -->
+                                    <div class="absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-red-500/10 to-transparent"></div>
+                                    <div class="absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-purple-500/10 to-transparent"></div>
+                                </div>
+                            </div>
                             
                             <!-- Professional Loading Overlay -->
                             <div id="video-loading" class="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-black/95 to-slate-900/95 backdrop-blur-md hidden rounded-2xl">
