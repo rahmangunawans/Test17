@@ -9,6 +9,7 @@ from anilist_integration import anilist_service
 
 import logging
 import json
+import re
 from iqiyi_scraper import scrape_iqiyi_episode, scrape_iqiyi_playlist
 from iqiyi_m3u8_scraper import IQiyiM3U8Scraper
 
@@ -791,29 +792,50 @@ def api_auto_add_episodes():
         added_episodes = []
         failed_episodes = []
         
-        for episode_data in episodes_data:
+        for index, episode_data in enumerate(episodes_data, 1):
             try:
+                # Validate and ensure episode_number is provided
+                episode_number = episode_data.get('episode_number')
+                
+                # If episode_number is missing or invalid, auto-generate it
+                if not episode_number or episode_number is None:
+                    # Try to extract from title or URL
+                    title = episode_data.get('title', '')
+                    url = episode_data.get('url', '')
+                    
+                    # Try to extract from title like "Episode 1", "EP01", etc.
+                    episode_match = re.search(r'(?:episode|ep|第)[\s]*(\d+)', title, re.IGNORECASE)
+                    if episode_match:
+                        episode_number = int(episode_match.group(1))
+                    else:
+                        # Use the index as fallback
+                        episode_number = index
+                        logging.warning(f"Episode number missing for '{title}', using index {index}")
+                
+                # Ensure episode_number is an integer
+                episode_number = int(episode_number) if episode_number else index
+                
                 # Check if episode already exists
                 existing_episode = Episode.query.filter_by(
                     content_id=content_id,
-                    episode_number=episode_data.get('episode_number')
+                    episode_number=episode_number
                 ).first()
                 
                 if existing_episode:
                     failed_episodes.append({
-                        'episode_number': episode_data.get('episode_number'),
+                        'episode_number': episode_number,
                         'title': episode_data.get('title'),
                         'error': 'Episode sudah ada'
                     })
                     continue
                 
                 # Create new episode
-                logging.info(f"Creating episode {episode_data.get('episode_number')}: {episode_data.get('title')}")
+                logging.info(f"Creating episode {episode_number}: {episode_data.get('title')}")
                 
                 new_episode = Episode(
                     content_id=content_id,
-                    episode_number=episode_data.get('episode_number'),
-                    title=episode_data.get('title')[:200] if episode_data.get('title') else None,  # Limit title length
+                    episode_number=episode_number,
+                    title=episode_data.get('title')[:200] if episode_data.get('title') else f"Episode {episode_number}",
                     description=episode_data.get('description'),  # TEXT field, no limit needed
                     server_m3u8_url=episode_data.get('m3u8_content'),  # TEXT field, no limit needed
                     server_embed_url=episode_data.get('url'),  # IQiyi URL sebagai embed fallback
