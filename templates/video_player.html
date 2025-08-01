@@ -633,42 +633,109 @@ async function switchServer(serverType, serverUrl) {
         
         // Load iframe after short delay to ensure container is ready
         setTimeout(() => {
-            // Use the test embed URL provided by user
-            const testEmbedUrl = "https://www.mp4upload.com/embed-32m2mnpv72pb.html";
-            
+            // Create a comprehensive solution for Server 2 embed
             container.innerHTML = `
-                <div class="w-full bg-black rounded-lg overflow-hidden" style="height: 500px;">
-                    <iframe 
-                        id="embed-iframe"
-                        src="${testEmbedUrl}" 
-                        frameborder="0" 
-                        marginwidth="0" 
-                        marginheight="0" 
-                        scrolling="no" 
-                        width="100%" 
-                        height="480"
-                        allowfullscreen
-                        style="width: 100%; height: 100%; border: none; display: block; background: #000;">
-                    </iframe>
-                </div>
-                <div class="mt-2 text-center">
-                    <p class="text-sm text-gray-400">Testing mp4upload.com embed (as requested)</p>
-                    <p class="text-xs text-gray-500">Original URL: ${serverUrl}</p>
+                <div class="w-full bg-gray-900 rounded-lg overflow-hidden" style="height: 520px;">
+                    <!-- Header with server info -->
+                    <div class="bg-gray-800 px-4 py-2 text-sm text-gray-300">
+                        Server 2 (Embed) - Multiple Options
+                    </div>
+                    
+                    <!-- Main content area -->
+                    <div class="relative h-full">
+                        <!-- Option 1: Iframe embed -->
+                        <div id="iframe-container" class="bg-black" style="height: 450px;">
+                            <iframe 
+                                id="embed-iframe"
+                                src="${serverUrl}" 
+                                frameborder="0" 
+                                width="100%" 
+                                height="450"
+                                allowfullscreen
+                                webkitallowfullscreen
+                                mozallowfullscreen
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+                                referrerpolicy="no-referrer-when-downgrade"
+                                style="width: 100%; height: 100%; border: none; display: block;">
+                            </iframe>
+                        </div>
+                        
+                        <!-- Fallback overlay (shows if iframe fails) -->
+                        <div id="fallback-overlay" class="absolute inset-0 bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center" style="display: none;">
+                            <div class="text-center text-white p-6">
+                                <div class="text-4xl mb-4">🎬</div>
+                                <h3 class="text-lg font-semibold mb-3">Video Embed Blocked</h3>
+                                <p class="text-gray-300 mb-6 text-sm">The video host prevents iframe embedding.<br>Use one of these options:</p>
+                                <div class="space-y-3">
+                                    <button 
+                                        onclick="window.open('${serverUrl}', '_blank', 'width=1200,height=700,scrollbars=yes,resizable=yes')"
+                                        class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors block w-full">
+                                        Open in Popup Window
+                                    </button>
+                                    <a href="${serverUrl}" target="_blank" 
+                                       class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium transition-colors block w-full">
+                                        Open in New Tab
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Debug info -->
+                    <div class="bg-gray-800 px-4 py-1 text-xs text-gray-400">
+                        URL: ${serverUrl.substring(0, 50)}${serverUrl.length > 50 ? '...' : ''}
+                    </div>
                 </div>
             `;
             
-            // Add event listeners for debugging
+            // Add event listeners and fallback logic
             const iframe = document.getElementById('embed-iframe');
-            if (iframe) {
+            const fallback = document.getElementById('fallback-overlay');
+            
+            if (iframe && fallback) {
+                let iframeLoaded = false;
+                
                 iframe.onload = function() {
-                    console.log('✅ mp4upload iframe loaded successfully');
+                    console.log('✅ Embed iframe loaded');
+                    iframeLoaded = true;
                 };
+                
                 iframe.onerror = function() {
-                    console.error('❌ mp4upload iframe failed to load');
+                    console.error('❌ Embed iframe failed');
+                    fallback.style.display = 'flex';
                 };
+                
+                // Check if iframe actually loaded content after 3 seconds
+                setTimeout(() => {
+                    if (!iframeLoaded) {
+                        console.log('⚠️ Iframe timeout - showing fallback options');
+                        fallback.style.display = 'flex';
+                    }
+                }, 3000);
+                
+                // Force show fallback for known problematic hosts
+                if (serverUrl.includes('yourupload.com') || serverUrl.includes('mp4upload.com')) {
+                    console.log('⚠️ Known problematic host detected - showing fallback immediately');
+                    setTimeout(() => {
+                        fallback.style.display = 'flex';
+                    }, 1000);
+                }
+                
+                // Additional check for blocked content
+                setTimeout(() => {
+                    try {
+                        // If we can't access iframe content, it might be blocked
+                        const iframeDoc = iframe.contentDocument;
+                        if (!iframeDoc) {
+                            console.log('📄 Cross-origin iframe (normal) - video should be working');
+                        }
+                    } catch (e) {
+                        console.log('📄 Cross-origin restriction detected (normal behavior)');
+                    }
+                }, 2000);
             }
             
-            console.log('✅ Server 2 mp4upload iframe created (test embed)');
+            console.log('✅ Server 2 comprehensive embed solution created');
         }, 500);
         
     } else if (serverType === 'direct') {
