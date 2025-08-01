@@ -279,11 +279,15 @@ def add_episode(content_id):
     
     if request.method == 'POST':
         try:
+            # Handle duration with proper validation - allow empty values
+            duration_str = request.form.get('duration', '').strip()
+            duration = int(duration_str) if duration_str else None
+            
             episode = Episode(
                 content_id=content_id,
                 episode_number=int(request.form['episode_number']),
                 title=request.form['title'],
-                duration=int(request.form['duration']),
+                duration=duration,
                 video_url=request.form.get('video_url', ''),
                 thumbnail_url=request.form.get('thumbnail_url', ''),
                 description=request.form.get('description', ''),
@@ -315,7 +319,14 @@ def edit_episode(episode_id):
         try:
             episode.episode_number = int(request.form['episode_number'])
             episode.title = request.form['title']
-            episode.duration = int(request.form['duration'])
+            
+            # Handle duration with proper validation - allow empty values
+            duration_str = request.form.get('duration', '').strip()
+            if duration_str:
+                episode.duration = int(duration_str)
+            else:
+                episode.duration = None
+                
             episode.video_url = request.form.get('video_url', '')
             episode.thumbnail_url = request.form.get('thumbnail_url', '')
             episode.description = request.form.get('description', '')
@@ -329,6 +340,7 @@ def edit_episode(episode_id):
         except Exception as e:
             db.session.rollback()
             flash(f'Error updating episode: {str(e)}', 'error')
+            logging.error(f"Edit episode error: {str(e)}")
     
     return render_template('admin/episode_form.html', content=episode.content, episode=episode)
 
