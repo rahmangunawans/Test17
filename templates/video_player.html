@@ -713,10 +713,72 @@ async function extractIqiyiM3U8(iqiyiPlayUrl) {
             `;
             
             // Wait for DOM to update properly
-            await new Promise(resolve => setTimeout(resolve, 200));
+            await new Promise(resolve => setTimeout(resolve, 300));
             
-            // Initialize Plyr with extracted M3U8
-            initializePlayer(m3u8Url);
+            // Force initialize with new video element
+            const newVideo = document.getElementById('video-player');
+            if (newVideo) {
+                console.log('🎯 Forcing new player initialization for iQiyi');
+                
+                // Ensure clean state
+                newVideo.src = '';
+                newVideo.load();
+                
+                // Initialize HLS directly with blob URL
+                if (typeof Hls !== 'undefined' && Hls.isSupported()) {
+                    hls = new Hls({
+                        debug: false,
+                        enableWorker: true,
+                        lowLatencyMode: true,
+                    });
+                    
+                    hls.loadSource(m3u8Url);
+                    hls.attachMedia(newVideo);
+                    
+                    hls.on(Hls.Events.MANIFEST_PARSED, function() {
+                        console.log('✅ iQiyi HLS manifest parsed successfully');
+                        
+                        // Initialize Plyr
+                        player = new Plyr(newVideo, {
+                            captions: { active: true, update: true, language: 'en' },
+                            controls: [
+                                'play-large', 'play', 'progress', 'current-time', 'duration', 
+                                'mute', 'volume', 'captions', 'settings', 'pip', 'airplay', 'fullscreen'
+                            ],
+                            settings: ['captions', 'quality', 'speed'],
+                            quality: { default: 720, options: [4320, 2880, 2160, 1440, 1080, 720, 576, 480, 360, 240] },
+                            speed: { selected: 1, options: [0.5, 0.75, 1, 1.25, 1.5, 2] }
+                        });
+                        
+                        window.player = player;
+                        window.hls = hls;
+                        
+                        console.log('✅ iQiyi Plyr + HLS.js initialized successfully');
+                        
+                        // Auto-play the new stream
+                        setTimeout(() => {
+                            if (player && player.play) {
+                                player.play().catch(e => console.log('Auto-play blocked:', e));
+                            }
+                        }, 500);
+                    });
+                    
+                    hls.on(Hls.Events.ERROR, function(event, data) {
+                        console.error('❌ iQiyi HLS Error:', data);
+                        if (data.fatal) {
+                            hls.destroy();
+                        }
+                    });
+                } else {
+                    // Fallback for Safari
+                    newVideo.src = m3u8Url;
+                    player = new Plyr(newVideo);
+                    window.player = player;
+                    console.log('✅ iQiyi Safari player initialized');
+                }
+            } else {
+                console.error('❌ Video element not found after recreation');
+            }
             
         } else {
             console.error('❌ iQiyi M3U8 extraction failed:', result.error);
