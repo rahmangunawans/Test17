@@ -712,83 +712,47 @@ async function extractIqiyiM3U8(iqiyiPlayUrl) {
                     crossorigin 
                     playsinline
                     preload="metadata"
-                    style="width: 100%; height: 100%; display: block; background: #000;">
+                    style="width: 100%; height: 100%; display: block; background: #000; position: relative; z-index: 1;">
                     <p class="text-white p-4">Your browser does not support the video tag.</p>
                 </video>
             `;
             
             // Wait for DOM to update properly
-            await new Promise(resolve => setTimeout(resolve, 300));
+            await new Promise(resolve => setTimeout(resolve, 100));
             
-            // Force initialize with new video element
+            // Force initialize with native HTML5 video first (no HLS.js)
             const newVideo = document.getElementById('video-player');
             if (newVideo) {
-                console.log('🎯 Forcing new player initialization for iQiyi');
+                console.log('🎯 Initializing iQiyi with native video');
                 
-                // Ensure clean state
-                newVideo.src = '';
-                newVideo.load();
+                // Try native M3U8 support first (works on Safari/iOS)
+                newVideo.src = m3u8Url;
+                newVideo.style.visibility = 'visible';
+                newVideo.style.opacity = '1';
                 
-                // Initialize HLS directly with blob URL
-                if (typeof Hls !== 'undefined' && Hls.isSupported()) {
-                    hls = new Hls({
-                        debug: false,
-                        enableWorker: true,
-                        lowLatencyMode: true,
-                    });
-                    
-                    hls.loadSource(m3u8Url);
-                    hls.attachMedia(newVideo);
-                    
-                    hls.on(Hls.Events.MANIFEST_PARSED, function() {
-                        console.log('✅ iQiyi HLS manifest parsed successfully');
-                        
-                        // Initialize Plyr with proper video display settings
-                        player = new Plyr(newVideo, {
-                            captions: { active: true, update: true, language: 'en' },
-                            controls: [
-                                'play-large', 'play', 'progress', 'current-time', 'duration', 
-                                'mute', 'volume', 'captions', 'settings', 'pip', 'airplay', 'fullscreen'
-                            ],
-                            settings: ['captions', 'quality', 'speed'],
-                            quality: { default: 720, options: [4320, 2880, 2160, 1440, 1080, 720, 576, 480, 360, 240] },
-                            speed: { selected: 1, options: [0.5, 0.75, 1, 1.25, 1.5, 2] },
-                            // Force video to be visible
-                            ratio: '16:9'
-                        });
-                        
-                        // Ensure video element is visible
-                        newVideo.style.width = '100%';
-                        newVideo.style.height = '100%';
-                        newVideo.style.display = 'block';
-                        newVideo.style.background = '#000';
-                        
-                        window.player = player;
-                        window.hls = hls;
-                        
-                        console.log('✅ iQiyi Plyr + HLS.js initialized successfully');
-                        
-                        // Auto-play the new stream
-                        setTimeout(() => {
-                            if (player && player.play) {
-                                player.play().catch(e => console.log('Auto-play blocked:', e));
-                            }
-                        }, 500);
-                    });
-                    
-                    hls.on(Hls.Events.ERROR, function(event, data) {
-                        console.error('❌ iQiyi HLS Error:', data);
-                        if (data.fatal) {
-                            hls.destroy();
-                        }
-                    });
-                } else {
-                    // Fallback for Safari
-                    newVideo.src = m3u8Url;
-                    player = new Plyr(newVideo);
-                    window.player = player;
-                    console.log('✅ iQiyi Safari player initialized');
-                }
+                // Initialize basic Plyr without HLS.js complexity
+                player = new Plyr(newVideo, {
+                    controls: ['play-large', 'play', 'progress', 'current-time', 'duration', 'mute', 'volume', 'fullscreen']
+                });
+                
+                window.player = player;
+                
+                // Force video to show
+                newVideo.addEventListener('loadedmetadata', function() {
+                    console.log('✅ iQiyi video metadata loaded - should be visible now');
+                    newVideo.style.display = 'block';
+                    newVideo.style.width = '100%';
+                    newVideo.style.height = '100%';
+                });
+                
+                newVideo.addEventListener('canplay', function() {
+                    console.log('✅ iQiyi video can play');
+                    setTimeout(() => {
+                        newVideo.play().catch(e => console.log('Auto-play blocked'));
+                    }, 200);
+                });
+                
+                console.log('✅ Native iQiyi player initialized');
             } else {
                 console.error('❌ Video element not found after recreation');
             }
