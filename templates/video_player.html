@@ -619,34 +619,61 @@ async function switchServer(serverType, serverUrl) {
             window.hls = null;
         }
         
-        console.log('🔄 Loading Server 2 embed iframe:', serverUrl);
+        console.log('🔄 Setting up Server 2 embed - trying simple iframe first');
         
-        // YouUpload blocks iframe embedding, so provide direct access
+        // Try simple iframe first - if it works, great; if not, user can use fallback
         container.innerHTML = `
-            <div style="width: 100%; height: 500px; background: linear-gradient(135deg, #1e293b, #334155); border-radius: 8px; display: flex; align-items: center; justify-content: center; position: relative;">
-                <div style="text-align: center; color: white; padding: 20px;">
-                    <div style="font-size: 48px; margin-bottom: 20px;">🎬</div>
-                    <h3 style="margin-bottom: 15px; font-size: 18px;">Server 2 - YouUpload</h3>
-                    <p style="margin-bottom: 20px; color: #94a3b8; font-size: 14px;">YouUpload tidak mengizinkan embedding iframe.<br>Klik tombol di bawah untuk menonton video.</p>
-                    <button 
-                        onclick="window.open('${serverUrl}', '_blank', 'width=1200,height=700,scrollbars=yes,resizable=yes')" 
-                        style="background: #3b82f6; color: white; padding: 12px 24px; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; font-weight: 500; transition: all 0.2s;"
-                        onmouseover="this.style.background='#2563eb'"
-                        onmouseout="this.style.background='#3b82f6'">
-                        🎥 Buka Video di Jendela Baru
-                    </button>
-                    <div style="margin-top: 15px;">
-                        <a href="${serverUrl}" target="_blank" style="color: #64748b; text-decoration: underline; font-size: 12px;">
-                            Atau klik di sini untuk membuka di tab baru
-                        </a>
+            <div class="relative w-full bg-gray-900 rounded-lg overflow-hidden" style="height: 500px;">
+                <iframe 
+                    id="embed-iframe"
+                    src="${serverUrl}" 
+                    class="w-full h-full border-0"
+                    allowfullscreen
+                    webkitallowfullscreen
+                    mozallowfullscreen
+                    loading="lazy">
+                </iframe>
+                <div id="embed-overlay" class="absolute inset-0 bg-gradient-to-br from-slate-800 to-slate-900 flex items-center justify-center text-center p-6" style="display: none;">
+                    <div class="text-white">
+                        <div class="text-5xl mb-4">🎬</div>
+                        <h3 class="text-xl font-semibold mb-3">Server 2 - YouUpload</h3>
+                        <p class="text-slate-300 mb-6 text-sm">Iframe tidak dapat memuat video.<br>Gunakan opsi berikut:</p>
+                        <div class="space-y-3">
+                            <button 
+                                onclick="window.open('${serverUrl}', '_blank', 'width=1200,height=700')"
+                                class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors">
+                                Buka di Jendela Baru
+                            </button>
+                            <div>
+                                <a href="${serverUrl}" target="_blank" class="text-slate-400 underline text-xs hover:text-slate-300">
+                                    Atau klik untuk membuka di tab baru
+                                </a>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         `;
         
-        console.log('✅ Server 2 embed iframe loaded successfully');
+        // Check if iframe loads content after 3 seconds
+        setTimeout(() => {
+            const iframe = document.getElementById('embed-iframe');
+            const overlay = document.getElementById('embed-overlay');
+            
+            try {
+                // Try to detect if iframe loaded properly
+                const iframeWindow = iframe.contentWindow;
+                if (!iframeWindow || iframeWindow.location.href === 'about:blank') {
+                    console.log('⚠️ Iframe seems blocked, showing fallback');
+                    overlay.style.display = 'flex';
+                }
+            } catch (e) {
+                // Cross-origin restriction - this is normal, iframe might be working
+                console.log('✅ Iframe loaded (cross-origin detected)');
+            }
+        }, 3000);
         
-        console.log('✅ Server 2 embed interface created - YouUpload will open in new window');
+        console.log('✅ Server 2 setup complete');
         
     } else if (serverType === 'direct') {
         // Handle direct video URLs
