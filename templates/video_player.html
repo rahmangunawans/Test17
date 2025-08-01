@@ -660,12 +660,12 @@ async function switchServer(serverType, serverUrl) {
                             </iframe>
                         </div>
                         
-                        <!-- Fallback overlay (shows if iframe fails) -->
+                        <!-- Optional fallback overlay (only shows on manual trigger) -->
                         <div id="fallback-overlay" class="absolute inset-0 bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center" style="display: none;">
                             <div class="text-center text-white p-6">
                                 <div class="text-4xl mb-4">🎬</div>
-                                <h3 class="text-lg font-semibold mb-3">Video Embed Blocked</h3>
-                                <p class="text-gray-300 mb-6 text-sm">The video host prevents iframe embedding.<br>Use one of these options:</p>
+                                <h3 class="text-lg font-semibold mb-3">Need Alternative Access?</h3>
+                                <p class="text-gray-300 mb-6 text-sm">If the video doesn't load, try these options:</p>
                                 <div class="space-y-3">
                                     <button 
                                         onclick="window.open('${serverUrl}', '_blank', 'width=1200,height=700,scrollbars=yes,resizable=yes')"
@@ -676,14 +676,26 @@ async function switchServer(serverType, serverUrl) {
                                        class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium transition-colors block w-full">
                                         Open in New Tab
                                     </a>
+                                    <button 
+                                        onclick="document.getElementById('fallback-overlay').style.display='none'"
+                                        class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded text-sm w-full mt-2">
+                                        Close and Try Iframe Again
+                                    </button>
                                 </div>
                             </div>
                         </div>
                     </div>
                     
-                    <!-- Debug info -->
-                    <div class="bg-gray-800 px-4 py-1 text-xs text-gray-400">
-                        URL: ${serverUrl.substring(0, 50)}${serverUrl.length > 50 ? '...' : ''}
+                    <!-- Control bar with debug info and manual fallback -->
+                    <div class="bg-gray-800 px-4 py-2 flex justify-between items-center text-xs">
+                        <span class="text-gray-400">
+                            URL: ${serverUrl.substring(0, 40)}${serverUrl.length > 40 ? '...' : ''}
+                        </span>
+                        <button 
+                            onclick="document.getElementById('fallback-overlay').style.display='flex'"
+                            class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs">
+                            Alternative Options
+                        </button>
                     </div>
                 </div>
             `;
@@ -705,21 +717,14 @@ async function switchServer(serverType, serverUrl) {
                     fallback.style.display = 'flex';
                 };
                 
-                // Check if iframe actually loaded content after 3 seconds
+                // Give iframe more time to load - only show fallback if truly needed
                 setTimeout(() => {
                     if (!iframeLoaded) {
-                        console.log('⚠️ Iframe timeout - showing fallback options');
-                        fallback.style.display = 'flex';
+                        console.log('⚠️ Iframe timeout - checking if content loaded');
+                        // Don't automatically show fallback - let user decide
+                        console.log('ℹ️ Iframe may still be loading content');
                     }
-                }, 3000);
-                
-                // Force show fallback for known problematic hosts
-                if (serverUrl.includes('yourupload.com') || serverUrl.includes('mp4upload.com')) {
-                    console.log('⚠️ Known problematic host detected - showing fallback immediately');
-                    setTimeout(() => {
-                        fallback.style.display = 'flex';
-                    }, 1000);
-                }
+                }, 8000);
                 
                 // Additional check for blocked content
                 setTimeout(() => {
