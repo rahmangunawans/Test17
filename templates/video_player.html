@@ -1,13 +1,10 @@
-{% extends "responsive_base.html" %}
+{% extends "base.html" %}
 
 {% block title %}{{ episode.title }} - {{ content.title }}{% endblock %}
 
 {% block head %}
-<!-- Plyr.io CSS and JS -->
+<!-- Plyr.io CSS -->
 <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
-<script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
-<!-- HLS.js for M3U8 support -->
-<script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.15/dist/hls.min.js"></script>
 
 <style>
 .video-container {
@@ -411,6 +408,10 @@
     </div>
 </div>
 </div>
+
+<!-- Plyr.io and HLS.js Scripts -->
+<script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.15/dist/hls.min.js"></script>
 
 <script>
 console.log('🎬 AniFlix Plyr.io Video Player Starting...');
