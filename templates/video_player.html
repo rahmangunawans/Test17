@@ -598,37 +598,60 @@ async function switchServer(serverType, serverUrl) {
     }
     
     if (serverType === 'embed') {
-        // Handle embed URLs with multiple approaches
+        // Handle embed URLs - show iframe directly
         const container = document.querySelector('.video-container');
         
-        // Clean up existing player
+        // Clean up existing player instances
         if (window.player) {
-            window.player.destroy();
+            try {
+                window.player.destroy();
+            } catch (e) {
+                console.log('Player cleanup error:', e);
+            }
             window.player = null;
         }
         if (window.hls) {
-            window.hls.destroy();
+            try {
+                window.hls.destroy();
+            } catch (e) {
+                console.log('HLS cleanup error:', e);
+            }
             window.hls = null;
         }
         
-        // Create iframe for embed server (simplified approach)
-        console.log('🔄 Loading embed iframe:', serverUrl);
+        console.log('🔄 Loading Server 2 embed iframe:', serverUrl);
         
+        // Create iframe with proper settings for YouUpload and other embed services
         container.innerHTML = `
-            <iframe 
-                src="${serverUrl}" 
-                width="100%" 
-                height="500" 
-                frameborder="0" 
-                allowfullscreen
-                webkitallowfullscreen
-                mozallowfullscreen
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
-                style="width: 100%; height: 500px; min-height: 500px; display: block; background: #000; border: none; border-radius: 8px;">
-            </iframe>
+            <div style="width: 100%; height: 500px; background: #000; border-radius: 8px; overflow: hidden;">
+                <iframe 
+                    src="${serverUrl}" 
+                    width="100%" 
+                    height="500" 
+                    frameborder="0" 
+                    allowfullscreen="true"
+                    webkitallowfullscreen="true"
+                    mozallowfullscreen="true"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+                    referrerpolicy="no-referrer-when-downgrade"
+                    sandbox="allow-scripts allow-same-origin allow-presentation allow-forms"
+                    style="width: 100%; height: 100%; border: none; display: block;">
+                </iframe>
+            </div>
         `;
         
-        console.log('✅ Embed iframe loaded:', serverUrl);
+        console.log('✅ Server 2 embed iframe loaded successfully');
+        
+        // Add iframe load event listener for debugging
+        const iframe = container.querySelector('iframe');
+        if (iframe) {
+            iframe.onload = function() {
+                console.log('✅ Iframe content loaded successfully');
+            };
+            iframe.onerror = function() {
+                console.error('❌ Iframe failed to load');
+            };
+        }
         
     } else if (serverType === 'direct') {
         // Handle direct video URLs
