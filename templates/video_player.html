@@ -593,12 +593,10 @@ function switchServer(serverType, serverUrl) {
         // Handle M3U8 and iQiyi URLs
         const video = document.getElementById('video-player');
         
-        // Check if URL is an iQiyi page (not a direct stream)
-        if (serverUrl.includes('iq.com') || serverUrl.includes('iqiyi.com')) {
-            // Handle iQiyi URLs as iframe embed
-            const container = document.querySelector('.video-container');
-            container.innerHTML = `<iframe src="${serverUrl}" class="w-full h-full rounded-lg" frameborder="0" allowfullscreen></iframe>`;
-            console.log('✅ iQiyi iframe player loaded');
+        // Check if URL is an iQiyi play page (extract M3U8)
+        if (serverUrl.includes('iq.com/play/') || serverUrl.includes('iqiyi.com/play/')) {
+            console.log('🔄 Extracting M3U8 from iQiyi play URL...');
+            await extractIqiyiM3U8(serverUrl);
         } else {
             // Handle M3U8 URLs with Plyr
             // Restore video element if iframe was used
@@ -637,6 +635,67 @@ function toggleDownloadMenu() {
     console.log('Download menu toggled for VIP user');
     // Implement VIP download functionality
     alert('VIP Download Feature - Coming Soon!');
+}
+
+// Function to extract M3U8 from iQiyi play URL
+async function extractIqiyiM3U8(iqiyiPlayUrl) {
+    try {
+        console.log('📡 Requesting M3U8 extraction from:', iqiyiPlayUrl);
+        
+        const response = await fetch('/admin/extract_iqiyi_m3u8', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                iqiyi_play_url: iqiyiPlayUrl
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success && result.m3u8_content) {
+            console.log('✅ iQiyi M3U8 extracted successfully:', result.method);
+            
+            // Create blob URL for M3U8 content
+            const blob = new Blob([result.m3u8_content], { 
+                type: 'application/vnd.apple.mpegurl' 
+            });
+            const m3u8Url = URL.createObjectURL(blob);
+            
+            // Restore video element if iframe was used
+            const container = document.querySelector('.video-container');
+            container.innerHTML = `
+                <video 
+                    id="video-player" 
+                    class="w-full h-full" 
+                    controls 
+                    crossorigin 
+                    playsinline
+                    preload="metadata"
+                    poster="{{ episode.thumbnail_url or content.thumbnail_url or '/static/images/default-poster.jpg' }}">
+                    <p class="text-white p-4">Your browser does not support the video tag.</p>
+                </video>
+            `;
+            
+            // Initialize Plyr with extracted M3U8
+            initializePlayer(m3u8Url);
+            
+        } else {
+            console.error('❌ iQiyi M3U8 extraction failed:', result.error);
+            // Fallback to iframe if extraction fails
+            const container = document.querySelector('.video-container');
+            container.innerHTML = `<iframe src="${iqiyiPlayUrl}" class="w-full h-full rounded-lg" frameborder="0" allowfullscreen></iframe>`;
+            console.log('🔄 Fallback: Using iQiyi iframe embed');
+        }
+        
+    } catch (error) {
+        console.error('❌ Network error during iQiyi extraction:', error);
+        // Fallback to iframe on network error
+        const container = document.querySelector('.video-container');
+        container.innerHTML = `<iframe src="${iqiyiPlayUrl}" class="w-full h-full rounded-lg" frameborder="0" allowfullscreen></iframe>`;
+        console.log('🔄 Fallback: Using iQiyi iframe embed due to network error');
+    }
 }
 
 // Initialize when page loads
