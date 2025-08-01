@@ -618,12 +618,30 @@ async function switchServer(serverType, serverUrl) {
                 class="w-full h-full rounded-lg" 
                 frameborder="0" 
                 allowfullscreen
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                style="width: 100%; height: 100%; min-height: 400px; display: block; background: #000;">
+                webkitallowfullscreen
+                mozallowfullscreen
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-presentation"
+                style="width: 100%; height: 100%; min-height: 400px; display: block; background: #000; border: none;">
             </iframe>
         `;
         
         console.log('✅ Embed server loaded:', serverUrl);
+        
+        // Check iframe loading after a delay
+        setTimeout(() => {
+            const iframe = container.querySelector('iframe');
+            if (iframe) {
+                console.log('📺 Iframe status:');
+                console.log('  - Dimensions:', iframe.offsetWidth + 'x' + iframe.offsetHeight);
+                console.log('  - Source:', iframe.src);
+                console.log('  - Display:', window.getComputedStyle(iframe).display);
+                
+                // Try to detect if iframe content loaded
+                iframe.onload = () => console.log('✅ Iframe content loaded successfully');
+                iframe.onerror = () => console.error('❌ Iframe failed to load');
+            }
+        }, 500);
         
     } else if (serverType === 'direct') {
         // Handle direct video URLs
