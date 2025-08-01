@@ -621,37 +621,32 @@ async function switchServer(serverType, serverUrl) {
         
         console.log('🔄 Loading Server 2 embed iframe:', serverUrl);
         
-        // Create iframe with proper settings for YouUpload and other embed services
+        // YouUpload blocks iframe embedding, so provide direct access
         container.innerHTML = `
-            <div style="width: 100%; height: 500px; background: #000; border-radius: 8px; overflow: hidden;">
-                <iframe 
-                    src="${serverUrl}" 
-                    width="100%" 
-                    height="500" 
-                    frameborder="0" 
-                    allowfullscreen="true"
-                    webkitallowfullscreen="true"
-                    mozallowfullscreen="true"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
-                    referrerpolicy="no-referrer-when-downgrade"
-                    sandbox="allow-scripts allow-same-origin allow-presentation allow-forms"
-                    style="width: 100%; height: 100%; border: none; display: block;">
-                </iframe>
+            <div style="width: 100%; height: 500px; background: linear-gradient(135deg, #1e293b, #334155); border-radius: 8px; display: flex; align-items: center; justify-content: center; position: relative;">
+                <div style="text-align: center; color: white; padding: 20px;">
+                    <div style="font-size: 48px; margin-bottom: 20px;">🎬</div>
+                    <h3 style="margin-bottom: 15px; font-size: 18px;">Server 2 - YouUpload</h3>
+                    <p style="margin-bottom: 20px; color: #94a3b8; font-size: 14px;">YouUpload tidak mengizinkan embedding iframe.<br>Klik tombol di bawah untuk menonton video.</p>
+                    <button 
+                        onclick="window.open('${serverUrl}', '_blank', 'width=1200,height=700,scrollbars=yes,resizable=yes')" 
+                        style="background: #3b82f6; color: white; padding: 12px 24px; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; font-weight: 500; transition: all 0.2s;"
+                        onmouseover="this.style.background='#2563eb'"
+                        onmouseout="this.style.background='#3b82f6'">
+                        🎥 Buka Video di Jendela Baru
+                    </button>
+                    <div style="margin-top: 15px;">
+                        <a href="${serverUrl}" target="_blank" style="color: #64748b; text-decoration: underline; font-size: 12px;">
+                            Atau klik di sini untuk membuka di tab baru
+                        </a>
+                    </div>
+                </div>
             </div>
         `;
         
         console.log('✅ Server 2 embed iframe loaded successfully');
         
-        // Add iframe load event listener for debugging
-        const iframe = container.querySelector('iframe');
-        if (iframe) {
-            iframe.onload = function() {
-                console.log('✅ Iframe content loaded successfully');
-            };
-            iframe.onerror = function() {
-                console.error('❌ Iframe failed to load');
-            };
-        }
+        console.log('✅ Server 2 embed interface created - YouUpload will open in new window');
         
     } else if (serverType === 'direct') {
         // Handle direct video URLs
