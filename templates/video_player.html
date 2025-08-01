@@ -611,120 +611,24 @@ async function switchServer(serverType, serverUrl) {
             window.hls = null;
         }
         
-        // Check if it's a YouUpload URL and try direct video extraction
-        if (serverUrl.includes('yourupload.com')) {
-            console.log('🔄 Detected YouUpload - trying direct video extraction...');
-            
-            // Show loading message
-            container.innerHTML = `
-                <div style="display: flex; align-items: center; justify-content: center; width: 100%; height: 400px; background: #000; color: white;">
-                    <div style="text-align: center;">
-                        <div style="margin-bottom: 10px;">🔄 Extracting YouUpload video...</div>
-                        <div style="font-size: 12px; color: #666;">Please wait</div>
-                    </div>
-                </div>
-            `;
-            
-            // Try to extract direct video URL using API
-            fetch('/admin/api/extract-yourupload-video', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ embed_url: serverUrl })
-            })
-            .then(response => response.json())
-            .then(result => {
-                if (result.success && result.video_url) {
-                    console.log('✅ YouUpload video extracted:', result.video_url);
-                    
-                    // Create video element with extracted direct URL
-                    container.innerHTML = `
-                        <video 
-                            id="video-player" 
-                            class="w-full h-full" 
-                            controls 
-                            crossorigin 
-                            playsinline
-                            preload="metadata"
-                            style="width: 100%; height: 100%; min-height: 400px; background: #000;"
-                            poster="{{ episode.thumbnail_url or content.thumbnail_url or '/static/images/default-poster.jpg' }}">
-                            <source src="${result.video_url}" type="video/mp4">
-                            <p class="text-white p-4">Your browser does not support the video tag.</p>
-                        </video>
-                    `;
-                    
-                    // Initialize Plyr on the video
-                    const video = document.getElementById('video-player');
-                    if (video) {
-                        player = new Plyr(video, {
-                            controls: [
-                                'play-large', 'play', 'progress', 'current-time', 'duration', 
-                                'mute', 'volume', 'settings', 'fullscreen'
-                            ]
-                        });
-                        window.player = player;
-                        console.log('✅ YouUpload Plyr player initialized');
-                    }
-                } else {
-                    console.error('❌ YouUpload extraction failed:', result.error);
-                    
-                    // Fall back to iframe with error message
-                    const videoId = serverUrl.match(/embed\/([^?]+)/)?.[1];
-                    const directVideoUrl = videoId ? `https://www.yourupload.com/watch/${videoId}` : serverUrl;
-                    
-                    container.innerHTML = `
-                        <div style="position: relative; width: 100%; height: 100%; min-height: 400px; background: #000;">
-                            <iframe 
-                                src="${serverUrl}" 
-                                class="w-full h-full rounded-lg" 
-                                frameborder="0" 
-                                allowfullscreen
-                                style="width: 100%; height: 100%; display: block; background: #000; border: none;">
-                            </iframe>
-                            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 100;">
-                                <div style="background: rgba(0,0,0,0.9); padding: 20px; border-radius: 10px; text-align: center; color: white;">
-                                    <p style="margin-bottom: 10px;">❌ Video tidak dapat diekstrak</p>
-                                    <a href="${directVideoUrl}" target="_blank" style="color: #3b82f6; text-decoration: underline;">
-                                        Buka video di tab baru
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                }
-            })
-            .catch(error => {
-                console.error('❌ YouUpload API error:', error);
-                
-                // Fall back to iframe
-                container.innerHTML = `
-                    <iframe 
-                        src="${serverUrl}" 
-                        class="w-full h-full rounded-lg" 
-                        frameborder="0" 
-                        allowfullscreen
-                        style="width: 100%; height: 100%; min-height: 400px; display: block; background: #000; border: none;">
-                    </iframe>
-                `;
-            });
-        } else {
-            // Standard iframe approach for other embed services
-            container.innerHTML = `
-                <iframe 
-                    src="${serverUrl}" 
-                    class="w-full h-full rounded-lg" 
-                    frameborder="0" 
-                    allowfullscreen
-                    webkitallowfullscreen
-                    mozallowfullscreen
-                    referrerpolicy="no-referrer-when-downgrade"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                    style="width: 100%; height: 100%; min-height: 400px; display: block; background: #000; border: none;">
-                </iframe>
-            `;
-        }
+        // Create iframe for embed server (simplified approach)
+        console.log('🔄 Loading embed iframe:', serverUrl);
         
-        console.log('✅ Embed server loaded:', serverUrl);
-        console.log('💡 If video tidak muncul, coba buka URL di tab baru:', serverUrl);
+        container.innerHTML = `
+            <iframe 
+                src="${serverUrl}" 
+                width="100%" 
+                height="500" 
+                frameborder="0" 
+                allowfullscreen
+                webkitallowfullscreen
+                mozallowfullscreen
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+                style="width: 100%; height: 500px; min-height: 500px; display: block; background: #000; border: none; border-radius: 8px;">
+            </iframe>
+        `;
+        
+        console.log('✅ Embed iframe loaded:', serverUrl);
         
     } else if (serverType === 'direct') {
         // Handle direct video URLs
