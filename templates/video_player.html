@@ -598,7 +598,7 @@ async function switchServer(serverType, serverUrl) {
     }
     
     if (serverType === 'embed') {
-        // Handle embed URLs - show iframe directly
+        // Handle embed URLs - completely replace container content
         const container = document.querySelector('.video-container');
         
         // Clean up existing player instances
@@ -619,87 +619,84 @@ async function switchServer(serverType, serverUrl) {
             window.hls = null;
         }
         
-        console.log('🔄 Loading Server 2 - YouUpload Embed');
+        console.log('🔄 Loading Server 2 - Embed iframe');
         
-        // Show loading state first
+        // Completely replace container with iframe - override all existing styles
+        container.style.cssText = 'position: relative; width: 100%; height: 500px; background: #000; border-radius: 8px; overflow: hidden;';
         container.innerHTML = `
-            <div class="w-full bg-gray-900 rounded-lg flex items-center justify-center" style="height: 500px;">
-                <div class="text-white text-center">
-                    <div class="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-4"></div>
-                    <p>Loading Server 2...</p>
+            <iframe 
+                id="embed-iframe"
+                src="${serverUrl}" 
+                frameborder="0" 
+                marginwidth="0" 
+                marginheight="0" 
+                scrolling="no" 
+                width="100%" 
+                height="100%"
+                allowfullscreen
+                webkitallowfullscreen
+                mozallowfullscreen
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+                style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; display: block; z-index: 1;">
+            </iframe>
+            
+            <!-- Manual fallback trigger -->
+            <div style="position: absolute; bottom: 10px; right: 10px; z-index: 5;">
+                <button 
+                    onclick="showEmbedFallback()"
+                    style="background: rgba(0,0,0,0.7); color: white; border: 1px solid #444; padding: 5px 10px; border-radius: 4px; font-size: 12px; cursor: pointer;">
+                    Options
+                </button>
+            </div>
+            
+            <!-- Fallback overlay (hidden by default) -->
+            <div id="fallback-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 10;">
+                <div style="text-align: center; color: white; padding: 30px;">
+                    <div style="font-size: 4rem; margin-bottom: 20px;">🎬</div>
+                    <h3 style="font-size: 1.5rem; margin-bottom: 15px; font-weight: bold;">Server 2 Options</h3>
+                    <p style="margin-bottom: 25px; color: #ccc; line-height: 1.5;">Choose how to access the video content:</p>
+                    <div style="display: flex; flex-direction: column; align-items: center; gap: 15px;">
+                        <button 
+                            onclick="window.open('${serverUrl}', '_blank', 'width=1200,height=700,scrollbars=yes,resizable=yes')"
+                            style="background: #2563eb; color: white; padding: 15px 30px; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold; width: 250px;">
+                            🪟 Open in Popup Window
+                        </button>
+                        <a href="${serverUrl}" target="_blank" 
+                           style="background: #16a34a; color: white; padding: 15px 30px; border-radius: 8px; text-decoration: none; font-size: 16px; font-weight: bold; width: 250px; text-align: center; display: block;">
+                            📂 Open in New Tab
+                        </a>
+                        <button 
+                            onclick="document.getElementById('fallback-overlay').style.display='none'"
+                            style="background: #6b7280; color: white; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; margin-top: 15px;">
+                            ✖️ Close
+                        </button>
+                    </div>
+                    <p style="margin-top: 20px; font-size: 12px; color: #888;">URL: ${serverUrl.substring(0, 50)}${serverUrl.length > 50 ? '...' : ''}</p>
                 </div>
             </div>
         `;
         
-        // Load iframe after short delay to ensure container is ready
-        setTimeout(() => {
-            // Simple, clean iframe implementation like the working test page
-            container.innerHTML = `
-                <div class="w-full bg-black rounded-lg" style="height: 500px; position: relative;">
-                    <iframe 
-                        id="embed-iframe"
-                        src="${serverUrl}" 
-                        frameborder="0" 
-                        marginwidth="0" 
-                        marginheight="0" 
-                        scrolling="no" 
-                        width="100%" 
-                        height="100%"
-                        allowfullscreen
-                        webkitallowfullscreen
-                        mozallowfullscreen
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
-                        style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; display: block; background: #000;">
-                    </iframe>
-                    
-                    <!-- Fallback overlay for alternative access (hidden by default) -->
-                    <div id="fallback-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 10;">
-                        <div style="text-align: center; color: white; padding: 20px;">
-                            <div style="font-size: 3rem; margin-bottom: 1rem;">🎬</div>
-                            <h3 style="font-size: 1.2rem; margin-bottom: 1rem;">Alternative Access Options</h3>
-                            <p style="margin-bottom: 1.5rem; color: #ccc;">If video doesn't load, try these options:</p>
-                            <button 
-                                onclick="window.open('${serverUrl}', '_blank', 'width=1200,height=700,scrollbars=yes,resizable=yes')"
-                                style="background: #2563eb; color: white; padding: 12px 24px; border: none; border-radius: 8px; margin: 5px; cursor: pointer; display: block; width: 200px;">
-                                Open in Popup
-                            </button>
-                            <a href="${serverUrl}" target="_blank" 
-                               style="background: #16a34a; color: white; padding: 12px 24px; border-radius: 8px; margin: 5px; text-decoration: none; display: block; width: 200px;">
-                                Open in New Tab
-                            </a>
-                            <button 
-                                onclick="document.getElementById('fallback-overlay').style.display='none'"
-                                style="background: #6b7280; color: white; padding: 8px 16px; border: none; border-radius: 4px; margin-top: 10px; cursor: pointer;">
-                                Close & Retry
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Debug info bar -->
-                <div class="mt-2 text-center">
-                    <p class="text-xs text-gray-400">Server 2 (Embed): ${serverUrl.substring(0, 60)}${serverUrl.length > 60 ? '...' : ''}</p>
-                    <button 
-                        onclick="document.getElementById('fallback-overlay').style.display='flex'"
-                        class="text-xs text-blue-400 hover:text-blue-300 underline mt-1">
-                        Need alternatives? Click here
-                    </button>
-                </div>
-            `;
-            
-            // Add simple event listeners
-            const iframe = document.getElementById('embed-iframe');
-            if (iframe) {
-                iframe.onload = function() {
-                    console.log('✅ Server 2 embed iframe loaded successfully');
-                };
-                iframe.onerror = function() {
-                    console.error('❌ Server 2 embed iframe failed to load');
-                };
+        // Add event listeners
+        const iframe = document.getElementById('embed-iframe');
+        if (iframe) {
+            iframe.onload = function() {
+                console.log('✅ Server 2 embed iframe loaded successfully');
+            };
+            iframe.onerror = function() {
+                console.error('❌ Server 2 embed iframe failed to load');
+                showEmbedFallback();
+            };
+        }
+        
+        // Add global function for fallback
+        window.showEmbedFallback = function() {
+            const overlay = document.getElementById('fallback-overlay');
+            if (overlay) {
+                overlay.style.display = 'flex';
             }
-            
-            console.log('✅ Server 2 embed created with clean iframe implementation');
-        }, 500);
+        };
+        
+        console.log('✅ Server 2 embed iframe created and injected');
         
     } else if (serverType === 'direct') {
         // Handle direct video URLs
