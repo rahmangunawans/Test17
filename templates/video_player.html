@@ -671,8 +671,47 @@ async function switchServer(serverType, serverUrl) {
                         videoUrl = URL.createObjectURL(blob);
                     }
                     
-                    // Initialize the player with extracted M3U8
-                    initializePlayer(videoUrl);
+                    // Add debugging for iQiyi M3U8
+                    console.log('🎬 iQiyi M3U8 URL:', videoUrl);
+                    console.log('🎬 M3U8 content size:', result.m3u8_content ? result.m3u8_content.length : 'N/A');
+                    
+                    // Try simple HTML5 video first for iQiyi
+                    const newVideo = document.getElementById('video-player');
+                    newVideo.crossOrigin = null; // Remove CORS for iQiyi
+                    newVideo.src = videoUrl;
+                    newVideo.load();
+                    
+                    // Add event listeners for debugging
+                    newVideo.addEventListener('loadstart', () => console.log('✅ iQiyi: loadstart'));
+                    newVideo.addEventListener('loadedmetadata', () => console.log('✅ iQiyi: metadata loaded'));
+                    newVideo.addEventListener('canplay', () => console.log('✅ iQiyi: can play'));
+                    newVideo.addEventListener('error', (e) => {
+                        console.error('❌ iQiyi video error:', e);
+                        console.error('❌ Error details:', newVideo.error);
+                        
+                        // Fallback: Try with HLS.js
+                        console.log('🔄 Trying iQiyi with HLS.js...');
+                        initializePlayer(videoUrl);
+                    });
+                    
+                    // Initialize Plyr on the video
+                    if (player) {
+                        player.destroy();
+                    }
+                    
+                    player = new Plyr(newVideo, {
+                        captions: { active: true, update: true, language: 'en' },
+                        controls: [
+                            'play-large', 'play', 'progress', 'current-time', 'duration', 
+                            'mute', 'volume', 'captions', 'settings', 'pip', 'airplay', 'fullscreen'
+                        ],
+                        settings: ['captions', 'quality', 'speed'],
+                        quality: { default: 720, options: [4320, 2880, 2160, 1440, 1080, 720, 576, 480, 360, 240] },
+                        speed: { selected: 1, options: [0.5, 0.75, 1, 1.25, 1.5, 2] }
+                    });
+                    
+                    window.player = player;
+                    console.log('✅ iQiyi Plyr player initialized');
                 } else {
                     throw new Error(result.error || 'Failed to extract M3U8');
                 }
