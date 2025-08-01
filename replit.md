@@ -19,7 +19,7 @@ Code cleanliness: Remove redundant maintenance and setup scripts to keep codebas
 ### Frontend
 - **Templating**: Jinja2 for responsive web pages.
 - **Styling**: Tailwind CSS for modern UI and responsive design.
-- **JavaScript**: Vanilla JS for interactivity and Video.js for video playback.
+- **JavaScript**: Vanilla JS for interactivity and Plyr.io for video playback.
 - **UI/UX**: Focus on a clean, modern, and responsive interface with consistent styling, animations, and visual feedback. Two-level navigation (App Header and Horizontal Navigation Bar) with optimized spacing and mobile responsiveness.
 
 ### Key Features
@@ -37,8 +37,8 @@ Code cleanliness: Remove redundant maintenance and setup scripts to keep codebas
 - **Tailwind CSS**: Via CDN for styling.
 - **Font Awesome**: Icon library.
 - **Google Fonts**: Poppins font family.
-- **Video.js**: Video player library for streaming functionality.
-- **HLS.js**: For M3U8 streaming support with native HTML5 video player.
+- **Plyr.io**: Modern video player library with extensive customization and features.
+- **HLS.js**: For M3U8 streaming support with Plyr.io video player.
 - **AniList API**: For automated anime/donghua content data fetching.
 - **Jikan API (MyAnimeList)**: Alternative data source for content fetching.
 - **YouTube (web scraping)**: For automatic trailer URL detection.
