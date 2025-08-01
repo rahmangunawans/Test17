@@ -437,7 +437,12 @@ function initializePlyrPlayer() {
         plyrPlayer.destroy();
     }
 
-    // Initialize Plyr with custom options
+    // Make sure video element is visible before Plyr initialization
+    videoPlayer.style.display = 'block';
+    videoPlayer.style.background = '#000000';
+    videoPlayer.style.minHeight = '400px';
+
+    // Initialize Plyr with simplified options
     plyrPlayer = new Plyr('#video-player', {
         controls: [
             'play-large',
@@ -447,33 +452,29 @@ function initializePlyrPlayer() {
             'duration',
             'mute',
             'volume',
-            'captions',
             'settings',
-            'pip',
-            'airplay',
             'fullscreen'
         ],
-        settings: ['captions', 'quality', 'speed'],
+        settings: ['quality', 'speed'],
         speed: { selected: 1, options: [0.5, 0.75, 1, 1.25, 1.5, 2] },
-        quality: { default: 720, options: [4320, 2880, 2160, 1440, 1080, 720, 576, 480, 360, 240] },
         keyboard: { focused: true, global: true },
         tooltips: { controls: true, seek: true },
-        captions: { active: true, language: 'auto', update: false },
         fullscreen: { enabled: true, fallback: true, iosNative: true },
-        storage: { enabled: true, key: 'aniflix-player' },
-        loadSprite: true,
-        iconUrl: 'https://cdn.plyr.io/3.7.8/plyr.svg'
+        storage: { enabled: true, key: 'aniflix-player' }
     });
 
     // Event listeners for Plyr
     plyrPlayer.on('ready', function() {
-        console.log('Plyr player ready');
+        console.log('Plyr player ready - video element:', plyrPlayer.media);
+        
+        // Make sure the video is visible after Plyr initialization
+        plyrPlayer.media.style.display = 'block';
         
         // Initialize with default M3U8 source if available
         {% if episode.server_m3u8_url %}
         const m3u8Url = '{{ episode.server_m3u8_url }}';
         console.log('Loading default M3U8 source:', m3u8Url);
-        initializeM3U8WithPlyr(m3u8Url);
+        setTimeout(() => initializeM3U8WithPlyr(m3u8Url), 100);
         {% else %}
         console.log('No default M3U8 source available');
         {% endif %}
@@ -492,35 +493,20 @@ function initializePlyrPlayer() {
         {% endif %}
     });
 
-    plyrPlayer.on('pause', function() {
-        console.log('Plyr player paused');
-    });
-
-    plyrPlayer.on('ended', function() {
-        console.log('Plyr player ended');
-    });
-
     plyrPlayer.on('error', function(event) {
         console.error('Plyr player error:', event);
-    });
-
-    plyrPlayer.on('loadstart', function() {
-        console.log('Plyr player load started');
-    });
-
-    plyrPlayer.on('canplay', function() {
-        console.log('Plyr player can play');
     });
 }
 
 // Initialize M3U8 playback with Plyr
 function initializeM3U8WithPlyr(url) {
-    if (!plyrPlayer) {
-        console.error('Plyr player not initialized');
+    if (!plyrPlayer || !plyrPlayer.media) {
+        console.error('Plyr player not ready');
         return;
     }
 
     const video = plyrPlayer.media;
+    console.log('Setting up M3U8 playback for:', url);
     
     if (typeof Hls !== 'undefined' && Hls.isSupported()) {
         console.log('Using HLS.js with Plyr for M3U8 playback');
@@ -531,7 +517,7 @@ function initializeM3U8WithPlyr(url) {
         }
         
         hlsPlayer = new Hls({
-            debug: false,
+            debug: true,
             enableWorker: true,
             lowLatencyMode: false,
             manifestLoadingTimeOut: 10000,
@@ -546,15 +532,8 @@ function initializeM3U8WithPlyr(url) {
         hlsPlayer.attachMedia(video);
         
         hlsPlayer.on(Hls.Events.MANIFEST_PARSED, function(event, data) {
-            console.log('HLS manifest parsed, quality levels:', data.levels.length);
-            
-            // Update Plyr quality options based on HLS levels
-            const qualityOptions = data.levels.map((level, index) => ({
-                value: index,
-                label: `${level.height}p`,
-            }));
-            
-            plyrPlayer.quality = qualityOptions;
+            console.log('HLS manifest parsed successfully, levels:', data.levels.length);
+            video.style.display = 'block';
         });
         
         hlsPlayer.on(Hls.Events.ERROR, function(event, data) {
@@ -563,6 +542,10 @@ function initializeM3U8WithPlyr(url) {
                 console.log('Fatal HLS error, trying direct video src fallback');
                 video.src = url;
             }
+        });
+        
+        hlsPlayer.on(Hls.Events.LEVEL_SWITCHED, function(event, data) {
+            console.log('Quality switched to level:', data.level);
         });
         
     } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
