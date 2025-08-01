@@ -382,7 +382,7 @@
             </h3>
             <div class="space-y-3 max-h-80 overflow-y-auto">
                 {% for anime in trending_anime[:5] %}
-                <a href="{{ url_for('content.content_detail', content_id=anime.id) }}" 
+                <a href="{{ url_for('content.anime_redirect', content_id=anime.id) }}" 
                    class="block p-3 rounded-xl bg-slate-800/30 hover:bg-slate-700/40 border border-slate-600/20 hover:border-slate-500/30 transition-all duration-200">
                     <div class="flex items-center space-x-3">
                         <img src="{{ anime.thumbnail_url }}" alt="{{ anime.title }}" 
