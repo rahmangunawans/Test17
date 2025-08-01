@@ -597,8 +597,17 @@ async function switchServer(serverType, serverUrl) {
     
     if (serverType === 'embed') {
         // Handle embed URLs (like YouTube)
-        const video = document.getElementById('video-player');
-        const container = video.parentElement;
+        const container = document.querySelector('.video-container');
+        
+        // Clean up existing player
+        if (player) {
+            player.destroy();
+            player = null;
+        }
+        if (hls) {
+            hls.destroy();
+            hls = null;
+        }
         
         container.innerHTML = `<iframe src="${serverUrl}" class="w-full h-full rounded-lg" frameborder="0" allowfullscreen></iframe>`;
         console.log('✅ Embed player loaded');
@@ -628,7 +637,25 @@ async function switchServer(serverType, serverUrl) {
         
     } else {
         // Handle M3U8 and iQiyi URLs
-        const video = document.getElementById('video-player');
+        let video = document.getElementById('video-player');
+        
+        // Always restore video element if iframe was used (coming from embed server)
+        if (!video || video.tagName !== 'VIDEO') {
+            const container = document.querySelector('.video-container');
+            container.innerHTML = `
+                <video 
+                    id="video-player" 
+                    class="w-full h-full" 
+                    controls 
+                    crossorigin 
+                    playsinline
+                    preload="metadata"
+                    poster="{{ episode.thumbnail_url or content.thumbnail_url or '/static/images/default-poster.jpg' }}">
+                    <p class="text-white p-4">Your browser does not support the video tag.</p>
+                </video>
+            `;
+            video = document.getElementById('video-player');
+        }
         
         // Check if URL is an iQiyi play page (extract M3U8)
         if (serverUrl.includes('iq.com/play/') || serverUrl.includes('iqiyi.com/play/')) {
@@ -645,23 +672,6 @@ async function switchServer(serverType, serverUrl) {
                 
                 if (result.success && (result.m3u8_content || result.m3u8_url)) {
                     console.log('✅ iQiyi M3U8 extracted successfully');
-                    
-                    // Restore video element if iframe was used
-                    if (!video || video.tagName !== 'VIDEO') {
-                        const container = document.querySelector('.video-container');
-                        container.innerHTML = `
-                            <video 
-                                id="video-player" 
-                                class="w-full h-full" 
-                                controls 
-                                crossorigin 
-                                playsinline
-                                preload="metadata"
-                                poster="{{ episode.thumbnail_url or content.thumbnail_url or '/static/images/default-poster.jpg' }}">
-                                <p class="text-white p-4">Your browser does not support the video tag.</p>
-                            </video>
-                        `;
-                    }
                     
                     let videoUrl;
                     if (result.m3u8_url) {
