@@ -642,7 +642,7 @@ async function extractIqiyiM3U8(iqiyiPlayUrl) {
     try {
         console.log('📡 Requesting M3U8 extraction from:', iqiyiPlayUrl);
         
-        const response = await fetch('/admin/extract_iqiyi_m3u8', {
+        const response = await fetch('/admin/api/extract-iqiyi-m3u8', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
