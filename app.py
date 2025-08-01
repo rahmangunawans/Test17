@@ -255,14 +255,26 @@ def index():
     latest_content = Content.query.order_by(Content.created_at.desc()).limit(8).all()
     popular_content = Content.query.order_by(Content.rating.desc()).limit(8).all()
     
-    # Get featured donghua (Chinese anime) - using specific IDs for now
-    featured_donghua = Content.query.filter(Content.id.in_([1,2,3])).all()
+    # Get content by type for proper categorization
+    featured_anime = Content.query.filter_by(content_type='anime', is_featured=True).limit(8).all()
+    featured_donghua = Content.query.filter_by(content_type='donghua', is_featured=True).limit(8).all()
+    featured_movies = Content.query.filter_by(content_type='movie', is_featured=True).limit(8).all()
+    
+    # If no featured content by type, get latest by type
+    if not featured_anime:
+        featured_anime = Content.query.filter_by(content_type='anime').order_by(Content.created_at.desc()).limit(8).all()
+    if not featured_donghua:
+        featured_donghua = Content.query.filter_by(content_type='donghua').order_by(Content.created_at.desc()).limit(8).all()
+    if not featured_movies:
+        featured_movies = Content.query.filter_by(content_type='movie').order_by(Content.created_at.desc()).limit(8).all()
     
     return render_template('index.html', 
                          featured_content=featured_content, 
                          latest_content=latest_content, 
                          popular_content=popular_content,
-                         featured_donghua=featured_donghua)
+                         featured_anime=featured_anime,
+                         featured_donghua=featured_donghua,
+                         featured_movies=featured_movies)
 
 @app.route('/dashboard')
 @login_required
