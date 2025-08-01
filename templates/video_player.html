@@ -614,7 +614,7 @@ async function switchServer(serverType, serverUrl) {
         // Handle M3U8 and iQiyi URLs
         const video = document.getElementById('video-player');
         
-        // Check if URL is an iQiyi play page (extract M3U8 with better video handling)
+        // Check if URL is an iQiyi play page (extract M3U8)
         if (serverUrl.includes('iq.com/play/') || serverUrl.includes('iqiyi.com/play/')) {
             console.log('🔄 Extracting M3U8 from iQiyi play URL...');
             
@@ -630,207 +630,33 @@ async function switchServer(serverType, serverUrl) {
                 if (result.success && (result.m3u8_content || result.m3u8_url)) {
                     console.log('✅ iQiyi M3U8 extracted successfully');
                     
-                    // CRITICAL TEST: Try direct video without any HLS.js first
-                    const container = document.querySelector('.video-container');
-                    container.innerHTML = `
-                        <div style="background: red; padding: 10px; color: white; margin-bottom: 10px;">
-                            🔴 TESTING: Basic video element (no HLS.js)
-                        </div>
-                        <video 
-                            id="test-video-basic" 
-                            controls 
-                            style="width: 100%; height: 300px; background: blue; border: 3px solid yellow;"
-                            muted
-                            autoplay>
-                        </video>
-                        <div style="background: green; padding: 10px; color: white; margin-top: 10px;">
-                            If you see blue/yellow area but no video = M3U8 problem<br>
-                            If you see nothing = CSS/rendering problem
-                        </div>
-                    `;
-                    
-                    const basicVideo = document.getElementById('test-video-basic');
-                    
-                    // Test 1: Try with a known working test video first
-                    console.log('🧪 TEST 1: Loading known working video');
-                    basicVideo.src = 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4';
-                    
-                    basicVideo.addEventListener('loadedmetadata', () => {
-                        console.log('✅ TEST 1 SUCCESS: Basic video loads and shows');
-                        
-                        // Test 2: Now try with iQiyi M3U8
-                        console.log('🧪 TEST 2: Switching to iQiyi M3U8');
-                        
-                        let videoUrl;
-                        if (result.m3u8_url) {
-                            videoUrl = result.m3u8_url;
-                        } else {
-                            const blob = new Blob([result.m3u8_content], { type: 'application/vnd.apple.mpegurl' });
-                            videoUrl = URL.createObjectURL(blob);
-                        }
-                        
-                        basicVideo.src = videoUrl;
-                        
-                        basicVideo.addEventListener('loadedmetadata', () => {
-                            console.log('✅ TEST 2 SUCCESS: iQiyi M3U8 works in basic video!');
-                            console.log('Video dimensions:', basicVideo.videoWidth, 'x', basicVideo.videoHeight);
-                            
-                            // If we get here, the M3U8 works - replace with proper player
-                            setTimeout(() => {
-                                console.log('🔄 M3U8 confirmed working, building proper player');
-                                container.innerHTML = `
-                                    <video 
-                                        id="video-player" 
-                                        controls 
-                                        style="width: 100%; height: 400px; background: black;"
-                                        src="${videoUrl}"
-                                        autoplay
-                                        muted>
-                                    </video>
-                                `;
-                                
-                                const finalVideo = document.getElementById('video-player');
-                                finalVideo.muted = false; // Unmute after confirmed working
-                                window.player = finalVideo;
-                                
-                            }, 2000);
-                        });
-                        
-                        basicVideo.addEventListener('error', (e) => {
-                            console.error('❌ TEST 2 FAILED: iQiyi M3U8 has issues:', e);
-                        });
-                        
-                    });
-                    
-                    basicVideo.addEventListener('error', (e) => {
-                        console.error('❌ TEST 1 FAILED: Basic video rendering broken:', e);
-                    });
-                        video.addEventListener('loadedmetadata', () => {
-                            console.log('📺 Video: loadedmetadata', {
-                                duration: video.duration,
-                                videoWidth: video.videoWidth,
-                                videoHeight: video.videoHeight
-                            });
-                            
-                            // Force video to be visible after metadata loads
-                            if (video.videoWidth > 0 && video.videoHeight > 0) {
-                                video.style.display = 'block';
-                                video.style.visibility = 'visible';
-                                video.style.opacity = '1';
-                                console.log('🎬 Video dimensions confirmed, forcing visibility');
-                            }
-                        });
-                        video.addEventListener('loadeddata', () => console.log('📺 Video: loadeddata'));
-                        video.addEventListener('canplay', () => console.log('📺 Video: canplay'));
-                        video.addEventListener('canplaythrough', () => console.log('📺 Video: canplaythrough'));
-                        video.addEventListener('playing', () => console.log('📺 Video: playing'));
-                        video.addEventListener('pause', () => console.log('📺 Video: pause'));
-                        video.addEventListener('error', (e) => {
-                            console.error('❌ Video error:', e, video.error);
-                        });
-                        
-                        if (typeof Hls !== 'undefined' && Hls.isSupported()) {
-                            const hlsInstance = new Hls({
-                                debug: true,
-                                enableWorker: true,
-                                lowLatencyMode: false,
-                                backBufferLength: 90,
-                                maxBufferLength: 30,
-                                maxMaxBufferLength: 300,
-                                maxBufferSize: 60 * 1000 * 1000,
-                                maxBufferHole: 0.5
-                            });
-                            
-                            hlsInstance.loadSource(videoUrl);
-                            hlsInstance.attachMedia(video);
-                            
-                            hlsInstance.on(Hls.Events.MANIFEST_PARSED, function() {
-                                console.log('✅ iQiyi manifest parsed, starting playback test');
-                                
-                                // Test direct video playback first without Plyr
-                                video.muted = false;
-                                video.currentTime = 0;
-                                
-                                // Force play to test if video stream works
-                                video.play().then(() => {
-                                    console.log('✅ Direct video playback successful');
-                                    
-                                    console.log('🎬 Using native HTML5 video for iQiyi (no Plyr)');
-                                    
-                                    // Minimal video setup
-                                    video.controls = true;
-                                    video.muted = false;
-                                    video.style.display = 'block';
-                                    
-                                    // Force a repaint to ensure video is visible
-                                    video.style.transform = 'translateZ(0)';
-                                    setTimeout(() => {
-                                        video.style.transform = 'none';
-                                    }, 100);
-                                    
-                                    // Store references for global access
-                                    window.player = video; // Use native video as player
-                                    window.hls = hlsInstance;
-                                    
-                                    console.log('✅ iQiyi native video player ready (no Plyr wrapper)');
-                                }).catch(error => {
-                                    console.error('❌ Direct video playback failed:', error);
-                                    
-                                    // Try without HLS.js as fallback
-                                    video.src = videoUrl;
-                                    video.play().then(() => {
-                                        console.log('✅ Fallback: Direct M3U8 playback works');
-                                        video.controls = true;
-                                        video.muted = false;
-                                        window.player = video; // Native video, no Plyr
-                                    }).catch(e => {
-                                        console.error('❌ All playback methods failed:', e);
-                                    });
-                                });
-                            });
-                            
-                            hlsInstance.on(Hls.Events.ERROR, function(event, data) {
-                                console.error('❌ HLS Error:', data);
-                                
-                                if (data.fatal) {
-                                    console.log('🔄 Fatal HLS error, trying direct M3U8');
-                                    hlsInstance.destroy();
-                                    
-                                    // Fallback to direct M3U8 playback
-                                    video.src = videoUrl;
-                                    video.play().then(() => {
-                                        console.log('✅ Fallback direct M3U8 works');
-                                        video.controls = true;
-                                        video.muted = false;
-                                        window.player = video; // Native video, no Plyr
-                                    }).catch(e => {
-                                        console.error('❌ Complete playback failure:', e);
-                                    });
-                                }
-                            });
-                        } else {
-                            // Safari/iOS fallback with native M3U8 support
-                            console.log('🍎 Using Safari native M3U8 support');
-                            video.src = videoUrl;
-                            video.muted = false;
-                            
-                            video.addEventListener('loadedmetadata', () => {
-                                console.log('✅ Safari M3U8 metadata loaded');
-                                video.play().then(() => {
-                                    console.log('✅ Safari M3U8 playback started');
-                                    video.controls = true;
-                                    video.muted = false;
-                                    window.player = video; // Native video, no Plyr
-                                }).catch(e => {
-                                    console.error('❌ Safari playback failed:', e);
-                                });
-                            });
-                            
-                            video.addEventListener('error', (e) => {
-                                console.error('❌ Safari video error:', e);
-                            });
-                        }
+                    // Restore video element if iframe was used
+                    if (!video || video.tagName !== 'VIDEO') {
+                        const container = document.querySelector('.video-container');
+                        container.innerHTML = `
+                            <video 
+                                id="video-player" 
+                                class="w-full h-full" 
+                                controls 
+                                crossorigin 
+                                playsinline
+                                preload="metadata"
+                                poster="{{ episode.thumbnail_url or content.thumbnail_url or '/static/images/default-poster.jpg' }}">
+                                <p class="text-white p-4">Your browser does not support the video tag.</p>
+                            </video>
+                        `;
                     }
+                    
+                    let videoUrl;
+                    if (result.m3u8_url) {
+                        videoUrl = result.m3u8_url;
+                    } else {
+                        const blob = new Blob([result.m3u8_content], { type: 'application/vnd.apple.mpegurl' });
+                        videoUrl = URL.createObjectURL(blob);
+                    }
+                    
+                    // Initialize the player with extracted M3U8
+                    initializePlayer(videoUrl);
                 } else {
                     throw new Error(result.error || 'Failed to extract M3U8');
                 }
