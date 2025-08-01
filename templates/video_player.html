@@ -553,6 +553,16 @@ function initializePlayer(source) {
 async function switchServer(serverType, serverUrl) {
     console.log('🔄 Switching to server:', serverType, serverUrl);
     
+    // Force cleanup of existing player and HLS instances first
+    if (window.player) {
+        window.player.destroy();
+        window.player = null;
+    }
+    if (window.hls) {
+        window.hls.destroy();
+        window.hls = null;
+    }
+    
     // Update active button
     document.querySelectorAll('.server-btn').forEach(btn => {
         btn.classList.remove('bg-green-600', 'bg-orange-600');
@@ -607,6 +617,14 @@ async function switchServer(serverType, serverUrl) {
         // Check if URL is an iQiyi play page (extract M3U8)
         if (serverUrl.includes('iq.com/play/') || serverUrl.includes('iqiyi.com/play/')) {
             console.log('🔄 Extracting M3U8 from iQiyi play URL...');
+            
+            // Clear video completely before switching
+            const existingVideo = document.getElementById('video-player');
+            if (existingVideo) {
+                existingVideo.src = '';
+                existingVideo.load();
+            }
+            
             await extractIqiyiM3U8(serverUrl);
         } else {
             // Handle M3U8 URLs with Plyr
