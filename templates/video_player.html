@@ -655,6 +655,15 @@ async function switchServer(serverType, serverUrl) {
                     
                     if (video) {
                         console.log('🎬 Initializing iQiyi video with HLS');
+                        console.log('📊 Video element state:', {
+                            readyState: video.readyState,
+                            networkState: video.networkState,
+                            currentSrc: video.currentSrc,
+                            videoWidth: video.videoWidth,
+                            videoHeight: video.videoHeight,
+                            paused: video.paused,
+                            muted: video.muted
+                        });
                         
                         // Force video properties before HLS initialization
                         video.style.display = 'block';
@@ -663,6 +672,24 @@ async function switchServer(serverType, serverUrl) {
                         video.style.objectFit = 'contain';
                         video.style.backgroundColor = '#000';
                         video.muted = true; // Start muted to allow autoplay
+                        
+                        // Add comprehensive event listeners for debugging
+                        video.addEventListener('loadstart', () => console.log('📺 Video: loadstart'));
+                        video.addEventListener('loadedmetadata', () => {
+                            console.log('📺 Video: loadedmetadata', {
+                                duration: video.duration,
+                                videoWidth: video.videoWidth,
+                                videoHeight: video.videoHeight
+                            });
+                        });
+                        video.addEventListener('loadeddata', () => console.log('📺 Video: loadeddata'));
+                        video.addEventListener('canplay', () => console.log('📺 Video: canplay'));
+                        video.addEventListener('canplaythrough', () => console.log('📺 Video: canplaythrough'));
+                        video.addEventListener('playing', () => console.log('📺 Video: playing'));
+                        video.addEventListener('pause', () => console.log('📺 Video: pause'));
+                        video.addEventListener('error', (e) => {
+                            console.error('❌ Video error:', e, video.error);
+                        });
                         
                         if (typeof Hls !== 'undefined' && Hls.isSupported()) {
                             const hlsInstance = new Hls({
@@ -676,36 +703,80 @@ async function switchServer(serverType, serverUrl) {
                             hlsInstance.attachMedia(video);
                             
                             hlsInstance.on(Hls.Events.MANIFEST_PARSED, function() {
-                                console.log('✅ iQiyi manifest parsed, initializing player');
+                                console.log('✅ iQiyi manifest parsed, starting playback test');
                                 
-                                const plyrInstance = new Plyr(video, {
-                                    controls: ['play-large', 'play', 'progress', 'current-time', 'duration', 'mute', 'volume', 'fullscreen'],
-                                    volume: 1,
-                                    muted: false
+                                // Test direct video playback first without Plyr
+                                video.muted = false;
+                                video.currentTime = 0;
+                                
+                                // Force play to test if video stream works
+                                video.play().then(() => {
+                                    console.log('✅ Direct video playback successful');
+                                    
+                                    // Only initialize Plyr after confirming video works
+                                    const plyrInstance = new Plyr(video, {
+                                        controls: ['play-large', 'play', 'progress', 'current-time', 'duration', 'mute', 'volume', 'fullscreen'],
+                                        volume: 1,
+                                        muted: false
+                                    });
+                                    
+                                    window.player = plyrInstance;
+                                    window.hls = hlsInstance;
+                                    
+                                    console.log('✅ iQiyi Plyr player ready');
+                                }).catch(error => {
+                                    console.error('❌ Direct video playback failed:', error);
+                                    
+                                    // Try without HLS.js as fallback
+                                    video.src = blobUrl;
+                                    video.play().then(() => {
+                                        console.log('✅ Fallback: Direct M3U8 playback works');
+                                        const plyrInstance = new Plyr(video);
+                                        window.player = plyrInstance;
+                                    }).catch(e => {
+                                        console.error('❌ All playback methods failed:', e);
+                                    });
                                 });
-                                
-                                window.player = plyrInstance;
-                                window.hls = hlsInstance;
-                                
-                                // Unmute after player is ready
-                                plyrInstance.on('ready', () => {
-                                    console.log('✅ Player ready, unmuting video');
-                                    video.muted = false;
-                                    plyrInstance.muted = false;
-                                });
-                                
-                                console.log('✅ iQiyi video player ready');
                             });
                             
                             hlsInstance.on(Hls.Events.ERROR, function(event, data) {
                                 console.error('❌ HLS Error:', data);
+                                
+                                if (data.fatal) {
+                                    console.log('🔄 Fatal HLS error, trying direct M3U8');
+                                    hlsInstance.destroy();
+                                    
+                                    // Fallback to direct M3U8 playback
+                                    video.src = blobUrl;
+                                    video.play().then(() => {
+                                        console.log('✅ Fallback direct M3U8 works');
+                                        const plyrInstance = new Plyr(video);
+                                        window.player = plyrInstance;
+                                    }).catch(e => {
+                                        console.error('❌ Complete playback failure:', e);
+                                    });
+                                }
                             });
                         } else {
-                            // Safari fallback
+                            // Safari/iOS fallback with native M3U8 support
+                            console.log('🍎 Using Safari native M3U8 support');
                             video.src = blobUrl;
-                            const plyrInstance = new Plyr(video);
-                            window.player = plyrInstance;
-                            console.log('✅ Safari video player initialized');
+                            video.muted = false;
+                            
+                            video.addEventListener('loadedmetadata', () => {
+                                console.log('✅ Safari M3U8 metadata loaded');
+                                video.play().then(() => {
+                                    console.log('✅ Safari M3U8 playback started');
+                                    const plyrInstance = new Plyr(video);
+                                    window.player = plyrInstance;
+                                }).catch(e => {
+                                    console.error('❌ Safari playback failed:', e);
+                                });
+                            });
+                            
+                            video.addEventListener('error', (e) => {
+                                console.error('❌ Safari video error:', e);
+                            });
                         }
                     }
                 } else {
