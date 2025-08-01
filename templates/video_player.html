@@ -438,6 +438,10 @@ function initializePlayer(source) {
         hls = null;
     }
     
+    // Clear video source completely
+    video.src = '';
+    video.load();
+    
     console.log('🎬 Initializing player with source:', source);
     
     if (source && typeof Hls !== 'undefined' && Hls.isSupported()) {
@@ -675,27 +679,23 @@ async function extractIqiyiM3U8(iqiyiPlayUrl) {
             console.log('🔧 M3U8 blob URL created:', m3u8Url);
             console.log('📝 M3U8 content preview:', result.m3u8_content.substring(0, 500));
             
-            // Restore video element if iframe was used
+            // Always recreate video element for iQiyi to ensure clean state
             const container = document.querySelector('.video-container');
-            const existingVideo = document.getElementById('video-player');
+            container.innerHTML = `
+                <video 
+                    id="video-player" 
+                    class="w-full h-full" 
+                    controls 
+                    crossorigin 
+                    playsinline
+                    preload="metadata"
+                    poster="{{ episode.thumbnail_url or content.thumbnail_url or '/static/images/default-poster.jpg' }}">
+                    <p class="text-white p-4">Your browser does not support the video tag.</p>
+                </video>
+            `;
             
-            if (!existingVideo || existingVideo.tagName !== 'VIDEO') {
-                container.innerHTML = `
-                    <video 
-                        id="video-player" 
-                        class="w-full h-full" 
-                        controls 
-                        crossorigin 
-                        playsinline
-                        preload="metadata"
-                        poster="{{ episode.thumbnail_url or content.thumbnail_url or '/static/images/default-poster.jpg' }}">
-                        <p class="text-white p-4">Your browser does not support the video tag.</p>
-                    </video>
-                `;
-                
-                // Wait for DOM to update
-                await new Promise(resolve => setTimeout(resolve, 100));
-            }
+            // Wait for DOM to update properly
+            await new Promise(resolve => setTimeout(resolve, 200));
             
             // Initialize Plyr with extracted M3U8
             initializePlayer(m3u8Url);
