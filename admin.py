@@ -1354,3 +1354,122 @@ def extract_iqiyi_m3u8():
             'error': f'Error extracting M3U8: {str(e)}'
         }), 500
 
+@admin_bp.route('/api/extract-yourupload-video', methods=['POST'])
+@login_required  
+@admin_required
+def extract_yourupload_video():
+    """Extract direct video URL from YouUpload embed URL"""
+    try:
+        data = request.get_json()
+        embed_url = data.get('embed_url', '').strip()
+        
+        if not embed_url:
+            return jsonify({
+                'success': False,
+                'error': 'YouUpload embed URL is required'
+            }), 400
+        
+        # Validate YouUpload embed URL format
+        if 'yourupload.com/embed/' not in embed_url:
+            return jsonify({
+                'success': False,
+                'error': 'Invalid YouUpload embed URL format'
+            }), 400
+        
+        logging.info(f"Extracting video from YouUpload embed: {embed_url}")
+        
+        # Extract video ID from embed URL
+        import re
+        video_id_match = re.search(r'/embed/([^?/]+)', embed_url)
+        if not video_id_match:
+            return jsonify({
+                'success': False,
+                'error': 'Cannot extract video ID from embed URL'
+            }), 400
+            
+        video_id = video_id_match.group(1)
+        logging.info(f"Extracted video ID: {video_id}")
+        
+        # Try to get the direct video page
+        import requests
+        from bs4 import BeautifulSoup
+        
+        watch_url = f"https://www.yourupload.com/watch/{video_id}"
+        
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+            'Referer': 'https://www.yourupload.com/',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8'
+        }
+        
+        response = requests.get(watch_url, headers=headers, timeout=10)
+        
+        if response.status_code != 200:
+            return jsonify({
+                'success': False,
+                'error': f'Cannot access YouUpload watch page: {response.status_code}'
+            }), 400
+            
+        # Parse the page to find video URL
+        soup = BeautifulSoup(response.content, 'html.parser')
+        
+        # Look for video source in various common patterns
+        video_url = None
+        
+        # Method 1: Look for video tag source
+        video_tag = soup.find('video')
+        if video_tag:
+            source_tag = video_tag.find('source')
+            if source_tag and source_tag.get('src'):
+                video_url = source_tag['src']
+                logging.info("✅ Found video URL in <video><source> tag")
+        
+        # Method 2: Look for JavaScript video configuration
+        if not video_url:
+            script_tags = soup.find_all('script')
+            for script in script_tags:
+                if script.string:
+                    # Look for common video URL patterns in JavaScript
+                    video_patterns = [
+                        r'src["\']?\s*:\s*["\']([^"\']+\.mp4[^"\']*)["\']',
+                        r'video["\']?\s*:\s*["\']([^"\']+\.mp4[^"\']*)["\']',
+                        r'url["\']?\s*:\s*["\']([^"\']+\.mp4[^"\']*)["\']',
+                        r'["\']([^"\']*yourupload[^"\']*\.mp4[^"\']*)["\']'
+                    ]
+                    
+                    for pattern in video_patterns:
+                        matches = re.findall(pattern, script.string, re.IGNORECASE)
+                        if matches:
+                            video_url = matches[0]
+                            logging.info(f"✅ Found video URL in JavaScript: {pattern}")
+                            break
+                    if video_url:
+                        break
+        
+        if video_url:
+            # Make sure URL is absolute
+            if video_url.startswith('//'):
+                video_url = 'https:' + video_url
+            elif video_url.startswith('/'):
+                video_url = 'https://www.yourupload.com' + video_url
+            
+            return jsonify({
+                'success': True,
+                'video_url': video_url,
+                'method': 'page_scraping',
+                'message': 'Direct video URL extracted from YouUpload'
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': 'Could not find direct video URL on YouUpload page',
+                'fallback_url': watch_url
+            }), 400
+            
+    except Exception as e:
+        logging.error(f"YouUpload video extraction error: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': f'Error extracting video: {str(e)}'
+        }), 500
+
