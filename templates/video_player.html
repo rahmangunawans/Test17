@@ -646,26 +646,10 @@ async function switchServer(serverType, serverUrl) {
                     container.innerHTML = `
                         <video 
                             id="video-player" 
-                            class="w-full h-full" 
                             controls 
-                            crossorigin="anonymous"
                             playsinline
                             preload="metadata"
-                            webkit-playsinline
-                            muted
-                            style="
-                                width: 100% !important; 
-                                height: 100% !important; 
-                                display: block !important; 
-                                background: #000 !important; 
-                                object-fit: contain !important;
-                                visibility: visible !important;
-                                opacity: 1 !important;
-                                z-index: 999 !important;
-                                position: relative !important;
-                                min-height: 400px !important;
-                                max-width: none !important;
-                            ">
+                            style="width: 100%; height: 400px; background: black;">
                             <p class="text-white p-4">Your browser does not support the video tag.</p>
                         </video>
                     `;
@@ -697,26 +681,11 @@ async function switchServer(serverType, serverUrl) {
                             muted: video.muted
                         });
                         
-                        // Force video properties with extreme visibility enforcement
-                        video.style.cssText = `
-                            display: block !important;
-                            width: 100% !important;
-                            height: 100% !important;
-                            object-fit: contain !important;
-                            background-color: #000 !important;
-                            visibility: visible !important;
-                            opacity: 1 !important;
-                            z-index: 999 !important;
-                            position: relative !important;
-                            min-height: 400px !important;
-                            border: 2px solid red !important;
-                            transform: none !important;
-                            overflow: visible !important;
-                        `;
-                        
-                        // Remove any conflicting CSS classes
-                        video.className = '';
-                        video.classList.add('w-full', 'h-full');
+                        // Minimal styling approach
+                        video.style.width = '100%';
+                        video.style.height = '400px';
+                        video.style.backgroundColor = 'black';
+                        video.style.display = 'block';
                         video.muted = true; // Start muted to allow autoplay
                         
                         // Add comprehensive event listeners for debugging
@@ -771,18 +740,18 @@ async function switchServer(serverType, serverUrl) {
                                 video.play().then(() => {
                                     console.log('✅ Direct video playback successful');
                                     
-                                    // For iQiyi - DO NOT use Plyr, keep native HTML5 video
                                     console.log('🎬 Using native HTML5 video for iQiyi (no Plyr)');
                                     
-                                    // Remove border now that we confirmed it works
-                                    video.style.border = 'none';
-                                    
-                                    // Ensure video controls are visible
+                                    // Minimal video setup
                                     video.controls = true;
+                                    video.muted = false;
                                     video.style.display = 'block';
-                                    video.style.visibility = 'visible';
-                                    video.style.opacity = '1';
-                                    video.muted = false; // Unmute for user
+                                    
+                                    // Force a repaint to ensure video is visible
+                                    video.style.transform = 'translateZ(0)';
+                                    setTimeout(() => {
+                                        video.style.transform = 'none';
+                                    }, 100);
                                     
                                     // Store references for global access
                                     window.player = video; // Use native video as player
@@ -797,7 +766,6 @@ async function switchServer(serverType, serverUrl) {
                                     video.play().then(() => {
                                         console.log('✅ Fallback: Direct M3U8 playback works');
                                         video.controls = true;
-                                        video.style.border = 'none';
                                         video.muted = false;
                                         window.player = video; // Native video, no Plyr
                                     }).catch(e => {
@@ -818,7 +786,6 @@ async function switchServer(serverType, serverUrl) {
                                     video.play().then(() => {
                                         console.log('✅ Fallback direct M3U8 works');
                                         video.controls = true;
-                                        video.style.border = 'none';
                                         video.muted = false;
                                         window.player = video; // Native video, no Plyr
                                     }).catch(e => {
@@ -837,7 +804,6 @@ async function switchServer(serverType, serverUrl) {
                                 video.play().then(() => {
                                     console.log('✅ Safari M3U8 playback started');
                                     video.controls = true;
-                                    video.style.border = 'none';
                                     video.muted = false;
                                     window.player = video; // Native video, no Plyr
                                 }).catch(e => {
