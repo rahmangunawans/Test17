@@ -759,53 +759,24 @@ async function switchServer(serverType, serverUrl) {
                                 video.play().then(() => {
                                     console.log('✅ Direct video playback successful');
                                     
-                                    // Ensure video is visible before Plyr initialization
+                                    // For iQiyi - DO NOT use Plyr, keep native HTML5 video
+                                    console.log('🎬 Using native HTML5 video for iQiyi (no Plyr)');
+                                    
+                                    // Remove border now that we confirmed it works
+                                    video.style.border = 'none';
+                                    
+                                    // Ensure video controls are visible
+                                    video.controls = true;
                                     video.style.display = 'block';
                                     video.style.visibility = 'visible';
                                     video.style.opacity = '1';
+                                    video.muted = false; // Unmute for user
                                     
-                                    // Only initialize Plyr after confirming video works and is visible
-                                    const plyrInstance = new Plyr(video, {
-                                        controls: ['play-large', 'play', 'progress', 'current-time', 'duration', 'mute', 'volume', 'fullscreen'],
-                                        volume: 1,
-                                        muted: false
-                                    });
-                                    
-                                    window.player = plyrInstance;
+                                    // Store references for global access
+                                    window.player = video; // Use native video as player
                                     window.hls = hlsInstance;
                                     
-                                    // Triple-check video visibility after Plyr init with aggressive styling
-                                    setTimeout(() => {
-                                        const videoElements = document.querySelectorAll('#video-player, .plyr__video-wrapper video, video');
-                                        videoElements.forEach(el => {
-                                            el.style.cssText = `
-                                                display: block !important;
-                                                visibility: visible !important;
-                                                opacity: 1 !important;
-                                                width: 100% !important;
-                                                height: 100% !important;
-                                                z-index: 999 !important;
-                                                position: relative !important;
-                                                object-fit: contain !important;
-                                                border: 2px solid red !important;
-                                                min-height: 400px !important;
-                                            `;
-                                        });
-                                        
-                                        // Also check if video is actually playing content
-                                        const mainVideo = document.getElementById('video-player');
-                                        if (mainVideo) {
-                                            console.log('🔧 Post-Plyr check:', {
-                                                currentTime: mainVideo.currentTime,
-                                                videoWidth: mainVideo.videoWidth,
-                                                videoHeight: mainVideo.videoHeight,
-                                                readyState: mainVideo.readyState,
-                                                played: !mainVideo.paused
-                                            });
-                                        }
-                                    }, 500);
-                                    
-                                    console.log('✅ iQiyi Plyr player ready');
+                                    console.log('✅ iQiyi native video player ready (no Plyr wrapper)');
                                 }).catch(error => {
                                     console.error('❌ Direct video playback failed:', error);
                                     
@@ -813,8 +784,10 @@ async function switchServer(serverType, serverUrl) {
                                     video.src = blobUrl;
                                     video.play().then(() => {
                                         console.log('✅ Fallback: Direct M3U8 playback works');
-                                        const plyrInstance = new Plyr(video);
-                                        window.player = plyrInstance;
+                                        video.controls = true;
+                                        video.style.border = 'none';
+                                        video.muted = false;
+                                        window.player = video; // Native video, no Plyr
                                     }).catch(e => {
                                         console.error('❌ All playback methods failed:', e);
                                     });
@@ -832,8 +805,10 @@ async function switchServer(serverType, serverUrl) {
                                     video.src = blobUrl;
                                     video.play().then(() => {
                                         console.log('✅ Fallback direct M3U8 works');
-                                        const plyrInstance = new Plyr(video);
-                                        window.player = plyrInstance;
+                                        video.controls = true;
+                                        video.style.border = 'none';
+                                        video.muted = false;
+                                        window.player = video; // Native video, no Plyr
                                     }).catch(e => {
                                         console.error('❌ Complete playback failure:', e);
                                     });
@@ -849,8 +824,10 @@ async function switchServer(serverType, serverUrl) {
                                 console.log('✅ Safari M3U8 metadata loaded');
                                 video.play().then(() => {
                                     console.log('✅ Safari M3U8 playback started');
-                                    const plyrInstance = new Plyr(video);
-                                    window.player = plyrInstance;
+                                    video.controls = true;
+                                    video.style.border = 'none';
+                                    video.muted = false;
+                                    window.player = video; // Native video, no Plyr
                                 }).catch(e => {
                                     console.error('❌ Safari playback failed:', e);
                                 });
