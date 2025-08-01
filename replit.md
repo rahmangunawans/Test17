@@ -26,7 +26,7 @@ Code cleanliness: Remove redundant maintenance and setup scripts to keep codebas
 - **User Management**: Registration, login, role-based access control (user/admin), session management.
 - **Subscription System**: Free tier (limited access) and multiple VIP tiers with Stripe for payments and content access restrictions.
 - **Content Management**: Support for anime series, movies, and donghua with episode organization, genre categorization, and filtering. Admin interface for CRUD operations on content and users.
-- **Video Streaming**: Video.js player with progress tracking, resume functionality, and quality controls. Supports M3U8, Embed, and IQiyi streaming servers. VIP-exclusive download functionality is available.
+- **Video Streaming**: Plyr.io player with HLS.js support for M3U8 streams, progress tracking, resume functionality, quality controls, and speed settings. Supports M3U8, Embed, and IQiyi streaming servers. VIP-exclusive download functionality is available.
 - **Admin Panel**: Dashboard for statistics, user management, content/episode management, system settings, and maintenance controls.
 - **Data Integration**: AniList and MyAnimeList API integration for automated content population (title, description, genres, studio, episodes, status, ratings, thumbnails, character overview, trailer URLs). IQiyi scraping for episode URLs and subtitles.
 
