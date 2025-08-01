@@ -630,8 +630,19 @@ async function switchServer(serverType, serverUrl) {
                 if (result.success && result.m3u8_content) {
                     console.log('✅ iQiyi M3U8 extracted successfully');
                     
-                    // Create new video element with better visibility settings
+                    // Create new video element with maximum visibility enforcement
                     const container = document.querySelector('.video-container');
+                    
+                    // Clear container and force its styling too
+                    container.style.cssText = `
+                        width: 100% !important;
+                        height: 100% !important;
+                        display: block !important;
+                        position: relative !important;
+                        background: #000 !important;
+                        min-height: 400px !important;
+                    `;
+                    
                     container.innerHTML = `
                         <video 
                             id="video-player" 
@@ -642,7 +653,20 @@ async function switchServer(serverType, serverUrl) {
                             preload="metadata"
                             webkit-playsinline
                             muted
-                            style="width: 100% !important; height: 100% !important; display: block !important; background: #000 !important; object-fit: contain !important;">
+                            style="
+                                width: 100% !important; 
+                                height: 100% !important; 
+                                display: block !important; 
+                                background: #000 !important; 
+                                object-fit: contain !important;
+                                visibility: visible !important;
+                                opacity: 1 !important;
+                                z-index: 999 !important;
+                                position: relative !important;
+                                min-height: 400px !important;
+                                max-width: none !important;
+                                border: 2px solid red !important;
+                            ">
                             <p class="text-white p-4">Your browser does not support the video tag.</p>
                         </video>
                     `;
@@ -665,7 +689,7 @@ async function switchServer(serverType, serverUrl) {
                             muted: video.muted
                         });
                         
-                        // Force video properties before HLS initialization - ensure visibility
+                        // Force video properties with extreme visibility enforcement
                         video.style.cssText = `
                             display: block !important;
                             width: 100% !important;
@@ -674,10 +698,17 @@ async function switchServer(serverType, serverUrl) {
                             background-color: #000 !important;
                             visibility: visible !important;
                             opacity: 1 !important;
-                            z-index: 10 !important;
+                            z-index: 999 !important;
                             position: relative !important;
-                            min-height: 300px !important;
+                            min-height: 400px !important;
+                            border: 2px solid red !important;
+                            transform: none !important;
+                            overflow: visible !important;
                         `;
+                        
+                        // Remove any conflicting CSS classes
+                        video.className = '';
+                        video.classList.add('w-full', 'h-full');
                         video.muted = true; // Start muted to allow autoplay
                         
                         // Add comprehensive event listeners for debugging
@@ -743,14 +774,34 @@ async function switchServer(serverType, serverUrl) {
                                     window.player = plyrInstance;
                                     window.hls = hlsInstance;
                                     
-                                    // Double-check video visibility after Plyr init
+                                    // Triple-check video visibility after Plyr init with aggressive styling
                                     setTimeout(() => {
-                                        const videoElement = document.querySelector('#video-player, .plyr__video-wrapper video');
-                                        if (videoElement) {
-                                            videoElement.style.display = 'block';
-                                            videoElement.style.visibility = 'visible';
-                                            videoElement.style.opacity = '1';
-                                            console.log('🔧 Post-Plyr video visibility enforced');
+                                        const videoElements = document.querySelectorAll('#video-player, .plyr__video-wrapper video, video');
+                                        videoElements.forEach(el => {
+                                            el.style.cssText = `
+                                                display: block !important;
+                                                visibility: visible !important;
+                                                opacity: 1 !important;
+                                                width: 100% !important;
+                                                height: 100% !important;
+                                                z-index: 999 !important;
+                                                position: relative !important;
+                                                object-fit: contain !important;
+                                                border: 2px solid red !important;
+                                                min-height: 400px !important;
+                                            `;
+                                        });
+                                        
+                                        // Also check if video is actually playing content
+                                        const mainVideo = document.getElementById('video-player');
+                                        if (mainVideo) {
+                                            console.log('🔧 Post-Plyr check:', {
+                                                currentTime: mainVideo.currentTime,
+                                                videoWidth: mainVideo.videoWidth,
+                                                videoHeight: mainVideo.videoHeight,
+                                                readyState: mainVideo.readyState,
+                                                played: !mainVideo.paused
+                                            });
                                         }
                                     }, 500);
                                     
