@@ -154,10 +154,11 @@
 
         <!-- Video Player -->
         <div class="glass-card rounded-2xl p-4 mb-6">
-            <div class="video-container">
+            <div class="video-container" style="position: relative; width: 100%; min-height: 400px; background: #000;">
                 <video 
                     id="video-player" 
                     class="w-full h-full" 
+                    style="display: block; background: #000; min-height: 400px;" 
                     controls 
                     crossorigin 
                     playsinline
@@ -413,6 +414,9 @@
 
 <script>
 console.log('🎬 AniFlix Plyr.io Video Player Starting...');
+console.log('📺 Video element check:', document.getElementById('video-player'));
+console.log('📦 Plyr available:', typeof Plyr !== 'undefined');
+console.log('📦 HLS available:', typeof Hls !== 'undefined');
 
 // Global variables  
 let player = null;
@@ -473,7 +477,7 @@ function initializePlayer(source) {
             
             // Watch time restriction for free users
             {% if not can_watch_full and max_watch_time %}
-            const maxWatchSeconds = {{ max_watch_time }} * 60;
+            const maxWatchSeconds = {{ max_watch_time|int }} * 60;
             player.on('play', function() {
                 setTimeout(function() {
                     player.pause();
@@ -647,7 +651,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize with default M3U8 source if available
     {% if episode.server_m3u8_url %}
-    const defaultSource = '{{ episode.server_m3u8_url }}';
+    const defaultSource = '{{ episode.server_m3u8_url|e }}';
     console.log('🎬 Default M3U8 source found:', defaultSource);
     initializePlayer(defaultSource);
     {% else %}
