@@ -486,6 +486,13 @@ function initializePlayer(source) {
         
         hls.on(Hls.Events.ERROR, function(event, data) {
             console.error('❌ HLS Error:', data);
+            console.error('❌ Error details:', {
+                type: data.type,
+                details: data.details,
+                fatal: data.fatal,
+                url: data.url,
+                response: data.response
+            });
             
             if (data.fatal) {
                 switch(data.type) {
@@ -679,6 +686,8 @@ async function extractIqiyiM3U8(iqiyiPlayUrl) {
             `;
             
             // Initialize Plyr with extracted M3U8
+            console.log('🔧 M3U8 blob URL created:', m3u8Url);
+            console.log('📝 M3U8 content preview:', result.m3u8_content.substring(0, 500));
             initializePlayer(m3u8Url);
             
         } else {
