@@ -744,7 +744,7 @@ async function switchServer(serverType, serverUrl) {
         }
         
         // Check if URL is an iQiyi play page (extract M3U8)
-        if (serverUrl.includes('iq.com/play/') || serverUrl.includes('iqiyi.com/play/')) {
+        if (serverType === 'iqiyi' && (serverUrl.includes('iq.com/play/') || serverUrl.includes('iqiyi.com/play/'))) {
             console.log('🔄 Extracting M3U8 from iQiyi play URL...');
             
             try {
@@ -817,6 +817,40 @@ async function switchServer(serverType, serverUrl) {
                 const container = document.querySelector('.video-container');
                 container.innerHTML = `<iframe src="${serverUrl}" class="w-full h-full" frameborder="0" allowfullscreen></iframe>`;
             }
+        } else if (serverType === 'iqiyi' && (serverUrl.includes('youtube.com') || serverUrl.includes('youtu.be') || serverUrl.includes('embed'))) {
+            // Handle Server 3 with non-iQiyi URLs (YouTube, embed, etc.) as iframe
+            console.log('🔄 Loading Server 3 - Non-iQiyi embed (iframe)');
+            
+            const container = document.querySelector('.video-container');
+            container.style.cssText = 'position: relative; width: 100%; height: 500px; background: #000; border-radius: 8px; overflow: hidden;';
+            container.innerHTML = `
+                <iframe 
+                    id="server3-iframe"
+                    src="${serverUrl}" 
+                    frameborder="0" 
+                    marginwidth="0" 
+                    marginheight="0" 
+                    scrolling="no" 
+                    width="100%" 
+                    height="100%"
+                    allowfullscreen
+                    webkitallowfullscreen
+                    mozallowfullscreen
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+                    style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; display: block; z-index: 1;">
+                </iframe>
+            `;
+            
+            const iframe = document.getElementById('server3-iframe');
+            if (iframe) {
+                iframe.onload = function() {
+                    console.log('✅ Server 3 iframe loaded successfully');
+                };
+                iframe.onerror = function() {
+                    console.error('❌ Server 3 iframe failed to load');
+                };
+            }
+            
         } else {
             // Handle M3U8 URLs with Plyr
             // Restore video element if iframe was used
