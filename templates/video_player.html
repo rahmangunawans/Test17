@@ -607,7 +607,7 @@ async function switchServer(serverType, serverUrl) {
         } else {
             // Handle M3U8 URLs with Plyr
             // Restore video element if iframe was used
-            if (!video) {
+            if (!video || video.tagName !== 'VIDEO') {
                 const container = document.querySelector('.video-container');
                 container.innerHTML = `
                     <video 
@@ -621,6 +621,8 @@ async function switchServer(serverType, serverUrl) {
                         <p class="text-white p-4">Your browser does not support the video tag.</p>
                     </video>
                 `;
+                // Wait for DOM to update
+                await new Promise(resolve => setTimeout(resolve, 100));
             }
             
             initializePlayer(serverUrl);
@@ -670,24 +672,32 @@ async function extractIqiyiM3U8(iqiyiPlayUrl) {
             });
             const m3u8Url = URL.createObjectURL(blob);
             
-            // Restore video element if iframe was used
-            const container = document.querySelector('.video-container');
-            container.innerHTML = `
-                <video 
-                    id="video-player" 
-                    class="w-full h-full" 
-                    controls 
-                    crossorigin 
-                    playsinline
-                    preload="metadata"
-                    poster="{{ episode.thumbnail_url or content.thumbnail_url or '/static/images/default-poster.jpg' }}">
-                    <p class="text-white p-4">Your browser does not support the video tag.</p>
-                </video>
-            `;
-            
-            // Initialize Plyr with extracted M3U8
             console.log('🔧 M3U8 blob URL created:', m3u8Url);
             console.log('📝 M3U8 content preview:', result.m3u8_content.substring(0, 500));
+            
+            // Restore video element if iframe was used
+            const container = document.querySelector('.video-container');
+            const existingVideo = document.getElementById('video-player');
+            
+            if (!existingVideo || existingVideo.tagName !== 'VIDEO') {
+                container.innerHTML = `
+                    <video 
+                        id="video-player" 
+                        class="w-full h-full" 
+                        controls 
+                        crossorigin 
+                        playsinline
+                        preload="metadata"
+                        poster="{{ episode.thumbnail_url or content.thumbnail_url or '/static/images/default-poster.jpg' }}">
+                        <p class="text-white p-4">Your browser does not support the video tag.</p>
+                    </video>
+                `;
+                
+                // Wait for DOM to update
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
+            
+            // Initialize Plyr with extracted M3U8
             initializePlayer(m3u8Url);
             
         } else {
