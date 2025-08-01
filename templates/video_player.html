@@ -665,12 +665,19 @@ async function switchServer(serverType, serverUrl) {
                             muted: video.muted
                         });
                         
-                        // Force video properties before HLS initialization
-                        video.style.display = 'block';
-                        video.style.width = '100%';
-                        video.style.height = '100%';
-                        video.style.objectFit = 'contain';
-                        video.style.backgroundColor = '#000';
+                        // Force video properties before HLS initialization - ensure visibility
+                        video.style.cssText = `
+                            display: block !important;
+                            width: 100% !important;
+                            height: 100% !important;
+                            object-fit: contain !important;
+                            background-color: #000 !important;
+                            visibility: visible !important;
+                            opacity: 1 !important;
+                            z-index: 10 !important;
+                            position: relative !important;
+                            min-height: 300px !important;
+                        `;
                         video.muted = true; // Start muted to allow autoplay
                         
                         // Add comprehensive event listeners for debugging
@@ -681,6 +688,14 @@ async function switchServer(serverType, serverUrl) {
                                 videoWidth: video.videoWidth,
                                 videoHeight: video.videoHeight
                             });
+                            
+                            // Force video to be visible after metadata loads
+                            if (video.videoWidth > 0 && video.videoHeight > 0) {
+                                video.style.display = 'block';
+                                video.style.visibility = 'visible';
+                                video.style.opacity = '1';
+                                console.log('🎬 Video dimensions confirmed, forcing visibility');
+                            }
                         });
                         video.addEventListener('loadeddata', () => console.log('📺 Video: loadeddata'));
                         video.addEventListener('canplay', () => console.log('📺 Video: canplay'));
@@ -713,7 +728,12 @@ async function switchServer(serverType, serverUrl) {
                                 video.play().then(() => {
                                     console.log('✅ Direct video playback successful');
                                     
-                                    // Only initialize Plyr after confirming video works
+                                    // Ensure video is visible before Plyr initialization
+                                    video.style.display = 'block';
+                                    video.style.visibility = 'visible';
+                                    video.style.opacity = '1';
+                                    
+                                    // Only initialize Plyr after confirming video works and is visible
                                     const plyrInstance = new Plyr(video, {
                                         controls: ['play-large', 'play', 'progress', 'current-time', 'duration', 'mute', 'volume', 'fullscreen'],
                                         volume: 1,
@@ -722,6 +742,17 @@ async function switchServer(serverType, serverUrl) {
                                     
                                     window.player = plyrInstance;
                                     window.hls = hlsInstance;
+                                    
+                                    // Double-check video visibility after Plyr init
+                                    setTimeout(() => {
+                                        const videoElement = document.querySelector('#video-player, .plyr__video-wrapper video');
+                                        if (videoElement) {
+                                            videoElement.style.display = 'block';
+                                            videoElement.style.visibility = 'visible';
+                                            videoElement.style.opacity = '1';
+                                            console.log('🔧 Post-Plyr video visibility enforced');
+                                        }
+                                    }, 500);
                                     
                                     console.log('✅ iQiyi Plyr player ready');
                                 }).catch(error => {
