@@ -627,7 +627,7 @@ async function switchServer(serverType, serverUrl) {
                 
                 const result = await response.json();
                 
-                if (result.success && result.m3u8_content) {
+                if (result.success && (result.m3u8_content || result.m3u8_url)) {
                     console.log('✅ iQiyi M3U8 extracted successfully');
                     
                     // Create new video element with maximum visibility enforcement
@@ -665,7 +665,6 @@ async function switchServer(serverType, serverUrl) {
                                 position: relative !important;
                                 min-height: 400px !important;
                                 max-width: none !important;
-                                border: 2px solid red !important;
                             ">
                             <p class="text-white p-4">Your browser does not support the video tag.</p>
                         </video>
@@ -674,8 +673,17 @@ async function switchServer(serverType, serverUrl) {
                     await new Promise(resolve => setTimeout(resolve, 200));
                     
                     const video = document.getElementById('video-player');
-                    const blob = new Blob([result.m3u8_content], { type: 'application/vnd.apple.mpegurl' });
-                    const blobUrl = URL.createObjectURL(blob);
+                    
+                    // Try direct M3U8 URL first, fallback to blob if needed
+                    let videoUrl;
+                    if (result.m3u8_url) {
+                        videoUrl = result.m3u8_url;
+                        console.log('🔗 Using direct M3U8 URL:', videoUrl);
+                    } else {
+                        const blob = new Blob([result.m3u8_content], { type: 'application/vnd.apple.mpegurl' });
+                        videoUrl = URL.createObjectURL(blob);
+                        console.log('🔗 Using blob URL:', videoUrl);
+                    }
                     
                     if (video) {
                         console.log('🎬 Initializing iQiyi video with HLS');
@@ -739,13 +747,17 @@ async function switchServer(serverType, serverUrl) {
                         
                         if (typeof Hls !== 'undefined' && Hls.isSupported()) {
                             const hlsInstance = new Hls({
-                                debug: false,
+                                debug: true,
                                 enableWorker: true,
                                 lowLatencyMode: false,
-                                backBufferLength: 90
+                                backBufferLength: 90,
+                                maxBufferLength: 30,
+                                maxMaxBufferLength: 300,
+                                maxBufferSize: 60 * 1000 * 1000,
+                                maxBufferHole: 0.5
                             });
                             
-                            hlsInstance.loadSource(blobUrl);
+                            hlsInstance.loadSource(videoUrl);
                             hlsInstance.attachMedia(video);
                             
                             hlsInstance.on(Hls.Events.MANIFEST_PARSED, function() {
@@ -781,7 +793,7 @@ async function switchServer(serverType, serverUrl) {
                                     console.error('❌ Direct video playback failed:', error);
                                     
                                     // Try without HLS.js as fallback
-                                    video.src = blobUrl;
+                                    video.src = videoUrl;
                                     video.play().then(() => {
                                         console.log('✅ Fallback: Direct M3U8 playback works');
                                         video.controls = true;
@@ -802,7 +814,7 @@ async function switchServer(serverType, serverUrl) {
                                     hlsInstance.destroy();
                                     
                                     // Fallback to direct M3U8 playback
-                                    video.src = blobUrl;
+                                    video.src = videoUrl;
                                     video.play().then(() => {
                                         console.log('✅ Fallback direct M3U8 works');
                                         video.controls = true;
@@ -817,7 +829,7 @@ async function switchServer(serverType, serverUrl) {
                         } else {
                             // Safari/iOS fallback with native M3U8 support
                             console.log('🍎 Using Safari native M3U8 support');
-                            video.src = blobUrl;
+                            video.src = videoUrl;
                             video.muted = false;
                             
                             video.addEventListener('loadedmetadata', () => {
