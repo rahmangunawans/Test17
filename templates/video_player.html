@@ -630,66 +630,81 @@ async function switchServer(serverType, serverUrl) {
                 if (result.success && (result.m3u8_content || result.m3u8_url)) {
                     console.log('✅ iQiyi M3U8 extracted successfully');
                     
-                    // Create new video element with maximum visibility enforcement
+                    // CRITICAL TEST: Try direct video without any HLS.js first
                     const container = document.querySelector('.video-container');
-                    
-                    // Clear container and force its styling too
-                    container.style.cssText = `
-                        width: 100% !important;
-                        height: 100% !important;
-                        display: block !important;
-                        position: relative !important;
-                        background: #000 !important;
-                        min-height: 400px !important;
-                    `;
-                    
                     container.innerHTML = `
+                        <div style="background: red; padding: 10px; color: white; margin-bottom: 10px;">
+                            🔴 TESTING: Basic video element (no HLS.js)
+                        </div>
                         <video 
-                            id="video-player" 
+                            id="test-video-basic" 
                             controls 
-                            playsinline
-                            preload="metadata"
-                            style="width: 100%; height: 400px; background: black;">
-                            <p class="text-white p-4">Your browser does not support the video tag.</p>
+                            style="width: 100%; height: 300px; background: blue; border: 3px solid yellow;"
+                            muted
+                            autoplay>
                         </video>
+                        <div style="background: green; padding: 10px; color: white; margin-top: 10px;">
+                            If you see blue/yellow area but no video = M3U8 problem<br>
+                            If you see nothing = CSS/rendering problem
+                        </div>
                     `;
                     
-                    await new Promise(resolve => setTimeout(resolve, 200));
+                    const basicVideo = document.getElementById('test-video-basic');
                     
-                    const video = document.getElementById('video-player');
+                    // Test 1: Try with a known working test video first
+                    console.log('🧪 TEST 1: Loading known working video');
+                    basicVideo.src = 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4';
                     
-                    // Try direct M3U8 URL first, fallback to blob if needed
-                    let videoUrl;
-                    if (result.m3u8_url) {
-                        videoUrl = result.m3u8_url;
-                        console.log('🔗 Using direct M3U8 URL:', videoUrl);
-                    } else {
-                        const blob = new Blob([result.m3u8_content], { type: 'application/vnd.apple.mpegurl' });
-                        videoUrl = URL.createObjectURL(blob);
-                        console.log('🔗 Using blob URL:', videoUrl);
-                    }
-                    
-                    if (video) {
-                        console.log('🎬 Initializing iQiyi video with HLS');
-                        console.log('📊 Video element state:', {
-                            readyState: video.readyState,
-                            networkState: video.networkState,
-                            currentSrc: video.currentSrc,
-                            videoWidth: video.videoWidth,
-                            videoHeight: video.videoHeight,
-                            paused: video.paused,
-                            muted: video.muted
+                    basicVideo.addEventListener('loadedmetadata', () => {
+                        console.log('✅ TEST 1 SUCCESS: Basic video loads and shows');
+                        
+                        // Test 2: Now try with iQiyi M3U8
+                        console.log('🧪 TEST 2: Switching to iQiyi M3U8');
+                        
+                        let videoUrl;
+                        if (result.m3u8_url) {
+                            videoUrl = result.m3u8_url;
+                        } else {
+                            const blob = new Blob([result.m3u8_content], { type: 'application/vnd.apple.mpegurl' });
+                            videoUrl = URL.createObjectURL(blob);
+                        }
+                        
+                        basicVideo.src = videoUrl;
+                        
+                        basicVideo.addEventListener('loadedmetadata', () => {
+                            console.log('✅ TEST 2 SUCCESS: iQiyi M3U8 works in basic video!');
+                            console.log('Video dimensions:', basicVideo.videoWidth, 'x', basicVideo.videoHeight);
+                            
+                            // If we get here, the M3U8 works - replace with proper player
+                            setTimeout(() => {
+                                console.log('🔄 M3U8 confirmed working, building proper player');
+                                container.innerHTML = `
+                                    <video 
+                                        id="video-player" 
+                                        controls 
+                                        style="width: 100%; height: 400px; background: black;"
+                                        src="${videoUrl}"
+                                        autoplay
+                                        muted>
+                                    </video>
+                                `;
+                                
+                                const finalVideo = document.getElementById('video-player');
+                                finalVideo.muted = false; // Unmute after confirmed working
+                                window.player = finalVideo;
+                                
+                            }, 2000);
                         });
                         
-                        // Minimal styling approach
-                        video.style.width = '100%';
-                        video.style.height = '400px';
-                        video.style.backgroundColor = 'black';
-                        video.style.display = 'block';
-                        video.muted = true; // Start muted to allow autoplay
+                        basicVideo.addEventListener('error', (e) => {
+                            console.error('❌ TEST 2 FAILED: iQiyi M3U8 has issues:', e);
+                        });
                         
-                        // Add comprehensive event listeners for debugging
-                        video.addEventListener('loadstart', () => console.log('📺 Video: loadstart'));
+                    });
+                    
+                    basicVideo.addEventListener('error', (e) => {
+                        console.error('❌ TEST 1 FAILED: Basic video rendering broken:', e);
+                    });
                         video.addEventListener('loadedmetadata', () => {
                             console.log('📺 Video: loadedmetadata', {
                                 duration: video.duration,
