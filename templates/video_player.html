@@ -600,17 +600,38 @@ async function switchServer(serverType, serverUrl) {
         const container = document.querySelector('.video-container');
         
         // Clean up existing player
-        if (player) {
-            player.destroy();
-            player = null;
+        if (window.player) {
+            window.player.destroy();
+            window.player = null;
         }
-        if (hls) {
-            hls.destroy();
-            hls = null;
+        if (window.hls) {
+            window.hls.destroy();
+            window.hls = null;
         }
         
-        container.innerHTML = `<iframe src="${serverUrl}" class="w-full h-full rounded-lg" frameborder="0" allowfullscreen></iframe>`;
-        console.log('✅ Embed player loaded');
+        // Create iframe with proper attributes for YouTube embed
+        const iframe = document.createElement('iframe');
+        iframe.src = serverUrl;
+        iframe.className = 'w-full h-full rounded-lg';
+        iframe.frameBorder = '0';
+        iframe.allowFullscreen = true;
+        iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
+        
+        // Clear container and add iframe
+        container.innerHTML = '';
+        container.appendChild(iframe);
+        
+        console.log('✅ Embed player loaded:', serverUrl);
+        console.log('📺 Iframe added to container:', container);
+        console.log('📺 Container HTML:', container.innerHTML);
+        
+        // Add iframe load event listeners for debugging
+        iframe.onload = function() {
+            console.log('✅ Iframe loaded successfully');
+        };
+        iframe.onerror = function(e) {
+            console.error('❌ Iframe failed to load:', e);
+        };
         
     } else if (serverType === 'direct') {
         // Handle direct video URLs
