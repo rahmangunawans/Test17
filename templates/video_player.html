@@ -123,7 +123,7 @@
                 {% if episode.server_embed_url %}
                 <button onclick="switchServer('embed', '{{ episode.server_embed_url }}')" 
                         id="server-embed"
-                        class="server-btn flex items-center px-4 py-2 rounded-lg bg-slate-600 hover:bg-slate-700 text-white font-medium transition-all duration-200">
+                        class="server-btn flex items-center px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium transition-all duration-200">
                     <i class="fas fa-code mr-2"></i>
                     Server 2 (Embed)
                 </button>
@@ -494,7 +494,7 @@ function initializePlayer(source) {
             
             // Watch time restriction for free users
             {% if not can_watch_full and max_watch_time %}
-            const maxWatchSeconds = {{ max_watch_time|int }} * 60;
+            const maxWatchSeconds = {{ max_watch_time|default(5)|int }} * 60;
             player.on('play', function() {
                 setTimeout(function() {
                     player.pause();
@@ -581,7 +581,7 @@ async function switchServer(serverType, serverUrl) {
     
     // Update active button
     document.querySelectorAll('.server-btn').forEach(btn => {
-        btn.classList.remove('bg-green-600', 'bg-orange-600');
+        btn.classList.remove('bg-green-600', 'bg-blue-600', 'bg-orange-600');
         btn.classList.add('bg-slate-600');
     });
     
@@ -590,13 +590,15 @@ async function switchServer(serverType, serverUrl) {
         activeBtn.classList.remove('bg-slate-600');
         if (serverType === 'm3u8') {
             activeBtn.classList.add('bg-green-600');
+        } else if (serverType === 'embed') {
+            activeBtn.classList.add('bg-blue-600');
         } else if (serverType === 'iqiyi') {
             activeBtn.classList.add('bg-orange-600');
         }
     }
     
     if (serverType === 'embed') {
-        // Handle embed URLs (like YouTube)
+        // Handle embed URLs
         const container = document.querySelector('.video-container');
         
         // Clean up existing player
@@ -609,38 +611,19 @@ async function switchServer(serverType, serverUrl) {
             window.hls = null;
         }
         
-        // Try a completely simple approach with working embed
-        container.style.cssText = 'position: relative; width: 100%; height: 400px; background: #000; z-index: 1;';
-        
-        const embedHtml = `
+        // Create iframe for embed server
+        container.innerHTML = `
             <iframe 
                 src="${serverUrl}" 
-                width="100%" 
-                height="400" 
+                class="w-full h-full rounded-lg" 
                 frameborder="0" 
                 allowfullscreen
-                style="display: block; background: white; z-index: 10;">
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                style="width: 100%; height: 100%; min-height: 400px; display: block; background: #000;">
             </iframe>
         `;
         
-        // Clear container and add iframe HTML
-        container.innerHTML = embedHtml;
-        
-        console.log('✅ Embed player loaded with test video');
-        console.log('📺 Container:', container);
-        console.log('📺 Container HTML:', container.innerHTML);
-        
-        // Check if iframe is visible after 1 second
-        setTimeout(() => {
-            const iframe = container.querySelector('iframe');
-            if (iframe) {
-                console.log('📺 Iframe check - Visible:', iframe.offsetWidth > 0 && iframe.offsetHeight > 0);
-                console.log('📺 Iframe dimensions:', iframe.offsetWidth, 'x', iframe.offsetHeight);
-                console.log('📺 Iframe computed style:', window.getComputedStyle(iframe).display);
-            } else {
-                console.error('❌ No iframe found in container');
-            }
-        }, 1000);
+        console.log('✅ Embed server loaded:', serverUrl);
         
     } else if (serverType === 'direct') {
         // Handle direct video URLs
