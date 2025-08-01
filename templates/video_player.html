@@ -633,35 +633,42 @@ async function switchServer(serverType, serverUrl) {
         
         // Load iframe after short delay to ensure container is ready
         setTimeout(() => {
+            // Use the test embed URL provided by user
+            const testEmbedUrl = "https://www.mp4upload.com/embed-32m2mnpv72pb.html";
+            
             container.innerHTML = `
                 <div class="w-full bg-black rounded-lg overflow-hidden" style="height: 500px;">
                     <iframe 
-                        id="yourupload-iframe"
-                        src="${serverUrl}" 
-                        width="100%" 
-                        height="500"
+                        id="embed-iframe"
+                        src="${testEmbedUrl}" 
                         frameborder="0" 
+                        marginwidth="0" 
+                        marginheight="0" 
+                        scrolling="no" 
+                        width="100%" 
+                        height="480"
                         allowfullscreen
-                        webkitallowfullscreen
-                        mozallowfullscreen
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
                         style="width: 100%; height: 100%; border: none; display: block; background: #000;">
                     </iframe>
+                </div>
+                <div class="mt-2 text-center">
+                    <p class="text-sm text-gray-400">Testing mp4upload.com embed (as requested)</p>
+                    <p class="text-xs text-gray-500">Original URL: ${serverUrl}</p>
                 </div>
             `;
             
             // Add event listeners for debugging
-            const iframe = document.getElementById('yourupload-iframe');
+            const iframe = document.getElementById('embed-iframe');
             if (iframe) {
                 iframe.onload = function() {
-                    console.log('✅ YouUpload iframe loaded successfully');
+                    console.log('✅ mp4upload iframe loaded successfully');
                 };
                 iframe.onerror = function() {
-                    console.error('❌ YouUpload iframe failed to load');
+                    console.error('❌ mp4upload iframe failed to load');
                 };
             }
             
-            console.log('✅ Server 2 YouUpload iframe created');
+            console.log('✅ Server 2 mp4upload iframe created (test embed)');
         }, 500);
         
     } else if (serverType === 'direct') {
