@@ -618,14 +618,91 @@ async function switchServer(serverType, serverUrl) {
         if (serverUrl.includes('iq.com/play/') || serverUrl.includes('iqiyi.com/play/')) {
             console.log('🔄 Extracting M3U8 from iQiyi play URL...');
             
-            // Clear video completely before switching
-            const existingVideo = document.getElementById('video-player');
-            if (existingVideo) {
-                existingVideo.src = '';
-                existingVideo.load();
-            }
+            // Show loading message
+            const container = document.querySelector('.video-container');
+            container.innerHTML = `
+                <div class="w-full h-full flex items-center justify-center bg-black text-white">
+                    <div class="text-center">
+                        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-red-500 mx-auto mb-4"></div>
+                        <p>Loading iQiyi stream...</p>
+                    </div>
+                </div>
+            `;
             
-            await extractIqiyiM3U8(serverUrl);
+            try {
+                const response = await fetch('/admin/api/extract-iqiyi-m3u8', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ iqiyi_play_url: serverUrl })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success && result.m3u8_content) {
+                    console.log('✅ iQiyi M3U8 extracted successfully');
+                    
+                    // Create new video element
+                    container.innerHTML = `
+                        <video 
+                            id="video-player" 
+                            class="w-full h-full" 
+                            controls 
+                            crossorigin 
+                            playsinline
+                            preload="metadata"
+                            style="background: #000;">
+                            <p class="text-white p-4">Your browser does not support the video tag.</p>
+                        </video>
+                    `;
+                    
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                    
+                    const video = document.getElementById('video-player');
+                    const blob = new Blob([result.m3u8_content], { type: 'application/vnd.apple.mpegurl' });
+                    const blobUrl = URL.createObjectURL(blob);
+                    
+                    if (video && typeof Hls !== 'undefined' && Hls.isSupported()) {
+                        console.log('🎬 Initializing iQiyi HLS player');
+                        
+                        const hlsInstance = new Hls({
+                            debug: false,
+                            enableWorker: true,
+                            lowLatencyMode: true
+                        });
+                        
+                        hlsInstance.loadSource(blobUrl);
+                        hlsInstance.attachMedia(video);
+                        
+                        hlsInstance.on(Hls.Events.MANIFEST_PARSED, function() {
+                            console.log('✅ iQiyi stream ready');
+                            
+                            const plyrInstance = new Plyr(video, {
+                                controls: ['play-large', 'play', 'progress', 'current-time', 'duration', 'mute', 'volume', 'settings', 'fullscreen']
+                            });
+                            
+                            window.player = plyrInstance;
+                            window.hls = hlsInstance;
+                            
+                            // Auto-play
+                            setTimeout(() => {
+                                video.play().catch(e => console.log('Auto-play blocked'));
+                            }, 500);
+                        });
+                        
+                        hlsInstance.on(Hls.Events.ERROR, function(event, data) {
+                            console.error('❌ iQiyi HLS Error:', data);
+                        });
+                    } else {
+                        video.src = blobUrl;
+                        video.play().catch(e => console.log('Auto-play blocked'));
+                    }
+                } else {
+                    throw new Error(result.error || 'Failed to extract M3U8');
+                }
+            } catch (error) {
+                console.error('❌ iQiyi extraction failed:', error);
+                container.innerHTML = `<iframe src="${serverUrl}" class="w-full h-full rounded-lg" frameborder="0" allowfullscreen></iframe>`;
+            }
         } else {
             // Handle M3U8 URLs with Plyr
             // Restore video element if iframe was used
