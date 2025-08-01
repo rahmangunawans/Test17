@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "responsive_base.html" %}
 
 {% block title %}{{ episode.title }} - {{ content.title }}{% endblock %}
 
@@ -408,10 +408,6 @@
     </div>
 </div>
 </div>
-
-<!-- Plyr.io and HLS.js Scripts -->
-<script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.15/dist/hls.min.js"></script>
 
 <script>
 console.log('🎬 AniFlix Plyr.io Video Player Starting...');
