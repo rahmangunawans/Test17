@@ -590,27 +590,36 @@ function switchServer(serverType, serverUrl) {
         initializePlayer(serverUrl);
         
     } else {
-        // Handle M3U8 URLs
+        // Handle M3U8 and iQiyi URLs
         const video = document.getElementById('video-player');
         
-        // Restore video element if iframe was used
-        if (!video) {
+        // Check if URL is an iQiyi page (not a direct stream)
+        if (serverUrl.includes('iq.com') || serverUrl.includes('iqiyi.com')) {
+            // Handle iQiyi URLs as iframe embed
             const container = document.querySelector('.video-container');
-            container.innerHTML = `
-                <video 
-                    id="video-player" 
-                    class="w-full h-full" 
-                    controls 
-                    crossorigin 
-                    playsinline
-                    preload="metadata"
-                    poster="{{ episode.thumbnail_url or content.thumbnail_url or '/static/images/default-poster.jpg' }}">
-                    <p class="text-white p-4">Your browser does not support the video tag.</p>
-                </video>
-            `;
+            container.innerHTML = `<iframe src="${serverUrl}" class="w-full h-full rounded-lg" frameborder="0" allowfullscreen></iframe>`;
+            console.log('✅ iQiyi iframe player loaded');
+        } else {
+            // Handle M3U8 URLs with Plyr
+            // Restore video element if iframe was used
+            if (!video) {
+                const container = document.querySelector('.video-container');
+                container.innerHTML = `
+                    <video 
+                        id="video-player" 
+                        class="w-full h-full" 
+                        controls 
+                        crossorigin 
+                        playsinline
+                        preload="metadata"
+                        poster="{{ episode.thumbnail_url or content.thumbnail_url or '/static/images/default-poster.jpg' }}">
+                        <p class="text-white p-4">Your browser does not support the video tag.</p>
+                    </video>
+                `;
+            }
+            
+            initializePlayer(serverUrl);
         }
-        
-        initializePlayer(serverUrl);
     }
 }
 
