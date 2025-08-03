@@ -16,6 +16,7 @@ Migration complete: Successfully migrated AniFlix from Replit Agent to standard 
 Migration to Replit Standard: Fixed JavaScript syntax errors in templates and enhanced admin content deletion with better logging and error handling - August 3, 2025.
 Server 3 Removal: Completely removed Server 3 (iQiyi streaming server) from the platform including all scraper files, templates, forms, JavaScript handlers, and API endpoints. Server 3 button now displays as disabled with error message. Only Server 1 (M3U8) and Server 2 (Embed) remain active - August 3, 2025.
 IQiyi Scraper Enhancement: Replaced simple scraper with professional enhanced scraper (single file: iqiyi_scraper.py) with comprehensive data structures and better episode detection for admin auto-scrape functionality - August 3, 2025.
+Clean Folder Structure: Maintained clean project structure with only 1 IQiyi file (iqiyi_scraper.py) as requested, removed all redundant IQiyi files and debug scripts - August 3, 2025.
 
 ## System Architecture
 
