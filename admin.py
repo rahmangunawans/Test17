@@ -628,7 +628,7 @@ def api_scrape_episode():
             }), 400
         
         # Import enhanced scraping functions
-        from enhanced_iqiyi_scraper import scrape_single_episode
+        from iqiyi_scrapers.scrapers.enhanced_iqiyi_scraper import scrape_single_episode
         
         # Scrape single episode using enhanced scraper
         result = scrape_single_episode(iqiyi_url)
@@ -675,7 +675,7 @@ def api_scrape_all_playlist():
             }), 400
         
         # Import enhanced scraping functions
-        from enhanced_iqiyi_scraper import scrape_all_episodes_playlist
+        from iqiyi_scrapers.scrapers.enhanced_iqiyi_scraper import scrape_all_episodes_playlist
         
         # Scrape all episodes from playlist using enhanced scraper
         max_episodes = data.get('max_episodes', 50)  # Default to 50 if not specified
