@@ -310,9 +310,51 @@ class EnhancedIQiyiScraper:
                 return True
         
         return False
+    
+    def _extract_current_episode_info(self, player_data: Dict[str, Any]) -> Optional[EpisodeInfo]:
+        """Extract information for current episode when only single episode is available"""
+        try:
+            props = player_data.get('props', {})
+            initial_state = props.get('initialState', {})
+            play = initial_state.get('play', {})
+            
+            # Extract current video info
+            cur_video_info = play.get('curVideoInfo', {})
+            video_info = play.get('videoInfo', {})
+            album_info = play.get('albumInfo', {})
+            
+            # Try to get episode title and number
+            title = cur_video_info.get('name') or video_info.get('name') or album_info.get('name', 'Unknown Episode')
+            
+            # Extract episode number from title
+            import re
+            episode_num_match = re.search(r'[Ee]pisode\s*(\d+)', title)
+            episode_number = int(episode_num_match.group(1)) if episode_num_match else 1
+            
+            # Get other info
+            description = cur_video_info.get('desc') or video_info.get('desc') or album_info.get('desc', '')
+            thumbnail = (cur_video_info.get('thumbnailUrl') or 
+                        video_info.get('thumbnailUrl') or 
+                        album_info.get('thumbnailUrl1', ''))
+            
+            episode_info = EpisodeInfo(
+                title=title,
+                episode_number=episode_number,
+                url=self.url,
+                content_type="episode",
+                description=description,
+                thumbnail=thumbnail,
+                is_valid=True
+            )
+            
+            return episode_info
+            
+        except Exception as e:
+            print(f"❌ Error extracting current episode info: {e}")
+            return None
 
     def extract_all_episodes(self, max_episodes: int = 100) -> List[EpisodeInfo]:
-        """Extract all episodes from playlist, filtering out previews and trailers"""
+        """Extract all episodes from playlist, with smart episode detection"""
         print("📺 Extracting all episodes from playlist...")
         
         player_data = self.get_player_data()
@@ -333,7 +375,22 @@ class EnhancedIQiyiScraper:
             cache_playlist = play.get('cachePlayList', {})
             episode_data = cache_playlist.get('1', [])
             
+            # If no episode data found, check if this is a single episode URL
             if not episode_data:
+                album_info = play.get('albumInfo', {})
+                total_episodes = album_info.get('total', 0)
+                album_name = album_info.get('name', '')
+                
+                if total_episodes > 1:
+                    print(f"🔍 Detected single episode URL for series '{album_name}' with {total_episodes} total episodes")
+                    print("💡 Tip: For better results, use the main album/series URL instead of individual episode URLs")
+                    
+                    # Try to create a single episode entry from current page
+                    current_episode = self._extract_current_episode_info(player_data)
+                    if current_episode:
+                        print(f"✅ Extracted current episode: {current_episode.title}")
+                        return [current_episode]
+                
                 print("❌ No episode data found in playlist")
                 return []
             
@@ -445,7 +502,7 @@ def scrape_single_episode(url: str) -> dict:
 
 def scrape_all_episodes_playlist(url: str, max_episodes: int = 100) -> dict:
     """
-    Scrape all episodes from playlist
+    Scrape all episodes from playlist with smart URL detection
     """
     try:
         scraper = EnhancedIQiyiScraper(url)
@@ -465,17 +522,32 @@ def scrape_all_episodes_playlist(url: str, max_episodes: int = 100) -> dict:
                     'is_valid': episode.is_valid
                 })
             
+            # Check if this was a single episode URL
+            if len(episodes_list) == 1:
+                # Get album info to provide better context
+                player_data = scraper.get_player_data()
+                album_info = player_data.get('props', {}).get('initialState', {}).get('play', {}).get('albumInfo', {})
+                total_episodes = album_info.get('total', 0)
+                series_name = album_info.get('name', '')
+                
+                if total_episodes > 1:
+                    message = f'Single episode extracted from "{series_name}" series (Total: {total_episodes} episodes). Tip: Use the main series/album URL to get all episodes at once.'
+                else:
+                    message = f'Successfully extracted 1 episode'
+            else:
+                message = f'Successfully extracted {len(episodes_list)} episodes from playlist'
+            
             return {
                 'success': True,
                 'total_episodes': len(episodes_list),
                 'valid_episodes': len(episodes_list),
                 'episodes': episodes_list,
-                'message': f'Successfully extracted {len(episodes_list)} episodes from playlist'
+                'message': message
             }
         else:
             return {
                 'success': False,
-                'error': 'No episodes found in playlist'
+                'error': 'No episodes found. This might be a single episode URL or the playlist structure has changed.'
             }
             
     except Exception as e:
