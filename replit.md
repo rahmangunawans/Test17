@@ -9,6 +9,7 @@ Database preference: Always use Supabase PostgreSQL database exclusively - no fa
 Code cleanliness: Remove redundant maintenance and setup scripts to keep codebase clean.
 Code organization: Organized IQiyi scraping files into clean folder structure (iqiyi_scrapers package) - August 3, 2025.
 IQiyi scraping: Enhanced scraper with smart episode detection to handle single episode URLs vs album URLs - August 3, 2025.
+IQiyi scraping improvements: Implemented 3-tier professional scraping system (Standard → Professional → Advanced) with comprehensive episode extraction from single episode URLs - August 3, 2025.
 
 ## System Architecture
 
@@ -30,7 +31,7 @@ IQiyi scraping: Enhanced scraper with smart episode detection to handle single e
 - **Content Management**: Support for anime series, movies, and donghua with episode organization, genre categorization, and filtering. Admin interface for CRUD operations on content and users.
 - **Video Streaming**: Plyr.io player with HLS.js support for M3U8 streams, progress tracking, resume functionality, quality controls, and speed settings. Supports M3U8, Embed, and IQiyi streaming servers. VIP-exclusive download functionality is available.
 - **Admin Panel**: Dashboard for statistics, user management, content/episode management, system settings, and maintenance controls.
-- **Data Integration**: AniList and MyAnimeList API integration for automated content population (title, description, genres, studio, episodes, status, ratings, thumbnails, character overview, trailer URLs). IQiyi scraping for episode URLs and subtitles with smart detection for single episode vs album URLs.
+- **Data Integration**: AniList and MyAnimeList API integration for automated content population (title, description, genres, studio, episodes, status, ratings, thumbnails, character overview, trailer URLs). IQiyi scraping with 3-tier professional system: Standard playlist extraction → Professional scraper with comprehensive data structures → Advanced URL pattern generation. Capable of extracting complete episode lists from single episode URLs with DASH URLs, subtitles, and metadata.
 
 ## External Dependencies
 

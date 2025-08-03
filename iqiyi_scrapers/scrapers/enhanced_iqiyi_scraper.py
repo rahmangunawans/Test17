@@ -516,22 +516,22 @@ def scrape_all_episodes_playlist(url: str, max_episodes: int = 100) -> dict:
         scraper = EnhancedIQiyiScraper(url)
         episodes_data = scraper.extract_all_episodes(max_episodes=max_episodes)
         
-        # If standard method only returns 1 episode, try advanced method
+        # If standard method only returns 1 episode, try professional method
         if len(episodes_data) <= 1:
-            print("🚀 Standard method returned only 1 episode, trying advanced method...")
+            print("🚀 Standard method returned only 1 episode, trying professional method...")
             
-            # Import and use advanced scraper
-            from .advanced_episode_scraper import scrape_episodes_advanced
-            advanced_result = scrape_episodes_advanced(url)
+            # Import and use professional scraper
+            from .professional_iqiyi_scraper import scrape_episodes_professional
+            professional_result = scrape_episodes_professional(url)
             
-            if advanced_result.get('success') and len(advanced_result.get('episodes', [])) > 1:
-                print(f"✅ Advanced method found {len(advanced_result['episodes'])} episodes!")
+            if professional_result.get('success') and len(professional_result.get('episodes', [])) > 1:
+                print(f"✅ Professional method found {len(professional_result['episodes'])} episodes!")
                 return {
                     'success': True,
-                    'total_episodes': advanced_result['total_episodes'],
-                    'valid_episodes': advanced_result['total_episodes'],
-                    'episodes': advanced_result['episodes'],
-                    'message': f'Advanced scraper extracted {advanced_result["total_episodes"]} episodes successfully using URL pattern generation'
+                    'total_episodes': professional_result['total_episodes'],
+                    'valid_episodes': professional_result['valid_episodes'],
+                    'episodes': professional_result['episodes'],
+                    'message': professional_result['message']
                 }
         
         # Standard method results
