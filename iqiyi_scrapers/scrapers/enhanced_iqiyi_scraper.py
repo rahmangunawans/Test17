@@ -509,12 +509,32 @@ def scrape_single_episode(url: str) -> dict:
 
 def scrape_all_episodes_playlist(url: str, max_episodes: int = 100) -> dict:
     """
-    Scrape all episodes from playlist with smart URL detection
+    Scrape all episodes from playlist with smart URL detection and advanced fallback
     """
     try:
+        # First try the standard method
         scraper = EnhancedIQiyiScraper(url)
         episodes_data = scraper.extract_all_episodes(max_episodes=max_episodes)
         
+        # If standard method only returns 1 episode, try advanced method
+        if len(episodes_data) <= 1:
+            print("🚀 Standard method returned only 1 episode, trying advanced method...")
+            
+            # Import and use advanced scraper
+            from .advanced_episode_scraper import scrape_episodes_advanced
+            advanced_result = scrape_episodes_advanced(url)
+            
+            if advanced_result.get('success') and len(advanced_result.get('episodes', [])) > 1:
+                print(f"✅ Advanced method found {len(advanced_result['episodes'])} episodes!")
+                return {
+                    'success': True,
+                    'total_episodes': advanced_result['total_episodes'],
+                    'valid_episodes': advanced_result['total_episodes'],
+                    'episodes': advanced_result['episodes'],
+                    'message': f'Advanced scraper extracted {advanced_result["total_episodes"]} episodes successfully using URL pattern generation'
+                }
+        
+        # Standard method results
         if episodes_data:
             episodes_list = []
             for episode in episodes_data:
@@ -538,7 +558,7 @@ def scrape_all_episodes_playlist(url: str, max_episodes: int = 100) -> dict:
                 series_name = album_info.get('name', '')
                 
                 if total_episodes > 1:
-                    message = f'Single episode extracted from "{series_name}" series (Total: {total_episodes} episodes). Tip: Use the main series/album URL to get all episodes at once.'
+                    message = f'Single episode extracted from "{series_name}" series (Total: {total_episodes} episodes). Advanced method was attempted but may have failed.'
                 else:
                     message = f'Successfully extracted 1 episode'
             else:
@@ -554,7 +574,7 @@ def scrape_all_episodes_playlist(url: str, max_episodes: int = 100) -> dict:
         else:
             return {
                 'success': False,
-                'error': 'No episodes found. This might be a single episode URL or the playlist structure has changed.'
+                'error': 'No episodes found. Both standard and advanced methods failed.'
             }
             
     except Exception as e:
