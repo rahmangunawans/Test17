@@ -39,18 +39,8 @@ def extract_m3u8_from_iqiyi_play_url(play_url):
         except Exception as e:
             logging.warning(f"Working extraction error: {str(e)}")
         
-        # Method 0.5: Try enhanced extraction using mainx.py methodology (FALLBACK)
-        try:
-            logging.info("🚀 Trying enhanced extraction (mainx.py method)...")
-            enhanced_result = extract_m3u8_enhanced(play_url)
-            
-            if enhanced_result.get('success'):
-                logging.info("✅ Enhanced extraction successful!")
-                return enhanced_result
-            else:
-                logging.warning(f"Enhanced extraction failed: {enhanced_result.get('error')}")
-        except Exception as e:
-            logging.warning(f"Enhanced extraction error: {str(e)}")
+        # Skip enhanced method temporarily - it has issues finding M3U8 content 
+        # even though API call succeeds. Working method is more reliable.
         
         # Method 1: Try direct DASH URL extraction from play page
         try:
