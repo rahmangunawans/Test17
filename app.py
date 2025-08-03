@@ -103,54 +103,15 @@ app.register_blueprint(subscription_bp, url_prefix='/subscription')
 app.register_blueprint(admin_bp, url_prefix='/admin')
 app.register_blueprint(notifications_bp, url_prefix='/api')
 
-# Add API endpoint for M3U8 extraction (accessible from video player)
+# Server 3 (iQiyi) endpoint disabled
 @app.route('/api/extract-iqiyi-m3u8', methods=['POST'])
 def extract_iqiyi_m3u8():
-    """Public endpoint for extracting M3U8 from iQiyi play URL"""
-    try:
-        data = request.get_json()
-        iqiyi_play_url = data.get('iqiyi_play_url', '').strip()
-        
-        if not iqiyi_play_url:
-            return jsonify({
-                'success': False,
-                'error': 'iQiyi play URL is required'
-            }), 400
-        
-        # Validate iQiyi play URL format
-        if 'iq.com/play/' not in iqiyi_play_url:
-            return jsonify({
-                'success': False,
-                'error': 'Invalid iQiyi play URL format'
-            }), 400
-        
-        logging.info(f"Extracting M3U8 from iQiyi play URL: {iqiyi_play_url[:100]}...")
-        
-        # Extract M3U8 using the play URL extractor
-        from iqiyi_scrapers.extractors.iqiyi_play_extractor import extract_m3u8_from_iqiyi_play_url
-        result = extract_m3u8_from_iqiyi_play_url(iqiyi_play_url)
-        
-        if result['success']:
-            return jsonify({
-                'success': True,
-                'm3u8_content': result['m3u8_content'],
-                'method': result['method'],
-                'episode_info': result.get('episode_info', {}),
-                'message': 'M3U8 berhasil diekstrak dari iQiyi play URL'
-            })
-        else:
-            return jsonify({
-                'success': False,
-                'error': result.get('error', 'Failed to extract M3U8 from iQiyi play URL'),
-                'details': 'Periksa apakah URL play iQiyi masih valid dan dapat diakses'
-            }), 400
-            
-    except Exception as e:
-        logging.error(f"iQiyi play M3U8 extraction error: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': f'Error extracting M3U8: {str(e)}'
-        }), 500
+    """Disabled endpoint - Server 3 (iQiyi) has been removed"""
+    return jsonify({
+        'success': False,
+        'error': 'Server 3 (iQiyi) has been disabled',
+        'message': 'This feature is no longer available'
+    }), 410  # HTTP 410 Gone
 
 # Emergency admin access routes (must be after blueprints)
 @app.route('/emergency-admin-access')

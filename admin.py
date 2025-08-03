@@ -10,8 +10,8 @@ from anilist_integration import anilist_service
 import logging
 import json
 import re
-from iqiyi_scrapers.scrapers.iqiyi_scraper import scrape_iqiyi_episode, scrape_iqiyi_playlist
-from iqiyi_scrapers.scrapers.iqiyi_m3u8_scraper import IQiyiM3U8Scraper
+# Server 3 (iQiyi) scraper removed - import disabled
+# Server 3 (iQiyi) M3U8 scraper removed - import disabled
 
 admin_bp = Blueprint('admin', __name__)
 
@@ -745,8 +745,8 @@ def api_scrape_all_playlist():
                 print("🔄 Attempting fallback to basic scraping...")
                 
                 try:
-                    from iqiyi_fallback_scraper import scrape_iqiyi_playlist_fallback
-                    fallback_result = scrape_iqiyi_playlist_fallback(iqiyi_url, max_episodes=max_episodes)
+                    # Server 3 (iQiyi) scraper disabled - no fallback scraping
+                    fallback_result = {'success': False, 'error': 'Server 3 (iQiyi) has been disabled'}
                     
                     if fallback_result.get('success'):
                         # Convert fallback scraping format to expected format
@@ -866,7 +866,7 @@ def api_auto_add_episodes():
                     description=episode_data.get('description'),  # TEXT field, no limit needed
                     server_m3u8_url=episode_data.get('m3u8_content'),  # TEXT field, no limit needed
                     server_embed_url=episode_data.get('url'),  # IQiyi URL sebagai embed fallback
-                    iqiyi_play_url=episode_data.get('url'),  # IQiyi play URL untuk Server 3
+                    iqiyi_play_url='',  # Server 3 disabled - no iQiyi URLs
                     thumbnail_url=episode_data.get('thumbnail_url')
                 )
                 
@@ -1327,81 +1327,32 @@ def extract_dash_m3u8():
         
         logging.info(f"Extracting M3U8 from DASH URL: {dash_url[:100]}...")
         
-        # Extract M3U8 using new scraper
-        scraper = IQiyiM3U8Scraper()
-        m3u8_url = scraper.extract_m3u8_from_dash_url(dash_url)
-        result = {'success': bool(m3u8_url), 'm3u8_content': m3u8_url, 'method': 'new_scraper'}
-        
-        if result['success']:
-            return jsonify({
-                'success': True,
-                'm3u8_content': result['m3u8_content'],
-                'method': result['method'],
-                'message': f'M3U8 berhasil diekstrak menggunakan method {result["method"]}'
-            })
-        else:
-            return jsonify({
-                'success': False,
-                'error': result.get('error', 'Failed to extract M3U8 from DASH URL'),
-                'details': 'Periksa apakah DASH URL masih valid dan dapat diakses'
-            }), 400
-            
-    except Exception as e:
-        logging.error(f"DASH M3U8 extraction error: {str(e)}")
+        # Server 3 (iQiyi) scraper disabled - return error
         return jsonify({
             'success': False,
-            'error': f'Error extracting M3U8: {str(e)}'
-        }), 500
+            'error': 'Server 3 (iQiyi) DASH extraction has been disabled',
+            'message': 'This feature is no longer available'
+        }), 410  # HTTP 410 Gone
+            
+    except Exception as e:
+        logging.error(f"DASH M3U8 extraction error (disabled): {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': 'Server 3 (iQiyi) has been disabled',
+            'message': 'This feature is no longer available'
+        }), 410
 
 @admin_bp.route('/api/extract-iqiyi-m3u8', methods=['POST'])
 @login_required
 @admin_required
 def extract_iqiyi_m3u8():
-    """Extract M3U8 from iQiyi play URL"""
-    try:
-        data = request.get_json()
-        iqiyi_play_url = data.get('iqiyi_play_url', '').strip()
-        
-        if not iqiyi_play_url:
-            return jsonify({
-                'success': False,
-                'error': 'iQiyi play URL is required'
-            }), 400
-        
-        # Validate iQiyi play URL format
-        if 'iq.com/play/' not in iqiyi_play_url:
-            return jsonify({
-                'success': False,
-                'error': 'Invalid iQiyi play URL format'
-            }), 400
-        
-        logging.info(f"Extracting M3U8 from iQiyi play URL: {iqiyi_play_url[:100]}...")
-        
-        # Extract M3U8 using the play URL extractor
-        from iqiyi_play_extractor import extract_m3u8_from_iqiyi_play_url
-        result = extract_m3u8_from_iqiyi_play_url(iqiyi_play_url)
-        
-        if result['success']:
-            return jsonify({
-                'success': True,
-                'm3u8_content': result['m3u8_content'],
-                'method': result['method'],
-                'episode_info': result.get('episode_info', {}),
-                'message': f'M3U8 berhasil diekstrak dari iQiyi play URL'
-            })
-        else:
-            return jsonify({
-                'success': False,
-                'error': result.get('error', 'Failed to extract M3U8 from iQiyi play URL'),
-                'details': 'Periksa apakah URL play iQiyi masih valid dan dapat diakses'
-            }), 400
-            
-    except Exception as e:
-        logging.error(f"iQiyi play M3U8 extraction error: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': f'Error extracting M3U8: {str(e)}'
-        }), 500
+    """Disabled - Server 3 (iQiyi) has been removed"""
+    return jsonify({
+        'success': False,
+        'error': 'Server 3 (iQiyi) has been disabled',
+        'message': 'This feature is no longer available'
+    }), 410  # HTTP 410 Gone
+
 
 @admin_bp.route('/api/extract-yourupload-video', methods=['POST'])
 @login_required  

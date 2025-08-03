@@ -130,11 +130,11 @@
                 {% endif %}
                 
                 {% if episode.iqiyi_play_url %}
-                <button onclick="switchServer('iqiyi', '{{ episode.iqiyi_play_url }}')" 
+                <button disabled
                         id="server-iqiyi"
-                        class="server-btn flex items-center px-4 py-2 rounded-lg bg-orange-600 hover:bg-orange-700 text-white font-medium transition-all duration-200">
-                    <i class="fas fa-tachometer-alt mr-2"></i>
-                    Server 3 (iQiyi)
+                        class="server-btn flex items-center px-4 py-2 rounded-lg bg-gray-600 text-gray-400 font-medium cursor-not-allowed">
+                    <i class="fas fa-ban mr-2"></i>
+                    Server 3 (Disabled)
                 </button>
                 {% endif %}
                 
@@ -743,113 +743,37 @@ async function switchServer(serverType, serverUrl) {
             video = document.getElementById('video-player');
         }
         
-        // Check if URL is an iQiyi play page (extract M3U8)
+        // Check if URL is an iQiyi play page (disabled)
         if (serverType === 'iqiyi' && (serverUrl.includes('iq.com/play/') || serverUrl.includes('iqiyi.com/play/'))) {
-            console.log('🔄 Extracting M3U8 from iQiyi play URL...');
+            console.log('❌ Server 3 (iQiyi extraction) has been disabled');
             
-            try {
-                const response = await fetch('/api/extract-iqiyi-m3u8', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ iqiyi_play_url: serverUrl })
-                });
-                
-                const result = await response.json();
-                
-                if (result.success && (result.m3u8_content || result.m3u8_url)) {
-                    console.log('✅ iQiyi M3U8 extracted successfully');
-                    
-                    let videoUrl;
-                    if (result.m3u8_url) {
-                        videoUrl = result.m3u8_url;
-                    } else {
-                        const blob = new Blob([result.m3u8_content], { type: 'application/vnd.apple.mpegurl' });
-                        videoUrl = URL.createObjectURL(blob);
-                    }
-                    
-                    // Add debugging for iQiyi M3U8
-                    console.log('🎬 iQiyi M3U8 URL:', videoUrl);
-                    console.log('🎬 M3U8 content size:', result.m3u8_content ? result.m3u8_content.length : 'N/A');
-                    
-                    // Try simple HTML5 video first for iQiyi
-                    const newVideo = document.getElementById('video-player');
-                    newVideo.crossOrigin = null; // Remove CORS for iQiyi
-                    newVideo.src = videoUrl;
-                    newVideo.load();
-                    
-                    // Add event listeners for debugging
-                    newVideo.addEventListener('loadstart', () => console.log('✅ iQiyi: loadstart'));
-                    newVideo.addEventListener('loadedmetadata', () => console.log('✅ iQiyi: metadata loaded'));
-                    newVideo.addEventListener('canplay', () => console.log('✅ iQiyi: can play'));
-                    newVideo.addEventListener('error', (e) => {
-                        console.error('❌ iQiyi video error:', e);
-                        console.error('❌ Error details:', newVideo.error);
-                        
-                        // Fallback: Try with HLS.js
-                        console.log('🔄 Trying iQiyi with HLS.js...');
-                        initializePlayer(videoUrl);
-                    });
-                    
-                    // Initialize Plyr on the video
-                    if (player) {
-                        player.destroy();
-                    }
-                    
-                    player = new Plyr(newVideo, {
-                        captions: { active: true, update: true, language: 'en' },
-                        controls: [
-                            'play-large', 'play', 'progress', 'current-time', 'duration', 
-                            'mute', 'volume', 'captions', 'settings', 'pip', 'airplay', 'fullscreen'
-                        ],
-                        settings: ['captions', 'quality', 'speed'],
-                        quality: { default: 720, options: [4320, 2880, 2160, 1440, 1080, 720, 576, 480, 360, 240] },
-                        speed: { selected: 1, options: [0.5, 0.75, 1, 1.25, 1.5, 2] }
-                    });
-                    
-                    window.player = player;
-                    console.log('✅ iQiyi Plyr player initialized');
-                } else {
-                    throw new Error(result.error || 'Failed to extract M3U8');
-                }
-            } catch (error) {
-                console.error('❌ iQiyi extraction failed:', error);
+            // Show disabled message instead of trying extraction
+            const container = document.querySelector('.video-container');
+            container.style.cssText = 'position: relative; width: 100%; height: 400px; background: #1a1a1a; border-radius: 8px; overflow: hidden; display: flex; align-items: center; justify-content: center;';
+            container.innerHTML = `
+                <div class="text-center text-white p-8">
+                    <i class="fas fa-ban text-6xl text-red-500 mb-4"></i>
+                    <h3 class="text-xl font-bold mb-2">Server 3 Telah Dinonaktifkan</h3>
+                    <p class="text-gray-400">Ekstraksi iQiyi tidak lagi tersedia. Silakan gunakan Server 1 atau Server 2.</p>
+                </div>
+            `;
                 // Fallback to iframe
                 const container = document.querySelector('.video-container');
                 container.innerHTML = `<iframe src="${serverUrl}" class="w-full h-full" frameborder="0" allowfullscreen></iframe>`;
             }
-        } else if (serverType === 'iqiyi' && (serverUrl.includes('youtube.com') || serverUrl.includes('youtu.be') || serverUrl.includes('embed'))) {
-            // Handle Server 3 with non-iQiyi URLs (YouTube, embed, etc.) as iframe
-            console.log('🔄 Loading Server 3 - Non-iQiyi embed (iframe)');
+        } else if (serverType === 'iqiyi') {
+            // Server 3 disabled - show error message
+            console.log('❌ Server 3 has been disabled');
             
             const container = document.querySelector('.video-container');
-            container.style.cssText = 'position: relative; width: 100%; height: 500px; background: #000; border-radius: 8px; overflow: hidden;';
+            container.style.cssText = 'position: relative; width: 100%; height: 400px; background: #1a1a1a; border-radius: 8px; overflow: hidden; display: flex; align-items: center; justify-content: center;';
             container.innerHTML = `
-                <iframe 
-                    id="server3-iframe"
-                    src="${serverUrl}" 
-                    frameborder="0" 
-                    marginwidth="0" 
-                    marginheight="0" 
-                    scrolling="no" 
-                    width="100%" 
-                    height="100%"
-                    allowfullscreen
-                    webkitallowfullscreen
-                    mozallowfullscreen
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
-                    style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; display: block; z-index: 1;">
-                </iframe>
+                <div class="text-center text-white p-8">
+                    <i class="fas fa-ban text-6xl text-red-500 mb-4"></i>
+                    <h3 class="text-xl font-bold mb-2">Server 3 Telah Dinonaktifkan</h3>
+                    <p class="text-gray-400">Server 3 (iQiyi) tidak lagi tersedia. Silakan gunakan Server 1 atau Server 2.</p>
+                </div>
             `;
-            
-            const iframe = document.getElementById('server3-iframe');
-            if (iframe) {
-                iframe.onload = function() {
-                    console.log('✅ Server 3 iframe loaded successfully');
-                };
-                iframe.onerror = function() {
-                    console.error('❌ Server 3 iframe failed to load');
-                };
-            }
             
         } else {
             // Handle M3U8 URLs with Plyr
@@ -893,7 +817,7 @@ function toggleDownloadMenu() {
     alert('VIP Download Feature - Coming Soon!');
 }
 
-// Server 3 (iQiyi) handled via iframe - no extraction needed
+// Server 3 (iQiyi) has been disabled
 
 // Initialize when page loads
 document.addEventListener('DOMContentLoaded', function() {

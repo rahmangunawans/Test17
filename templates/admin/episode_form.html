@@ -78,17 +78,18 @@
                             <p class="text-xs text-gray-400 mt-1">Embed iframe URL for external player</p>
                         </div>
                         
-                        <!-- Server 3: iQiyi Play URL -->
+                        <!-- Server 3: Disabled (iQiyi) -->
                         <div>
-                            <label class="block text-sm font-medium text-gray-300 mb-2">
-                                <i class="fas fa-tachometer-alt mr-1 text-orange-500"></i>
-                                Server 3 - iQiyi Play URL
+                            <label class="block text-sm font-medium text-gray-500 mb-2">
+                                <i class="fas fa-ban mr-1 text-red-500"></i>
+                                Server 3 - Disabled (iQiyi)
                             </label>
                             <input type="url" name="iqiyi_play_url" 
                                    value="{{ episode.iqiyi_play_url if episode and episode.iqiyi_play_url else '' }}"
-                                   class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-red-500"
-                                   placeholder="https://www.iq.com/play/super-cube-episode-1-11eihk07dr8?lang=en_us">
-                            <p class="text-xs text-gray-400 mt-1">iQiyi play URL - akan otomatis extract M3U8 saat streaming</p>
+                                   class="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-gray-500 focus:outline-none"
+                                   placeholder="Server 3 telah dinonaktifkan"
+                                   disabled>
+                            <p class="text-xs text-red-400 mt-1">Server 3 (iQiyi) telah dinonaktifkan dan tidak dapat digunakan</p>
                         </div>
                         
                         <!-- Legacy Video URL (for backwards compatibility) -->
