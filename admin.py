@@ -10,8 +10,8 @@ from anilist_integration import anilist_service
 import logging
 import json
 import re
-from iqiyi_scraper import scrape_iqiyi_episode, scrape_iqiyi_playlist
-from iqiyi_m3u8_scraper import IQiyiM3U8Scraper
+from iqiyi_scrapers.scrapers.iqiyi_scraper import scrape_iqiyi_episode, scrape_iqiyi_playlist
+from iqiyi_scrapers.scrapers.iqiyi_m3u8_scraper import IQiyiM3U8Scraper
 
 admin_bp = Blueprint('admin', __name__)
 

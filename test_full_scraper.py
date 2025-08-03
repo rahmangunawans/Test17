@@ -3,7 +3,7 @@
 Test scraper untuk mengambil SEMUA episode dari playlist IQiyi
 """
 
-from iqiyi_scraper import IQiyiScraper, EpisodeData
+from iqiyi_scrapers.scrapers.iqiyi_scraper import IQiyiScraper, EpisodeData
 from typing import List
 import time
 
