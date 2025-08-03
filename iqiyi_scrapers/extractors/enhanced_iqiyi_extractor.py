@@ -99,8 +99,16 @@ class EnhancedIQiyiExtractor:
         """Get M3U8 content from DASH query using mainx.py method"""
         logging.info("🔍 Getting M3U8 from DASH query...")
         
+        # Try original URL first
         dash_url = f'https://cache.video.iqiyi.com/dash?{dash_query}'
         response = self._request('get', dash_url)
+        
+        # If failed, try with signature fix
+        if not response or not response.ok:
+            logging.info("🔧 Original URL failed, trying with signature fix...")
+            from .iqiyi_signature_fixer import fix_iqiyi_signature
+            fixed_url = fix_iqiyi_signature(dash_url)
+            response = self._request('get', fixed_url)
         
         if not response:
             return None
@@ -108,8 +116,8 @@ class EnhancedIQiyiExtractor:
         try:
             data = response.json()
             
-            # Log the response structure for debugging
-            logging.info(f"📊 DASH API response structure: {data.get('code', 'no_code')}")
+            # Log full response for debugging
+            logging.info(f"📊 Full DASH API response: {json.dumps(data, indent=2)[:1000]}...")
             
             # Check for API errors first (multiple error code formats)
             error_code = data.get('code')

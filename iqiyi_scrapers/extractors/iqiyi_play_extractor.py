@@ -10,8 +10,7 @@ import json
 import logging
 import re
 from urllib.parse import urlparse, parse_qs
-from enhanced_iqiyi_scraper import scrape_all_episodes_playlist
-from enhanced_iqiyi_extractor import extract_m3u8_enhanced
+from .enhanced_iqiyi_extractor import extract_m3u8_enhanced
 
 def extract_m3u8_from_iqiyi_play_url(play_url):
     """
@@ -26,7 +25,21 @@ def extract_m3u8_from_iqiyi_play_url(play_url):
     try:
         logging.info(f"🎬 Extracting M3U8 from iQiyi play URL: {play_url[:100]}...")
         
-        # Method 0: Try enhanced extraction using mainx.py methodology (PRIORITY)
+        # Method 0: Try working extraction method (PRIORITY - bypasses signature issues)
+        try:
+            logging.info("🚀 Trying working extraction method...")
+            from .iqiyi_working_extractor import extract_m3u8_working_method
+            working_result = extract_m3u8_working_method(play_url)
+            
+            if working_result.get('success'):
+                logging.info("✅ Working extraction successful!")
+                return working_result
+            else:
+                logging.warning(f"Working extraction failed: {working_result.get('error')}")
+        except Exception as e:
+            logging.warning(f"Working extraction error: {str(e)}")
+        
+        # Method 0.5: Try enhanced extraction using mainx.py methodology (FALLBACK)
         try:
             logging.info("🚀 Trying enhanced extraction (mainx.py method)...")
             enhanced_result = extract_m3u8_enhanced(play_url)
@@ -41,7 +54,7 @@ def extract_m3u8_from_iqiyi_play_url(play_url):
         
         # Method 1: Try direct DASH URL extraction from play page
         try:
-            from iqiyi_direct_scraper import extract_dash_url_from_play_page
+            from ..scrapers.iqiyi_direct_scraper import extract_dash_url_from_play_page
             
             logging.info("🔍 Trying direct DASH URL extraction from play page...")
             dash_result = extract_dash_url_from_play_page(play_url)
@@ -50,7 +63,7 @@ def extract_m3u8_from_iqiyi_play_url(play_url):
                 logging.info(f"✅ Got DASH URL: {dash_result['dash_url'][:100]}...")
                 
                 # Extract M3U8 from DASH URL
-                from iqiyi_dash_extractor import extract_m3u8_from_dash_url
+                from .iqiyi_dash_extractor import extract_m3u8_from_dash_url
                 m3u8_result = extract_m3u8_from_dash_url(dash_result['dash_url'])
                 
                 if m3u8_result.get('success'):
