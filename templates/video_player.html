@@ -748,7 +748,7 @@ async function switchServer(serverType, serverUrl) {
             console.log('🔄 Extracting M3U8 from iQiyi play URL...');
             
             try {
-                const response = await fetch('/admin/api/extract-iqiyi-m3u8', {
+                const response = await fetch('/api/extract-iqiyi-m3u8', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ iqiyi_play_url: serverUrl })

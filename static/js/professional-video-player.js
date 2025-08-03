@@ -218,6 +218,7 @@ class ProfessionalVideoPlayer {
             });
 
             const data = await response.json();
+            console.log('🔍 iQiyi API Response:', data);
             
             if (data.success && data.m3u8_content) {
                 console.log('✅ M3U8 extracted successfully, content length:', data.m3u8_content.length);
