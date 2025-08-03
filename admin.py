@@ -593,9 +593,9 @@ def api_scrape_basic():
         
         batch_size = data.get('batch_size', 10)
         
-        # Import and use basic scraper
-        from simple_episode_scraper import scrape_basic_episodes
-        result = scrape_basic_episodes(iqiyi_url, max_episodes=batch_size)
+        # Import and use professional scraper
+        from iqiyi_scraper import scrape_iqiyi_basic_info
+        result = scrape_iqiyi_basic_info(iqiyi_url, max_episodes=batch_size)
         
         if result.get('success'):
             return jsonify({
@@ -642,8 +642,8 @@ def api_scrape_episode():
                 'error': 'URL harus dari domain iq.com'
             }), 400
         
-        # Import simple scraping functions
-        from simple_iqiyi_scraper import scrape_single_episode
+        # Import professional scraping functions
+        from iqiyi_scraper import scrape_single_episode
         
         # Scrape single episode using enhanced scraper
         result = scrape_single_episode(iqiyi_url)
@@ -689,8 +689,8 @@ def api_scrape_all_playlist():
                 'error': 'URL harus dari domain iq.com'
             }), 400
         
-        # Import simple scraping functions
-        from simple_iqiyi_scraper import scrape_all_episodes_playlist
+        # Import professional scraping functions
+        from iqiyi_scraper import scrape_all_episodes_playlist
         
         # Scrape all episodes from playlist using enhanced scraper
         max_episodes = data.get('max_episodes', 50)  # Default to 50 if not specified
@@ -745,8 +745,8 @@ def api_scrape_all_playlist():
                 print("🔄 Attempting fallback to basic scraping...")
                 
                 try:
-                    # Fallback to simple scraping (no M3U8 extraction)
-                    from simple_iqiyi_scraper import scrape_iqiyi_basic_info
+                    # Fallback to professional scraping (no M3U8 extraction)
+                    from iqiyi_scraper import scrape_iqiyi_basic_info
                     fallback_result = scrape_iqiyi_basic_info(iqiyi_url, max_episodes=max_episodes)
                     
                     if fallback_result.get('success'):
