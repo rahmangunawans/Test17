@@ -10,6 +10,7 @@ Code cleanliness: Remove redundant maintenance and setup scripts to keep codebas
 Code organization: Organized IQiyi scraping files into clean folder structure (iqiyi_scrapers package) - August 3, 2025.
 IQiyi scraping: Enhanced scraper with smart episode detection to handle single episode URLs vs album URLs - August 3, 2025.
 IQiyi scraping improvements: Implemented 3-tier professional scraping system (Standard → Professional → Advanced) with comprehensive episode extraction from single episode URLs - August 3, 2025.
+Migration to Replit: Successfully migrated from Replit Agent to standard Replit environment with enhanced IQiyi scraper fixes for M3U8 extraction - August 3, 2025.
 
 ## System Architecture
 

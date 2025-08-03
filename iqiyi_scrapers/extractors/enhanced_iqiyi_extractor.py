@@ -43,10 +43,15 @@ class EnhancedIQiyiExtractor:
             return None
 
         try:
-            json_data = script_tag.string.strip()
-            player_data = json.loads(json_data)
-            logging.info("✅ Player data loaded successfully")
-            return player_data
+            json_text = script_tag.get_text() if script_tag.get_text() else ""
+            if json_text:
+                json_text = json_text.strip()
+                player_data = json.loads(json_text)
+                logging.info("✅ Player data loaded successfully")
+                return player_data
+            else:
+                logging.warning("❌ Empty script tag content")
+                return None
         except json.JSONDecodeError as e:
             logging.error(f"❌ Error parsing JSON data: {e}")
             return None
@@ -63,9 +68,20 @@ class EnhancedIQiyiExtractor:
                 logging.warning("❌ No ssrlog found in player data")
                 return None
             
-            # Use regex pattern from mainx.py to extract DASH URL
-            url_pattern = r'http://intel-cache\.video\.qiyi\.domain/dash\?([^\s]+)'
-            urls = re.findall(url_pattern, ssrlog)
+            # Use updated regex pattern for current IQiyi structure
+            url_patterns = [
+                r'https://cache\.video\.iqiyi\.com/dash\?([^\s&"\']+)',  # Current HTTPS cache URLs
+                r'http://intel-cache\.video\.qiyi\.domain/dash\?([^\s&"\']+)',  # Legacy pattern
+                r'https://[^/]+\.iqiyi\.com/dash\?([^\s&"\']+)',  # Generic iqiyi.com domains
+            ]
+            
+            urls = []
+            for pattern in url_patterns:
+                found_urls = re.findall(pattern, ssrlog)
+                if found_urls:
+                    urls.extend(found_urls)
+                    logging.info(f"Found URLs with pattern: {pattern}")
+                    break
             
             if urls:
                 dash_query = urls[0]
@@ -92,32 +108,79 @@ class EnhancedIQiyiExtractor:
         try:
             data = response.json()
             
-            # Check for API errors first
-            if data.get('code') != 'A00000':
-                error_code = data.get('code')
+            # Log the response structure for debugging
+            logging.info(f"📊 DASH API response structure: {data.get('code', 'no_code')}")
+            
+            # Check for API errors first (multiple error code formats)
+            error_code = data.get('code')
+            if error_code and str(error_code) not in ['A00000', '0', 'success']:
                 error_msg = data.get('msg', 'Unknown error')
                 logging.error(f"❌ iQiyi API error: {error_code} - {error_msg}")
                 
-                if error_code == 'A00020':
+                if str(error_code) == 'A00020':
                     return f"ERROR_EXPIRED:{error_msg}"
                 else:
                     return f"ERROR_API:{error_msg}"
             
-            # Extract M3U8 content like mainx.py
-            video_data = data.get('data', {}).get('program', {}).get('video', [])
+            # Multiple extraction strategies for M3U8 content
+            strategies = [
+                # Strategy 1: Standard path data.program.video[]
+                lambda d: d.get('data', {}).get('program', {}).get('video', []),
+                # Strategy 2: Direct data.video[]
+                lambda d: d.get('data', {}).get('video', []),
+                # Strategy 3: Root level video[]
+                lambda d: d.get('video', []),
+                # Strategy 4: Any nested video arrays
+                lambda d: self._find_video_arrays(d)
+            ]
             
-            for video_item in video_data:
-                if 'm3u8' in video_item and video_item['m3u8']:
-                    m3u8_content = video_item['m3u8']
-                    logging.info(f"✅ M3U8 content found: {len(m3u8_content)} characters")
-                    return m3u8_content
+            for i, strategy in enumerate(strategies, 1):
+                try:
+                    video_data = strategy(data)
+                    if isinstance(video_data, list) and video_data:
+                        logging.info(f"🔍 Strategy {i}: Found {len(video_data)} video items")
+                        
+                        for j, video_item in enumerate(video_data):
+                            if isinstance(video_item, dict) and 'm3u8' in video_item:
+                                m3u8_content = video_item['m3u8']
+                                if m3u8_content and isinstance(m3u8_content, str) and '#EXTM3U' in m3u8_content:
+                                    logging.info(f"✅ M3U8 content found in video[{j}]: {len(m3u8_content)} characters")
+                                    return m3u8_content
+                    elif video_data:
+                        logging.info(f"🔍 Strategy {i}: Non-list video data type: {type(video_data)}")
+                except Exception as e:
+                    logging.warning(f"Strategy {i} failed: {e}")
             
-            logging.warning("❌ No M3U8 content found in video data")
+            # Log full response structure for debugging
+            logging.warning(f"❌ No M3U8 content found. Response keys: {list(data.keys())}")
+            if 'data' in data:
+                logging.warning(f"Data keys: {list(data['data'].keys())}")
+            
             return None
             
         except Exception as e:
             logging.error(f"❌ Error parsing DASH response: {e}")
             return None
+    
+    def _find_video_arrays(self, data):
+        """Recursively find any video arrays in the response"""
+        def search_recursive(obj):
+            if isinstance(obj, dict):
+                for key, value in obj.items():
+                    if key == 'video' and isinstance(value, list):
+                        return value
+                    elif isinstance(value, (dict, list)):
+                        result = search_recursive(value)
+                        if result:
+                            return result
+            elif isinstance(obj, list):
+                for item in obj:
+                    result = search_recursive(item)
+                    if result:
+                        return result
+            return []
+        
+        return search_recursive(data)
 
 def extract_m3u8_enhanced(play_url: str) -> Dict[str, Any]:
     """Main enhanced extraction function based on mainx.py methodology"""
