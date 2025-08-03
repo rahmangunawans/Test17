@@ -642,8 +642,8 @@ def api_scrape_episode():
                 'error': 'URL harus dari domain iq.com'
             }), 400
         
-        # Import enhanced scraping functions
-        from iqiyi_scrapers.scrapers.enhanced_iqiyi_scraper import scrape_single_episode
+        # Import simple scraping functions
+        from simple_iqiyi_scraper import scrape_single_episode
         
         # Scrape single episode using enhanced scraper
         result = scrape_single_episode(iqiyi_url)
@@ -689,8 +689,8 @@ def api_scrape_all_playlist():
                 'error': 'URL harus dari domain iq.com'
             }), 400
         
-        # Import enhanced scraping functions
-        from iqiyi_scrapers.scrapers.enhanced_iqiyi_scraper import scrape_all_episodes_playlist
+        # Import simple scraping functions
+        from simple_iqiyi_scraper import scrape_all_episodes_playlist
         
         # Scrape all episodes from playlist using enhanced scraper
         max_episodes = data.get('max_episodes', 50)  # Default to 50 if not specified
@@ -745,8 +745,9 @@ def api_scrape_all_playlist():
                 print("🔄 Attempting fallback to basic scraping...")
                 
                 try:
-                    # Server 3 (iQiyi) scraper disabled - no fallback scraping
-                    fallback_result = {'success': False, 'error': 'Server 3 (iQiyi) has been disabled'}
+                    # Fallback to simple scraping (no M3U8 extraction)
+                    from simple_iqiyi_scraper import scrape_iqiyi_basic_info
+                    fallback_result = scrape_iqiyi_basic_info(iqiyi_url, max_episodes=max_episodes)
                     
                     if fallback_result.get('success'):
                         # Convert fallback scraping format to expected format
