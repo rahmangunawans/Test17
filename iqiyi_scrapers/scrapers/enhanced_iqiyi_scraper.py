@@ -383,7 +383,14 @@ class EnhancedIQiyiScraper:
                 
                 if total_episodes > 1:
                     print(f"🔍 Detected single episode URL for series '{album_name}' with {total_episodes} total episodes")
-                    print("💡 Tip: For better results, use the main album/series URL instead of individual episode URLs")
+                    print("💡 IQiyi Structure Info:")
+                    print(f"   - This URL only contains data for 1 episode")
+                    print(f"   - The series has {total_episodes} total episodes")
+                    print(f"   - IQiyi loads episode lists dynamically with JavaScript")
+                    print(f"   - To get all episodes, you need to:")
+                    print(f"     1. Find the main album/series page")
+                    print(f"     2. Or manually add each episode URL one by one")
+                    print(f"     3. Or use a different approach like browser automation")
                     
                     # Try to create a single episode entry from current page
                     current_episode = self._extract_current_episode_info(player_data)

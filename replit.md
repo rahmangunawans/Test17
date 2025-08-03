@@ -8,6 +8,7 @@ Preferred communication style: Simple, everyday language.
 Database preference: Always use Supabase PostgreSQL database exclusively - no fallback mechanisms.
 Code cleanliness: Remove redundant maintenance and setup scripts to keep codebase clean.
 Code organization: Organized IQiyi scraping files into clean folder structure (iqiyi_scrapers package) - August 3, 2025.
+IQiyi scraping: Enhanced scraper with smart episode detection to handle single episode URLs vs album URLs - August 3, 2025.
 
 ## System Architecture
 
@@ -29,7 +30,7 @@ Code organization: Organized IQiyi scraping files into clean folder structure (i
 - **Content Management**: Support for anime series, movies, and donghua with episode organization, genre categorization, and filtering. Admin interface for CRUD operations on content and users.
 - **Video Streaming**: Plyr.io player with HLS.js support for M3U8 streams, progress tracking, resume functionality, quality controls, and speed settings. Supports M3U8, Embed, and IQiyi streaming servers. VIP-exclusive download functionality is available.
 - **Admin Panel**: Dashboard for statistics, user management, content/episode management, system settings, and maintenance controls.
-- **Data Integration**: AniList and MyAnimeList API integration for automated content population (title, description, genres, studio, episodes, status, ratings, thumbnails, character overview, trailer URLs). IQiyi scraping for episode URLs and subtitles.
+- **Data Integration**: AniList and MyAnimeList API integration for automated content population (title, description, genres, studio, episodes, status, ratings, thumbnails, character overview, trailer URLs). IQiyi scraping for episode URLs and subtitles with smart detection for single episode vs album URLs.
 
 ## External Dependencies
 

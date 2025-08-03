@@ -148,6 +148,6 @@ def debug_iqiyi_structure(url):
         return None
 
 if __name__ == "__main__":
-    # Test with the Lazarus album URL
-    test_url = "https://www.iq.com/album/3813997793733701"
+    # Test with the correct Lazarus album URL
+    test_url = "https://www.iq.com/album/lazarus-2025-12qeocfw755?lang=en_us"
     debug_iqiyi_structure(test_url)
