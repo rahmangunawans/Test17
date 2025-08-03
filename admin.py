@@ -594,7 +594,7 @@ def api_scrape_basic():
         batch_size = data.get('batch_size', 10)
         
         # Import and use professional scraper
-        from iqiyi_scraper import scrape_iqiyi_basic_info
+        from iqiyi import scrape_iqiyi_basic_info
         result = scrape_iqiyi_basic_info(iqiyi_url, max_episodes=batch_size)
         
         if result.get('success'):
@@ -643,7 +643,7 @@ def api_scrape_episode():
             }), 400
         
         # Import professional scraping functions
-        from iqiyi_scraper import scrape_single_episode
+        from iqiyi import scrape_single_episode
         
         # Scrape single episode using enhanced scraper
         result = scrape_single_episode(iqiyi_url)
@@ -690,7 +690,7 @@ def api_scrape_all_playlist():
             }), 400
         
         # Import professional scraping functions
-        from iqiyi_scraper import scrape_all_episodes_playlist
+        from iqiyi import scrape_all_episodes_playlist
         
         # Scrape all episodes from playlist using enhanced scraper
         max_episodes = data.get('max_episodes', 50)  # Default to 50 if not specified
@@ -746,7 +746,7 @@ def api_scrape_all_playlist():
                 
                 try:
                     # Fallback to professional scraping (no M3U8 extraction)
-                    from iqiyi_scraper import scrape_iqiyi_basic_info
+                    from iqiyi import scrape_iqiyi_basic_info
                     fallback_result = scrape_iqiyi_basic_info(iqiyi_url, max_episodes=max_episodes)
                     
                     if fallback_result.get('success'):
