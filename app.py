@@ -108,8 +108,6 @@ app.register_blueprint(notifications_bp, url_prefix='/api')
 def extract_iqiyi_m3u8():
     """Public endpoint for extracting M3U8 from iQiyi play URL"""
     try:
-        import logging
-        
         data = request.get_json()
         iqiyi_play_url = data.get('iqiyi_play_url', '').strip()
         
