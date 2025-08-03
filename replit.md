@@ -13,6 +13,7 @@ IQiyi scraping improvements: Implemented 3-tier professional scraping system (St
 Migration to Replit: Successfully migrated from Replit Agent to standard Replit environment with enhanced IQiyi scraper fixes for M3U8 extraction - August 3, 2025.
 IQiyi scraper fix: Implemented working extraction method to bypass signature validation issues (A00001 error) for Server 3 streaming - August 3, 2025.
 Migration complete: Successfully migrated AniFlix from Replit Agent to standard Replit environment with fully functional Server 3 IQiyi streaming - August 3, 2025.
+Migration to Replit Standard: Fixed JavaScript syntax errors in templates and enhanced admin content deletion with better logging and error handling - August 3, 2025.
 
 ## System Architecture
 

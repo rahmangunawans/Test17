@@ -237,16 +237,31 @@ def edit_content(content_id):
 @admin_required
 def delete_content(content_id):
     content = Content.query.get_or_404(content_id)
+    content_title = content.title
+    
     try:
-        # Delete associated episodes and watch history
-        Episode.query.filter_by(content_id=content_id).delete()
-        WatchHistory.query.filter_by(content_id=content_id).delete()
+        logging.info(f"Starting deletion of content: {content_title} (ID: {content_id})")
         
+        # Delete associated watch history first
+        watch_history_count = WatchHistory.query.filter_by(content_id=content_id).count()
+        WatchHistory.query.filter_by(content_id=content_id).delete()
+        logging.info(f"Deleted {watch_history_count} watch history records")
+        
+        # Delete associated episodes
+        episodes_count = Episode.query.filter_by(content_id=content_id).count()
+        Episode.query.filter_by(content_id=content_id).delete()
+        logging.info(f"Deleted {episodes_count} episodes")
+        
+        # Delete the content itself
         db.session.delete(content)
         db.session.commit()
-        flash(f'Content "{content.title}" deleted successfully!', 'success')
+        
+        logging.info(f"Successfully deleted content: {content_title}")
+        flash(f'Content "{content_title}" and all {episodes_count} episodes deleted successfully!', 'success')
+        
     except Exception as e:
         db.session.rollback()
+        logging.error(f'Error deleting content {content_title}: {str(e)}')
         flash(f'Error deleting content: {str(e)}', 'error')
     
     return redirect(url_for('admin.admin_content'))

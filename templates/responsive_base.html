@@ -924,15 +924,12 @@
                             <div class="flex-1 min-w-0">
                                 <p class="text-sm font-medium leading-5">${message}</p>
                             </div>
-                            <button class="flex-shrink-0 ml-4 text-white/80 hover:text-white transition-colors duration-200" onclick="removeFlashNotification(this.closest('div').closest('div'))">
-                                <i class="fas fa-times text-sm"></i>
-                            </button>
                         </div>
                     `;
                     
                     document.body.appendChild(notification);
                     
-                    // Animate in
+                    // Trigger animation
                     setTimeout(() => {
                         notification.classList.remove('translate-x-full');
                         notification.classList.add('translate-x-0');
@@ -949,7 +946,7 @@
                         notification.classList.add('notification-removing');
                         setTimeout(() => {
                             if (notification.parentNode) {
-                                notification.remove();
+                                notification.parentNode.removeChild(notification);
                             }
                         }, 500);
                     }
