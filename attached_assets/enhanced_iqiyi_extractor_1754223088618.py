@@ -12,7 +12,7 @@ class EnhancedIQiyiExtractor:
     
     def __init__(self):
         self.headers = {
-            'cookie': 'QC005=91f7468819d6389e92fbfb26249b03dd; lang=id_id; mod=id; random-uuid=c98c16f1580c43719fb6d49b7dc52a27; QC173=0; b_ext_ip=182.3.45.217; QC006=63e3cc4c1d047e08d11aa4bc4b77f582; _ga=GA1.1.159462571.1754163381; _gcl_au=1.1.1813734661.1754163407; QC007=DIRECT; QC008=1754163385.1754164853.1754170808.12; nu=0; adcookie=1; ak_bmsc=D4E573C2962F91863C13C51E11157C77~000000000000000000000000000000~YAAQC7QRYDHPZD2YAQAA9F26bBw7iPwXvR8eMqoUK7TPKzrVu3aHRZbAgQtdt33pHEODon',
+            'cookie': 'QC005=91f7468819d6389e92fbfb26249b03dd; lang=id_id; mod=id; random-uuid=c98c16f1580c43719fb6d49b7dc52a27; QC173=0; b_ext_ip=182.3.45.217; QC006=63e3cc4c1d047e08d11aa4bc4b77f582; _ga=GA1.1.159462571.1754163381; _gcl_au=1.1.1813734661.1754163407; QC007=DIRECT; QC008=1754163385.1754164853.1754170808.12; nu=0; adcookie=1; ak_bmsc=D4E573C2962F91863C13C51E11157C77~000000000000000000000000000000~YAAQC7QRYDHPZD2YAQAA9F26bBw7iPwXvR8eMqoUK7TPKzrVu3aHRZbAgQtdt33pHEODonkJMxSf15OOl9U/JNLaeJmBnkOw2pNLuoRtiBAvIJd3fuvZjxX+lRxSskGh+hJ10siS7M0kPMFsg4TwZJ2142i+m3Spf65VTZLS86bSOllN0gYZBKtjngtBFZ/2M+5iKbiR0+huR3iB8DY/0R6kJd1Jrre/Vv6j5Db3L5Hklw//GgCwzaCMa7C63SrqXMIyWmtFePgnf2VY5k/9WRkEhHaFpl8X9xrK2KyDGkJH/yxIvLBTORPQD5ohi+1UrhFLKhWxdGyO73f2a3AeSymGnjgxkkt2W2GlG+GNXkTbVIzKyIAlDirXj6hzf5TXadDgMtk=; QiyiPlayerSupported=%7B%22v%22%3A3%2C%22dp%22%3A1%2C%22dm%22%3A%7B%22wv%22%3A1%7D%2C%22m%22%3A%7B%22wm-vp9%22%3A1%2C%22wm-av1%22%3A1%7D%2C%22hvc%22%3Atrue%7D; QCVtype=; intl_playbackRate=1; QiyiPlayerVD=5; QiyiPlayerBID=600; I00040=CnhUVXBRYzFWUmEza3ZSamxYVmpKeFlqWjVlRU5wUXpSdVltMVRVSE5ZVFVGSWRsZDBiR1o2T0hrM0wwUnJOa0ZRWmpCa1dqRlJkVVZzZGpOdWEySk9UV2cxUjNoR01sZ3lOVU5qT0RsbGRsbFJTWGx0WmxFOVBRPT0QqgNQIGIgOTFmNzQ2ODgxOWQ2Mzg5ZTkyZmJmYjI2MjQ5YjAzZGR6P2h0dHBzOi8vcGFzc3BvcnQuaXEuY29tL2ludGwvdGhpcmRwYXJ0eS9jYWxsYmFjay5hY3Rpb24%2FZnJvbT0zMqoBFDAxMDEwMDMxMDEwMDE4MDAwMDAw4gE8aHR0cHM6Ly93d3cuaXEuY29tL2ludGwtY29tbW9uL2ludGxfdGhpcmRwYXJ0eV90cmFuc2Zlci5odG1s6gEBMQ%3D%3D; __dfp=e01b5e74016c8a49df92d9f41954ee2ebeb3468856d7cb0aa9c41724c07748da54@1755459402609@1754163403609; abtest=%7B%22pcw_play_comment%22%3A%228546_A%2C8706_C%22%7D; _ga_VTJGB1PRBJ=GS2.1.s1754170811$o2$g1$t1754172283$j9$l0$h0; _ga_PCTZRE9688=GS2.1.s1754170811$o2$g1$t1754172283$j9$l0$h0; QC010=4815159; bm_sv=F7B2885772414DD94539BAB5C0B0CD6C~YAAQpOQ+F2sHgGaYAQAA1OvQbBzBJ8y19XmwbBMXmqy+fNMgMLp2LVZphHQ5XmaSqxd1kOns9aLDt8FbMVGRn+LdIeeI1rtpP8lVaQzhYvTr0LeCMOr778mpIfedOwzo5UH8mo371pBQPop4oLNMTNreIkdoEEXyuAPb5Of7UGoekxZ9ZQJeQmgFAXqSOFCAiOITVg6deFX+kafjJ87WsPaOMqZVrETlw1YQoW4eokNzkCGYPFWLOGY1o0rd~1',
             'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36'
         }
         self.session = requests.Session()
@@ -84,11 +84,10 @@ class EnhancedIQiyiExtractor:
         """Get M3U8 content from DASH query using mainx.py method"""
         logging.info("🔍 Getting M3U8 from DASH query...")
         
-        # Try original URL first
         dash_url = f'https://cache.video.iqiyi.com/dash?{dash_query}'
-        logging.info(f"🔍 DASH URL: {dash_url}")
+        print(dash_url)
         response = self._request('get', dash_url)
-        
+        print(response.json())
         if not response:
             return None
             
@@ -121,26 +120,6 @@ class EnhancedIQiyiExtractor:
         except Exception as e:
             logging.error(f"❌ Error parsing DASH response: {e}")
             return None
-    
-    def _find_video_arrays(self, data):
-        """Recursively find any video arrays in the response"""
-        def search_recursive(obj):
-            if isinstance(obj, dict):
-                for key, value in obj.items():
-                    if key == 'video' and isinstance(value, list):
-                        return value
-                    elif isinstance(value, (dict, list)):
-                        result = search_recursive(value)
-                        if result:
-                            return result
-            elif isinstance(obj, list):
-                for item in obj:
-                    result = search_recursive(item)
-                    if result:
-                        return result
-            return []
-        
-        return search_recursive(data)
 
 def extract_m3u8_enhanced(play_url: str) -> Dict[str, Any]:
     """Main enhanced extraction function based on mainx.py methodology"""
@@ -201,3 +180,15 @@ def extract_m3u8_enhanced(play_url: str) -> Dict[str, Any]:
         'method': 'enhanced_extraction',
         'dash_query': dash_query
     }
+    
+url = "https://www.iq.com/play/lazarus-episode-1-1l0n170m0qc"  # contoh link
+result = extract_m3u8_enhanced(url)
+
+if result['success']:
+    print("✅ M3U8 ditemukan:")
+    print(result['m3u8_content'])
+else:
+    print("❌ Gagal:")
+    print(result['error'])
+    if 'suggestion' in result:
+        print("💡 Saran:", result['suggestion'])

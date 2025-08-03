@@ -129,7 +129,7 @@ def extract_iqiyi_m3u8():
         logging.info(f"Extracting M3U8 from iQiyi play URL: {iqiyi_play_url[:100]}...")
         
         # Extract M3U8 using the play URL extractor
-        from iqiyi_play_extractor import extract_m3u8_from_iqiyi_play_url
+        from iqiyi_scrapers.extractors.iqiyi_play_extractor import extract_m3u8_from_iqiyi_play_url
         result = extract_m3u8_from_iqiyi_play_url(iqiyi_play_url)
         
         if result['success']:

@@ -1,0 +1,39 @@
+#!/usr/bin/env python3
+"""
+Test enhanced method directly
+"""
+
+import sys
+import os
+sys.path.append('.')
+
+from iqiyi_scrapers.extractors.enhanced_iqiyi_extractor import extract_m3u8_enhanced
+import logging
+
+# Setup logging
+logging.basicConfig(level=logging.DEBUG, format='%(levelname)s:%(name)s:%(message)s')
+
+def test_enhanced_extraction():
+    """Test enhanced IQiyi extraction method"""
+    test_url = "https://www.iq.com/play/super-cube-episode-1-11eihk07dr8?lang=en_us"
+    
+    print(f"🧪 Testing Enhanced IQiyi extraction with: {test_url}")
+    
+    result = extract_m3u8_enhanced(test_url)
+    
+    print("\n" + "="*50)
+    print("ENHANCED EXTRACTION RESULT:")
+    print("="*50)
+    print(f"Success: {result.get('success')}")
+    print(f"Method: {result.get('method')}")
+    print(f"Error: {result.get('error')}")
+    
+    if result.get('success') and result.get('m3u8_content'):
+        m3u8_content = result['m3u8_content']
+        print(f"M3U8 Length: {len(m3u8_content)} characters")
+        print(f"M3U8 Preview: {m3u8_content[:200]}...")
+    
+    return result
+
+if __name__ == '__main__':
+    test_enhanced_extraction()
