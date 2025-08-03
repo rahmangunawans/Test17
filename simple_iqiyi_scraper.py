@@ -37,57 +37,138 @@ def scrape_iqiyi_basic_info(iqiyi_url, max_episodes=20):
         # Look for episode patterns in the page
         episodes = []
         
-        # Try to find episode links or patterns
-        episode_links = soup.find_all('a', href=re.compile(r'/play/'))
+        # Method 1: Look for episode selection UI elements
+        episode_selectors = [
+            'div[class*="episode"]',
+            'div[class*="tab"]', 
+            'a[class*="episode"]',
+            'li[class*="episode"]',
+            '.intl-episode-list a',
+            '.episode-list a',
+            '.tab-list a'
+        ]
         
         episode_count = 0
-        for link in episode_links:
+        found_episodes = set()  # To avoid duplicates
+        
+        for selector in episode_selectors:
             if episode_count >= max_episodes:
                 break
                 
-            href = link.get('href', '')
-            text = link.get_text(strip=True)
-            
-            if href and text and any(keyword in text.lower() for keyword in ['episode', 'ep', '第', '话', '集']):
-                # Extract episode number if possible
-                episode_num_match = re.search(r'(\d+)', text)
-                episode_num = episode_num_match.group(1) if episode_num_match else str(episode_count + 1)
+            episode_elements = soup.select(selector)
+            for element in episode_elements:
+                if episode_count >= max_episodes:
+                    break
+                    
+                href = element.get('href', '')
+                text = element.get_text(strip=True)
                 
-                full_url = href if href.startswith('http') else f"https://www.iq.com{href}"
-                
-                episodes.append({
-                    'episode_number': episode_num,
-                    'title': text,
-                    'url': full_url,
-                    'server_1_url': '',  # Empty for Server 1 (M3U8)
-                    'server_2_url': full_url,  # Use as embed URL for Server 2
-                    'server_3_url': '',  # Server 3 disabled
-                    'thumbnail_url': '',
-                    'description': '',
-                    'duration': '',
-                    'release_date': ''
-                })
-                episode_count += 1
+                if href and text:
+                    # Clean up the URL
+                    if href.startswith('/'):
+                        full_url = f"https://www.iq.com{href}"
+                    elif not href.startswith('http'):
+                        full_url = f"https://www.iq.com/play/{href}"
+                    else:
+                        full_url = href
+                    
+                    # Skip if we already found this URL
+                    if full_url in found_episodes:
+                        continue
+                        
+                    # Extract episode number
+                    episode_num_match = re.search(r'(\d+)', text)
+                    if not episode_num_match:
+                        episode_num_match = re.search(r'episode-(\d+)', href)
+                    
+                    episode_num = episode_num_match.group(1) if episode_num_match else str(episode_count + 1)
+                    
+                    # Create episode title
+                    if re.search(r'\d+', text):
+                        episode_title = text
+                    else:
+                        episode_title = f"Episode {episode_num}"
+                    
+                    episodes.append({
+                        'episode_number': episode_num,
+                        'title': episode_title,
+                        'url': full_url,
+                        'server_1_url': '',  # Empty for Server 1 (M3U8)
+                        'server_2_url': full_url,  # Use as embed URL for Server 2
+                        'server_3_url': '',  # Server 3 disabled
+                        'thumbnail_url': '',
+                        'description': '',
+                        'duration': '',
+                        'release_date': ''
+                    })
+                    
+                    found_episodes.add(full_url)
+                    episode_count += 1
         
-        # If no episodes found, try alternative method
+        # Method 2: If still no episodes, try to find script data
         if not episodes:
-            # Check if this is a single episode page
-            if '/play/' in iqiyi_url:
-                episode_num_match = re.search(r'episode-(\d+)', iqiyi_url)
-                episode_num = episode_num_match.group(1) if episode_num_match else "1"
+            script_tags = soup.find_all('script')
+            for script in script_tags:
+                script_content = script.get_text() if script.string else ''
                 
-                episodes.append({
-                    'episode_number': episode_num,
-                    'title': title_text,
-                    'url': iqiyi_url,
-                    'server_1_url': '',  # Empty for Server 1 (M3U8)
-                    'server_2_url': iqiyi_url,  # Use as embed URL for Server 2
-                    'server_3_url': '',  # Server 3 disabled
-                    'thumbnail_url': '',
-                    'description': '',
-                    'duration': '',
-                    'release_date': ''
-                })
+                # Look for episode data in JavaScript
+                if 'episode' in script_content.lower() and 'play' in script_content.lower():
+                    # Try to extract URLs from script
+                    url_matches = re.findall(r'/play/[a-zA-Z0-9]+', script_content)
+                    for i, url_match in enumerate(url_matches[:max_episodes]):
+                        full_url = f"https://www.iq.com{url_match}"
+                        if full_url not in found_episodes:
+                            episodes.append({
+                                'episode_number': str(i + 1),
+                                'title': f"Episode {i + 1}",
+                                'url': full_url,
+                                'server_1_url': '',
+                                'server_2_url': full_url,
+                                'server_3_url': '',
+                                'thumbnail_url': '',
+                                'description': '',
+                                'duration': '',
+                                'release_date': ''
+                            })
+                            found_episodes.add(full_url)
+        
+        # Method 3: If this is a single episode page, try to find series info
+        if not episodes and '/play/' in iqiyi_url:
+            # Extract the base ID from URL
+            url_match = re.search(r'/play/([a-zA-Z0-9]+)', iqiyi_url)
+            if url_match:
+                base_id = url_match.group(1)
+                
+                # Try to generate common episode patterns
+                for i in range(1, min(max_episodes + 1, 21)):  # Try up to 20 episodes
+                    episode_url = f"https://www.iq.com/play/{base_id}?episode={i}"
+                    episodes.append({
+                        'episode_number': str(i),
+                        'title': f"Episode {i}",
+                        'url': episode_url,
+                        'server_1_url': '',
+                        'server_2_url': episode_url,
+                        'server_3_url': '',
+                        'thumbnail_url': '',
+                        'description': '',
+                        'duration': '',
+                        'release_date': ''
+                    })
+                
+                # Also add the original URL as episode 1 if not already included
+                if iqiyi_url not in [ep['url'] for ep in episodes]:
+                    episodes.insert(0, {
+                        'episode_number': '1',
+                        'title': title_text,
+                        'url': iqiyi_url,
+                        'server_1_url': '',
+                        'server_2_url': iqiyi_url,
+                        'server_3_url': '',
+                        'thumbnail_url': '',
+                        'description': '',
+                        'duration': '',
+                        'release_date': ''
+                    })
         
         if episodes:
             return {
@@ -96,7 +177,7 @@ def scrape_iqiyi_basic_info(iqiyi_url, max_episodes=20):
                 'valid_episodes': len(episodes),
                 'episodes': episodes,
                 'message': f"Successfully scraped {len(episodes)} episodes (basic info only)",
-                'method': 'simple_scraper'
+                'method': 'enhanced_simple_scraper'
             }
         else:
             return {
