@@ -161,12 +161,10 @@
                                     <span>{{ content.year }}</span>
                                 </div>
                                 <div class="mt-2 flex flex-wrap gap-1">
-                                    {% if content.genre %}
-                                        {% for genre in content.genre.split(', ')[:2] %}
-                                        <span
-                                            class="genre-tag bg-gray-700 text-gray-300 text-xs px-2 py-1 rounded">{{ genre }}</span>
-                                        {% endfor %}
-                                    {% endif %}
+                                    {% if content.genre %}{% for genre in content.genre.split(', ')[:2] %}
+                                    <span
+                                        class="genre-tag bg-gray-700 text-gray-300 text-xs px-2 py-1 rounded">{{ genre }}</span>
+                                    {% endfor %}
                                 </div>
                             </div>
                         </div>
@@ -234,12 +232,10 @@
                                     <span>{{ content.year }}</span>
                                 </div>
                                 <div class="mt-2 flex flex-wrap gap-1">
-                                    {% if content.genre %}
-                                        {% for genre in content.genre.split(', ')[:2] %}
-                                        <span
-                                            class="genre-tag bg-gray-700 text-gray-300 text-xs px-2 py-1 rounded">{{ genre }}</span>
-                                        {% endfor %}
-                                    {% endif %}
+                                    {% if content.genre %}{% for genre in content.genre.split(', ')[:2] %}
+                                    <span
+                                        class="genre-tag bg-gray-700 text-gray-300 text-xs px-2 py-1 rounded">{{ genre }}</span>
+                                    {% endfor %}
                                 </div>
                             </div>
                         </div>
@@ -307,12 +303,10 @@
                                     <span>{{ content.year }}</span>
                                 </div>
                                 <div class="mt-2 flex flex-wrap gap-1">
-                                    {% if content.genre %}
-                                        {% for genre in content.genre.split(', ')[:2] %}
-                                        <span
-                                            class="genre-tag bg-gray-700 text-gray-300 text-xs px-2 py-1 rounded">{{ genre }}</span>
-                                        {% endfor %}
-                                    {% endif %}
+                                    {% if content.genre %}{% for genre in content.genre.split(', ')[:2] %}
+                                    <span
+                                        class="genre-tag bg-gray-700 text-gray-300 text-xs px-2 py-1 rounded">{{ genre }}</span>
+                                    {% endfor %}
                                 </div>
                             </div>
                         </div>
